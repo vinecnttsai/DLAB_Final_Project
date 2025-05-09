@@ -1,6 +1,6 @@
 // Auto-generated Verilog pixel data (12-bit RGB)
-module IDLE_CHAR #(parameter CHAR_WIDTH_X = 16,
-                    parameter CHAR_WIDTH_Y = 16,
+module IDLE_CHAR #(parameter CHAR_WIDTH_X = 32,
+                    parameter CHAR_WIDTH_Y = 32,
                     parameter PIXEL_WIDTH = 12) (
     input [9:0] char_x_rom,
     input [9:0] char_y_rom,
