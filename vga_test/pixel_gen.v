@@ -1,20 +1,21 @@
 `timescale 1ns / 1ps
 
-module pixel_gen #(//-----------Sequence debug parameters-----------
-                    parameter SEQ_DIGITS = 4,
-                    parameter SEQ_NUM = 16,
-                    parameter PIXEL_WIDTH = 12,
-                    parameter FONT_WIDTH = 8,
-                    //-----------Map parameters-----------
-                    parameter MAP_WIDTH_X = 100,
-                    parameter MAP_WIDTH_Y = 100,
-                    parameter MAP_X_OFFEST = 270, // start position of map
-                    parameter MAP_Y_OFFEST = 50,
-                    //-----------Character parameters-----------
-                    parameter CHAR_WIDTH_X = 32, // width of character
-                    parameter CHAR_WIDTH_Y = 32, // height of character
-                    //-----------Screen parameters-----------
-                    parameter SCREEN_WIDTH = 10
+module pixel_gen #(
+    //-----------Sequence debug parameters-----------
+    parameter SEQ_DIGITS = 4,
+    parameter SEQ_NUM = 16,
+    parameter PIXEL_WIDTH = 12,
+    parameter FONT_WIDTH = 8,
+    //-----------Map parameters-----------
+    parameter MAP_WIDTH_X = 100,
+    parameter MAP_WIDTH_Y = 100,
+    parameter MAP_X_OFFEST = 270, // start position of map
+    parameter MAP_Y_OFFEST = 50,
+    //-----------Character parameters-----------
+    parameter CHAR_WIDTH_X = 32, // width of character
+    parameter CHAR_WIDTH_Y = 32, // height of character
+    //-----------Screen parameters-----------
+    parameter SCREEN_WIDTH = 10
     )(
     input sys_clk,
     input sys_rst_n,
@@ -153,7 +154,10 @@ module pixel_gen #(//-----------Sequence debug parameters-----------
     end
 
     //------------------------------Map--------------------------------
-    Map map_inst(
+    Map #(
+        .MAP_WIDTH_X(MAP_WIDTH_X),
+        .MAP_WIDTH_Y(MAP_WIDTH_Y)
+    ) map_inst(
         .x(map_x),
         .y(map_y),
         .map_on(map_on),
@@ -162,7 +166,12 @@ module pixel_gen #(//-----------Sequence debug parameters-----------
     //-----------------------------------------------------------------
 
     //------------------------------Character--------------------------------
-    IDLE_CHAR char_inst(
+    IDLE_CHAR #(
+        .PIXEL_WIDTH(PIXEL_WIDTH),
+        .SCREEN_WIDTH(SCREEN_WIDTH),
+        .CHAR_WIDTH_X(CHAR_WIDTH_X),
+        .CHAR_WIDTH_Y(CHAR_WIDTH_Y)
+    ) char_inst(
         .char_x_rom(char_x_rom),
         .char_y_rom(char_y_rom),
         .char_on(char_on),

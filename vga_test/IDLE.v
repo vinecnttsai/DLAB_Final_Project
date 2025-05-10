@@ -1,11 +1,14 @@
 // Auto-generated Verilog pixel data (12-bit RGB)
-module IDLE_CHAR #(parameter CHAR_WIDTH_X = 32,
-                    parameter CHAR_WIDTH_Y = 32,
-                    parameter PIXEL_WIDTH = 12) (
-    input [9:0] char_x_rom,
-    input [9:0] char_y_rom,
+module IDLE_CHAR #(
+    parameter PIXEL_WIDTH = 12,
+    parameter SCREEN_WIDTH = 10,
+    parameter CHAR_WIDTH_X = 32,
+    parameter CHAR_WIDTH_Y = 32
+) (
+    input [SCREEN_WIDTH - 1:0] char_x_rom,
+    input [SCREEN_WIDTH - 1:0] char_y_rom,
     input char_on,
-    output [11:0] rgb
+    output [PIXEL_WIDTH - 1:0] rgb
 );
 
 parameter COLOR_0 = 12'hDBA;
