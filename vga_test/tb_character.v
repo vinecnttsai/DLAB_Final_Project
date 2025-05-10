@@ -316,8 +316,8 @@ end
 // -----------------------
 wire [CHAR_WIDTH_X-1:0] top_row_frame;
 wire [CHAR_WIDTH_X-1:0] bottom_row_frame; //collumn detection
-wire [CHAR_WIDTH_Y-1:0] left_col_frame;
-wire [CHAR_WIDTH_Y-1:0] right_col_frame; //row detection
+wire [MAX_VEL+1:0] left_col_frame;
+wire [MAX_VEL+1:0] right_col_frame; //row detection, since calculate_impact_pos is based on max velocity
 
 genvar i;
 generate
@@ -325,7 +325,7 @@ generate
         assign top_row_frame[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
         assign bottom_row_frame[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
     end
-    for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
+    for (i = 0; i <= MAX_VEL+1; i = i + 1) begin
         assign left_col_frame[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
         assign right_col_frame[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
     end
@@ -333,7 +333,7 @@ endgenerate
 
 
 function automatic detect_row_boundary; // 1 for in the boundary, 0 for not in the boundary
-    input [$clog2(CHAR_WIDTH_Y + 1)-1:0] row;
+    input [$clog2(MAX_VEL + 2)-1:0] row;
     begin
         detect_row_boundary = left_col_frame[row] && right_col_frame[row];
     end
@@ -376,13 +376,13 @@ function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
     begin
         distance_to_nearest_ob = 0;
         if (detect_row_boundary(pos_y_reg)) begin // if the bottom of the character is not fully in the wall
-            for (i = 1; i <= MAX_VEL; i = i + 1) begin
+            for (i = 1; i <= MAX_VEL+1; i = i + 1) begin
                 if (!detect_row_boundary(pos_y_reg + i)) begin
                     distance_to_nearest_ob = (i + WALL_WIDTH > distance_to_nearest_ob) ? distance_to_nearest_ob : i + WALL_WIDTH;
                 end
             end
         end else begin // if the bottom of the character is fully in the wall
-            for (i = 1; i <= MAX_VEL; i = i + 1) begin
+            for (i = 1; i <= MAX_VEL+1; i = i + 1) begin
                 if (detect_row_boundary(pos_y_reg + i)) begin
                     distance_to_nearest_ob = (i > distance_to_nearest_ob) ? distance_to_nearest_ob : i;
                 end
@@ -446,7 +446,7 @@ function detect_fall_to_ground;
     input signed [PHY_WIDTH:0] pos_y_reg;
     input signed [PHY_WIDTH:0] vel_y_reg;
     begin
-        detect_fall_to_ground = (collision_type == 1) && (vel_y_reg < 0);
+        detect_fall_to_ground = (collision_type == 1) && (vel_y_reg <= 0);
     end
 endfunction
 

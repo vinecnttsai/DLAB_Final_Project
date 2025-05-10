@@ -118,7 +118,7 @@ module top(
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if (!sys_rst_n) begin
             jump_btn_cnt <= 0;
-        end else if(jump_btn_posedge) begin
+        end else if(debounced_jump_btn && debug_char_clk) begin
             jump_btn_cnt <= jump_btn_cnt + 1;
         end
     end
