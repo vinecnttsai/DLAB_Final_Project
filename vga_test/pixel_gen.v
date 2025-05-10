@@ -6,11 +6,12 @@ module pixel_gen #(
     parameter SEQ_NUM = 16,
     parameter PIXEL_WIDTH = 12,
     parameter FONT_WIDTH = 8,
+    parameter UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH,
     //-----------Map parameters-----------
     parameter MAP_WIDTH_X = 100,
     parameter MAP_WIDTH_Y = 100,
-    parameter MAP_X_OFFEST = 270, // start position of map
-    parameter MAP_Y_OFFEST = 50,
+    parameter MAP_X_OFFSET = 270, // start position of map
+    parameter MAP_Y_OFFSET = 50,
     //-----------Character parameters-----------
     parameter CHAR_WIDTH_X = 32, // width of character
     parameter CHAR_WIDTH_Y = 32, // height of character
@@ -26,7 +27,7 @@ module pixel_gen #(
     input [SCREEN_WIDTH - 1:0] char_y, // from character
     output reg [PIXEL_WIDTH - 1:0] rgb,   // to VGA port
     //------------------------------data signals------------------------------
-    input [SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH - 1:0] debug_seq [SEQ_NUM - 1:0]
+    input [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_seq
     );
     
     //------------------------------RGB Color Values------------------------------
@@ -62,6 +63,7 @@ module pixel_gen #(
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Debug Sequence Position Signals-----------------------------
+    wire [SCREEN_WIDTH - 1:0] debug_seq_pos_y [SEQ_NUM - 1:0];
     genvar i;
     generate
         for(i = 0; i < SEQ_NUM; i = i + 1) begin : debug_seq_pos
@@ -71,7 +73,7 @@ module pixel_gen #(
     //----------------------------------------------------------------------------------------  
 
     //-----------------------------Debug Sequence Y Position Signals-----------------------------
-    wire [9:0] debug_seq_y [SEQ_NUM - 1:0];
+    wire [SCREEN_WIDTH - 1:0] debug_seq_y [SEQ_NUM - 1:0];
     genvar j;
     generate
         for(j = 0; j < SEQ_NUM; j = j + 1) begin : debug_seq_y_pos
@@ -83,8 +85,8 @@ module pixel_gen #(
     //-----------------------------Map Position Signals-----------------------------
     wire [SCREEN_WIDTH - 1:0] map_y;
     wire [SCREEN_WIDTH - 1:0] map_x;
-    assign map_y = y - MAP_Y_OFFEST;
-    assign map_x = x - MAP_X_OFFEST;
+    assign map_y = y - MAP_Y_OFFSET;
+    assign map_x = x - MAP_X_OFFSET;
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Character Position Signals-----------------------------
@@ -97,11 +99,11 @@ module pixel_gen #(
     //------------------------------Drivers for Status Signals------------------------------
     genvar k;
     generate
-        for(k = 0; k < SEQ_NUM; k = k + 1) begin : debug_seq_on
+        for(k = 0; k < SEQ_NUM; k = k + 1) begin : debug_sequence_on
             assign debug_seq_on[k] = ((x >= 0) && (x < SEQ_DIGITS * FONT_WIDTH) && (y >= debug_seq_pos_y[k]) && (y < debug_seq_pos_y[k] + FONT_WIDTH));
         end
     endgenerate
-    assign map_on = ((x >= MAP_X_OFFEST) && (x < MAP_X_OFFEST + MAP_WIDTH_X) && (y >= MAP_Y_OFFEST) && (y < MAP_Y_OFFEST + MAP_WIDTH_Y));
+    assign map_on = ((x >= MAP_X_OFFSET) && (x < MAP_X_OFFSET + MAP_WIDTH_X) && (y >= MAP_Y_OFFSET) && (y < MAP_Y_OFFSET + MAP_WIDTH_Y));
     assign char_on = ((x >= char_x) && (x < char_x + CHAR_WIDTH_X) && (y >= char_y) && (y < char_y + CHAR_WIDTH_Y));
     //----------------------------------------------------------------------------------------
     
@@ -111,38 +113,38 @@ module pixel_gen #(
             rgb = BLACK;
         end else begin
             
-            if(debug_seq1_on) begin
-                rgb = debug_seq[0][(debug_seq_y[0] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq2_on) begin
-                rgb = debug_seq[1][(debug_seq_y[1] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq3_on) begin
-                rgb = debug_seq[2][(debug_seq_y[2] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq4_on) begin
-                rgb = debug_seq[3][(debug_seq_y[3] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq5_on) begin
-                rgb = debug_seq[4][(debug_seq_y[4] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq6_on) begin
-                rgb = debug_seq[5][(debug_seq_y[5] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq7_on) begin
-                rgb = debug_seq[6][(debug_seq_y[6] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq8_on) begin
-                rgb = debug_seq[7][(debug_seq_y[7] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq9_on) begin
-                rgb = debug_seq[8][(debug_seq_y[8] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq10_on) begin
-                rgb = debug_seq[9][(debug_seq_y[9] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq11_on) begin
-                rgb = debug_seq[10][(debug_seq_y[10] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq12_on) begin
-                rgb = debug_seq[11][(debug_seq_y[11] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq13_on) begin
-                rgb = debug_seq[12][(debug_seq_y[12] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq14_on) begin
-                rgb = debug_seq[13][(debug_seq_y[13] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq15_on) begin
-                rgb = debug_seq[14][(debug_seq_y[14] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq16_on) begin
-                rgb = debug_seq[15][(debug_seq_y[15] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            if(debug_seq_on[0]) begin
+                rgb = debug_seq[0 * UNIT_SEQ_WIDTH + (debug_seq_y[0] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[1]) begin
+                rgb = debug_seq[1 * UNIT_SEQ_WIDTH + (debug_seq_y[1] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[2]) begin
+                rgb = debug_seq[2 * UNIT_SEQ_WIDTH + (debug_seq_y[2] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[3]) begin
+                rgb = debug_seq[3 * UNIT_SEQ_WIDTH + (debug_seq_y[3] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[4]) begin
+                rgb = debug_seq[4 * UNIT_SEQ_WIDTH + (debug_seq_y[4] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[5]) begin
+                rgb = debug_seq[5 * UNIT_SEQ_WIDTH + (debug_seq_y[5] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[6]) begin
+                rgb = debug_seq[6 * UNIT_SEQ_WIDTH + (debug_seq_y[6] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[7]) begin
+                rgb = debug_seq[7 * UNIT_SEQ_WIDTH + (debug_seq_y[7] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[8]) begin
+                rgb = debug_seq[8 * UNIT_SEQ_WIDTH + (debug_seq_y[8] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[9]) begin
+                rgb = debug_seq[9 * UNIT_SEQ_WIDTH + (debug_seq_y[9] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[10]) begin
+                rgb = debug_seq[10 * UNIT_SEQ_WIDTH + (debug_seq_y[10] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[11]) begin
+                rgb = debug_seq[11 * UNIT_SEQ_WIDTH + (debug_seq_y[11] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[12]) begin
+                rgb = debug_seq[12 * UNIT_SEQ_WIDTH + (debug_seq_y[12] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[13]) begin
+                rgb = debug_seq[13 * UNIT_SEQ_WIDTH + (debug_seq_y[13] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[14]) begin
+                rgb = debug_seq[14 * UNIT_SEQ_WIDTH + (debug_seq_y[14] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[15]) begin
+                rgb = debug_seq[15 * UNIT_SEQ_WIDTH + (debug_seq_y[15] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(map_on) begin
                 rgb = map_rgb;
             end else if(char_on) begin

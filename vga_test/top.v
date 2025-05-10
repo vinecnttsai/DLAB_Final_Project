@@ -32,6 +32,7 @@ module top(
     localparam SEQ_DIGITS = SEQ_LEN / 4 + 1; // 1 for sign digit
     localparam SEQ_NUM = 16;
     localparam FONT_WIDTH = 8;
+    localparam UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH;
     //-----------Sequence debug parameters-----------
 
     //-----------Pixel generator parameters-----------
@@ -41,8 +42,8 @@ module top(
     //-----------Map parameters-----------
     localparam MAP_WIDTH_X = 100;
     localparam MAP_WIDTH_Y = 100;
-    localparam MAP_X_OFFEST = 270;
-    localparam MAP_Y_OFFEST = 50;
+    localparam MAP_X_OFFSET = 270;
+    localparam MAP_Y_OFFSET = 50;
     localparam WALL_WIDTH = 10;
     //-----------Map parameters-----------
 
@@ -152,8 +153,8 @@ module top(
         .PIXEL_WIDTH(PIXEL_WIDTH),
         .MAP_WIDTH_X(MAP_WIDTH_X),
         .MAP_WIDTH_Y(MAP_WIDTH_Y),
-        .MAP_X_OFFSET(MAP_X_OFFEST),
-        .MAP_Y_OFFSET(MAP_Y_OFFEST),
+        .MAP_X_OFFSET(MAP_X_OFFSET),
+        .MAP_Y_OFFSET(MAP_Y_OFFSET),
         .WALL_WIDTH(WALL_WIDTH),
         .CHAR_WIDTH_X(CHAR_WIDTH_X),
         .CHAR_WIDTH_Y(CHAR_WIDTH_Y) 
@@ -205,8 +206,8 @@ module top(
                 .CHAR_WIDTH_Y(CHAR_WIDTH_Y),
                 .MAP_WIDTH_X(MAP_WIDTH_X),
                 .MAP_WIDTH_Y(MAP_WIDTH_Y),
-                .MAP_X_OFFEST(MAP_X_OFFEST),
-                .MAP_Y_OFFEST(MAP_Y_OFFEST)
+                .MAP_X_OFFSET(MAP_X_OFFSET),
+                .MAP_Y_OFFSET(MAP_Y_OFFSET)
                 ) pg (
                 .sys_clk(sys_clk),
                 .sys_rst_n(sys_rst_n),
@@ -222,7 +223,7 @@ module top(
 
 //-----------------------------------Debug variables-----------------------------------
 wire [SEQ_LEN - 1:0] debug_padded_sig [SEQ_NUM - 1:0];
-wire [SEQ_DIGITS * FONT_WIDTH * FONT_WIDTH * PIXEL_WIDTH - 1:0] debug_sig [SEQ_NUM - 1:0];
+wire [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_sig;
 
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_1 ( .seq(cnt), .padded_seq(debug_padded_sig[0]) );
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_2 ( .seq(left_btn_cnt), .padded_seq(debug_padded_sig[1]) );
@@ -248,7 +249,7 @@ wire [SEQ_DIGITS * FONT_WIDTH * FONT_WIDTH * PIXEL_WIDTH - 1:0] debug_sig [SEQ_N
     generate
         for (i = 0; i < SEQ_NUM; i = i + 1) begin : debug_var
             debug_var #(.SEQ_LEN(SEQ_LEN), .PIXEL_WIDTH(PIXEL_WIDTH), .FONT_WIDTH(FONT_WIDTH)) debug_var_inst (
-                .seq(debug_padded_sig[i]), .debug_seq(debug_sig[i])
+                .seq(debug_padded_sig[i]), .debug_seq(debug_sig[i * UNIT_SEQ_WIDTH +: UNIT_SEQ_WIDTH])
             );
         end
     endgenerate

@@ -55,6 +55,7 @@ localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION 
 reg [2:0] state, next_state;
 
 // physics simulation
+localparam signed [PHY_WIDTH:0] MAX_VEL = WALL_WIDTH + CHAR_WIDTH_Y - 1; // assure that the character can not pass the wall without being detected
 localparam signed [PHY_WIDTH:0] GRAVITY = -1;
 localparam signed [PHY_WIDTH:0] POSITIVE = 1;
 localparam signed [PHY_WIDTH:0] LEFT_VEL_X = 1;
@@ -76,10 +77,11 @@ reg signed [1:0] face;
 localparam MAX_CHARGE = 100;
 localparam JUMP_INCREMENT = 10;
 reg [6:0] jump_cnt;
+reg signed [3:0] jump_factor;
 wire max_charge;
 
 // collision type
-localparam FALLING_VEL_THRESHOLD = 15;
+localparam FALLING_VEL_THRESHOLD = MAX_VEL / 3;
 wire [1:0] collision_type; // 0: no collision, 1: collision horizontal, 2: collision vertical
 wire fall_to_ground;
 wire on_ground;
@@ -182,6 +184,18 @@ always @(posedge character_clk or negedge sys_rst_n) begin
     end
 end
 
+always @(*) begin
+    if (jump_cnt <= MAX_CHARGE / 4) begin
+        jump_factor = 1;
+    end else if (jump_cnt <= MAX_CHARGE * 2 / 4) begin
+        jump_factor = 2;
+    end else if (jump_cnt <= MAX_CHARGE * 3 / 4) begin
+        jump_factor = 3;
+    end else begin
+        jump_factor = 4;
+    end
+end
+
 always @(posedge character_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         face <= 1;
@@ -215,8 +229,11 @@ always @(*) begin
         vel_x = -2 * vel_x_reg;
         vel_y = 0;
     end else if (state == CHARGE && (max_charge || !jump_btn)) begin
-        vel_x = JUMP_VEL_X *  $signed($clog2(jump_cnt)) * face;
-        vel_y = JUMP_VEL_Y * $signed($clog2(jump_cnt));
+        vel_x = JUMP_VEL_X *  jump_factor * face;
+        vel_y = JUMP_VEL_Y * jump_factor;
+    end else begin
+        vel_x = 0;
+        vel_y = 0;
     end
 end
 
@@ -250,8 +267,8 @@ always @(posedge character_clk or negedge sys_rst_n) begin
         vel_x_reg <= 0;
         vel_y_reg <= 0;
     end else begin
-        vel_x_reg <= (vel_x_reg + vel_x) + (acc_x);
-        vel_y_reg <= (vel_y_reg + vel_y) + (acc_y);
+        vel_x_reg <= ((vel_x_reg + vel_x) + (acc_x)) > MAX_VEL ? MAX_VEL : ((vel_x_reg + vel_x) + (acc_x));
+        vel_y_reg <= ((vel_y_reg + vel_y) + (acc_y)) > MAX_VEL ? MAX_VEL : ((vel_y_reg + vel_y) + (acc_y));
     end
 end
 
@@ -316,8 +333,8 @@ function automatic signed [PHY_WIDTH:0] multi_div;
     input signed [PHY_WIDTH:0] org;
     input signed [PHY_WIDTH:0] mul;
     input signed [PHY_WIDTH:0] div;
+    reg signed [PHY_WIDTH + PHY_WIDTH + 1:0] result;
     begin
-        reg signed [PHY_WIDTH + PHY_WIDTH + 1:0] result;
         result = org * mul;
         if (div == 0) begin
             multi_div = 0;
@@ -337,20 +354,17 @@ function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
     reg signed [PHY_WIDTH:0] distance_to_nearest_ob;
     reg enable;
     begin
-        enable = 1;
         distance_to_nearest_ob = 0;
         if (detect_row_boundary(pos_y_reg)) begin // if the bottom of the character is not fully in the wall
-            for (i = pos_y_reg + 1; i < MAP_WIDTH_Y; i = i + 1) begin
-                if (!detect_row_boundary(i) && enable) begin
-                    distance_to_nearest_ob = i - pos_y_reg + WALL_WIDTH;
-                    enable = 0;
+            for (i = 1; i <= MAX_VEL; i = i + 1) begin
+                if (!detect_row_boundary(pos_y_reg + i)) begin
+                    distance_to_nearest_ob = (i + WALL_WIDTH > distance_to_nearest_ob) ? i + WALL_WIDTH : distance_to_nearest_ob;
                 end
             end
         end else begin // if the bottom of the character is fully in the wall
-            for (i = pos_y_reg + 1; i < MAP_WIDTH_Y; i = i + 1) begin
-                if (detect_row_boundary(i) && enable) begin
-                    distance_to_nearest_ob = i - pos_y_reg;
-                    enable = 0;
+            for (i = 1; i <= MAX_VEL; i = i + 1) begin
+                if (detect_row_boundary(pos_y_reg + i)) begin
+                    distance_to_nearest_ob = (i > distance_to_nearest_ob) ? i : distance_to_nearest_ob;
                 end
             end
         end
