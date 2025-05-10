@@ -3,7 +3,7 @@
 module pixel_gen #(
     //-----------Sequence debug parameters-----------
     parameter SEQ_DIGITS = 4,
-    parameter SEQ_NUM = 16,
+    parameter SEQ_NUM = 17,
     parameter PIXEL_WIDTH = 12,
     parameter FONT_WIDTH = 8,
     parameter UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH,
@@ -145,6 +145,8 @@ module pixel_gen #(
                 rgb = debug_seq[14 * UNIT_SEQ_WIDTH + (debug_seq_y[14] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(debug_seq_on[15]) begin
                 rgb = debug_seq[15 * UNIT_SEQ_WIDTH + (debug_seq_y[15] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[16]) begin
+                rgb = debug_seq[16 * UNIT_SEQ_WIDTH + (debug_seq_y[16] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(char_on) begin
                 rgb = char_rgb;
             end else if(map_on) begin

@@ -34,7 +34,9 @@ module tb_character #(
     output [3:0] out_state,
     output [2:0] out_collision_type,
     output [1:0] out_fall_to_ground,
-    output [1:0] out_on_ground
+    output [1:0] out_on_ground,
+    //debug
+    output [PHY_WIDTH:0] out_dis_to_ob
 );
 // output wire
 assign out_pos_x = pos_x_reg;
@@ -314,37 +316,18 @@ end
 // |                     |
 // |                     |
 // -----------------------
-wire [CHAR_WIDTH_X-1:0] top_row_frame;
-wire [CHAR_WIDTH_X-1:0] bottom_row_frame; //collumn detection
-wire [MAX_VEL+1:0] left_col_frame;
-wire [MAX_VEL+1:0] right_col_frame; //row detection, since calculate_impact_pos is based on max velocity
+wire [CHAR_WIDTH_X-1:0] col_detect;
+wire [MAX_VEL+1:0] row_detect;
 
 genvar i;
 generate
     for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-        assign top_row_frame[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
-        assign bottom_row_frame[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
+        assign col_detect[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
     end
     for (i = 0; i <= MAX_VEL+1; i = i + 1) begin
-        assign left_col_frame[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
-        assign right_col_frame[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
+        assign row_detect[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
     end
 endgenerate
-
-
-function automatic detect_row_boundary; // 1 for in the boundary, 0 for not in the boundary
-    input [$clog2(MAX_VEL + 2)-1:0] row;
-    begin
-        detect_row_boundary = left_col_frame[row] && right_col_frame[row];
-    end
-endfunction
-
-function automatic detect_col_boundary; // 1 for in the boundary, 0 for not in the boundary
-    input [$clog2(CHAR_WIDTH_X + 1)-1:0] col;
-    begin
-        detect_col_boundary = top_row_frame[col] && bottom_row_frame[col];
-    end
-endfunction
 
 //-----------------------------------------detect boundary-----------------------------------------
 
@@ -364,6 +347,13 @@ function automatic signed [PHY_WIDTH:0] multi_div;
     end
 endfunction
 
+// debug
+wire signed [PHY_WIDTH + PHY_WIDTH + 1:0] impact_pos_result;
+
+assign impact_pos_result = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
+assign out_dis_to_ob = impact_pos_result[PHY_WIDTH:0];
+
+
 function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
     input signed [PHY_WIDTH:0] pos_x_reg;
     input signed [PHY_WIDTH:0] pos_y_reg;
@@ -375,16 +365,16 @@ function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
     reg enable;
     begin
         distance_to_nearest_ob = 0;
-        if (detect_row_boundary(pos_y_reg)) begin // if the bottom of the character is not fully in the wall
+        if (row_detect(pos_y_reg)) begin // if the bottom of the character is not fully in the wall
             for (i = 1; i <= MAX_VEL+1; i = i + 1) begin
-                if (!detect_row_boundary(pos_y_reg + i)) begin
-                    distance_to_nearest_ob = (i + WALL_WIDTH > distance_to_nearest_ob) ? distance_to_nearest_ob : i + WALL_WIDTH;
+                if (!row_detect[pos_y_reg + i] && distance_to_nearest_ob == 0) begin
+                    distance_to_nearest_ob = i + WALL_WIDTH;
                 end
             end
         end else begin // if the bottom of the character is fully in the wall
             for (i = 1; i <= MAX_VEL+1; i = i + 1) begin
-                if (detect_row_boundary(pos_y_reg + i)) begin
-                    distance_to_nearest_ob = (i > distance_to_nearest_ob) ? distance_to_nearest_ob : i;
+                if (row_detect[pos_y_reg + i] && distance_to_nearest_ob == 0) begin
+                    distance_to_nearest_ob = i;
                 end
             end
         end
@@ -420,13 +410,13 @@ function automatic [1:0] detect_collision;
     reg col_detection; // 0: no detect, 1: detect once, 2: detect twice
     begin
         for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
-            if (!detect_row_boundary(pos_y_reg + i)) begin
+            if (!row_detect[pos_y_reg + i]) begin
                 row_detection = 1;
             end
         end
 
         for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-            if (!detect_col_boundary(pos_x_reg + i)) begin
+            if (!col_detect[pos_x_reg + i]) begin
                 col_detection = 1;
             end
         end
@@ -454,7 +444,7 @@ function detect_on_ground;
     input signed [PHY_WIDTH:0] pos_x_reg;
     input signed [PHY_WIDTH:0] pos_y_reg;
     begin
-        detect_on_ground =  (detect_row_boundary(pos_y_reg) && !detect_row_boundary(pos_y_reg - 1));
+        detect_on_ground =  (row_detect(pos_y_reg) && !row_detect(pos_y_reg - 1));
     end
 endfunction
 //-----------------------------------------Character Detection-----------------------------------------
