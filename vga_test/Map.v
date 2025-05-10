@@ -15,10 +15,7 @@ localparam RIGHT_WALL = 0;
 
 always @(*) begin
     if (map_on) begin
-        if (map_x >= LEFT_WALL && 
-            map_x < RIGHT_WALL + WALL_WIDTH && 
-            map_y >= TOP_WALL && 
-            map_y < BOTTOM_WALL + WALL_WIDTH) begin
+        if (map_x >= LEFT_WALL) begin
             rgb = 12'h000;
         end
         else begin

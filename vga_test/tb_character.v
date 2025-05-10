@@ -7,10 +7,10 @@ module tb_character #(
     parameter MAP_WIDTH_Y = 100,
     parameter MAP_X_OFFSET = 270,
     parameter MAP_Y_OFFSET = 50,
-    parameter LEFT_WALL = MAP_WIDTH_X - WALL_WIDTH,
-    parameter RIGHT_WALL = 0,
-    parameter TOP_WALL = MAP_WIDTH_Y - WALL_WIDTH,
-    parameter BOTTOM_WALL = 0,
+    parameter LEFT_WALL = MAP_WIDTH_X - WALL_WIDTH + MAP_X_OFFSET,
+    parameter RIGHT_WALL = MAP_X_OFFSET,
+    parameter TOP_WALL = MAP_WIDTH_Y - WALL_WIDTH + MAP_Y_OFFSET,
+    parameter BOTTOM_WALL = MAP_Y_OFFSET,
     //-----------Character Parameters-----
     parameter CHAR_WIDTH_X = 32,
     parameter CHAR_WIDTH_Y = 32,
@@ -56,7 +56,7 @@ localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION 
 reg [2:0] state, next_state;
 
 // physics simulation
-localparam signed [PHY_WIDTH:0] MAX_VEL = WALL_WIDTH + CHAR_WIDTH_Y - 1; // assure that the character can not pass the wall without being detected
+localparam signed [PHY_WIDTH:0] MAX_VEL = WALL_WIDTH + CHAR_WIDTH_Y - 2; // assure that the character can not pass the wall without being detected
 localparam signed [PHY_WIDTH:0] GRAVITY = -1;
 localparam signed [PHY_WIDTH:0] POSITIVE = 1;
 localparam signed [PHY_WIDTH:0] LEFT_VEL_X = 1;
@@ -157,7 +157,7 @@ always @(*) begin
                 end
             end
             CHARGE: begin
-                if (max_charge || ~jump_btn_sync[2]) begin
+                if (max_charge || ~jump_btn) begin
                     next_state = JUMP;
                 end else begin
                     next_state = CHARGE;
@@ -215,7 +215,7 @@ always @(posedge character_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    if (on_ground) begin
+    if (on_ground || fall_to_ground) begin
         acc_x = 0;
         acc_y = 0;
     end else begin
@@ -322,12 +322,12 @@ wire [CHAR_WIDTH_Y-1:0] right_col_frame; //row detection
 genvar i;
 generate
     for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-        assign top_row_frame[i] = (i + pos_x_reg < LEFT_WALL || i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
-        assign bottom_row_frame[i] = (i + pos_x_reg < LEFT_WALL || i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
+        assign top_row_frame[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
+        assign bottom_row_frame[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
     end
     for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
-        assign left_col_frame[i] = (i + pos_y_reg < TOP_WALL || i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
-        assign right_col_frame[i] = (i + pos_y_reg < TOP_WALL || i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
+        assign left_col_frame[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
+        assign right_col_frame[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
     end
 endgenerate
 
@@ -378,13 +378,13 @@ function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
         if (detect_row_boundary(pos_y_reg)) begin // if the bottom of the character is not fully in the wall
             for (i = 1; i <= MAX_VEL; i = i + 1) begin
                 if (!detect_row_boundary(pos_y_reg + i)) begin
-                    distance_to_nearest_ob = (i + WALL_WIDTH > distance_to_nearest_ob) ? i + WALL_WIDTH : distance_to_nearest_ob;
+                    distance_to_nearest_ob = (i + WALL_WIDTH > distance_to_nearest_ob) ? distance_to_nearest_ob : i + WALL_WIDTH;
                 end
             end
         end else begin // if the bottom of the character is fully in the wall
             for (i = 1; i <= MAX_VEL; i = i + 1) begin
                 if (detect_row_boundary(pos_y_reg + i)) begin
-                    distance_to_nearest_ob = (i > distance_to_nearest_ob) ? i : distance_to_nearest_ob;
+                    distance_to_nearest_ob = (i > distance_to_nearest_ob) ? distance_to_nearest_ob : i;
                 end
             end
         end
@@ -416,8 +416,8 @@ function automatic [1:0] detect_collision;
     input signed [PHY_WIDTH:0] pos_y_reg;
     integer i;
 
-    reg [1:0] row_detection; // 0: no detect, 1: detect once, 2: detect twice
-    reg [1:0] col_detection; // 0: no detect, 1: detect once, 2: detect twice
+    reg row_detection; // 0: no detect, 1: detect once, 2: detect twice
+    reg col_detection; // 0: no detect, 1: detect once, 2: detect twice
     begin
         for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
             if (!detect_row_boundary(pos_y_reg + i)) begin
@@ -431,9 +431,9 @@ function automatic [1:0] detect_collision;
             end
         end
 
-        if (row_detection >= 1) begin
+        if (row_detection == 1) begin
             detect_collision = 1; // higher priority
-        end else if (col_detection >= 1) begin
+        end else if (col_detection == 1) begin
             detect_collision = 2;
         end else begin
             detect_collision = 0;
