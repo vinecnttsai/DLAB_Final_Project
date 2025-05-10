@@ -2,6 +2,7 @@ module tb_character #(
     parameter PHY_WIDTH = 10,
     parameter PIXEL_WIDTH = 12,
     //-----------Map Parameters-----------
+    parameter WALL_WIDTH = 10,
     parameter MAP_WIDTH_X = 100,
     parameter MAP_WIDTH_Y = 100,
     parameter MAP_X_OFFSET = 270,
@@ -10,13 +11,13 @@ module tb_character #(
     parameter RIGHT_WALL = 0,
     parameter TOP_WALL = MAP_WIDTH_Y - WALL_WIDTH,
     parameter BOTTOM_WALL = 0,
-    parameter WALL_WIDTH = 10,
     //-----------Character Parameters-----
     parameter CHAR_WIDTH_X = 32,
     parameter CHAR_WIDTH_Y = 32,
     parameter INITIAL_POS_X = MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
     parameter INITIAL_POS_Y = MAP_Y_OFFSET + (MAP_WIDTH_Y - CHAR_WIDTH_Y) / 2
      ) (
+    input sys_clk,
     input character_clk,
     input sys_rst_n,
     input left_btn,
@@ -62,6 +63,7 @@ localparam signed [PHY_WIDTH:0] LEFT_VEL_X = 1;
 localparam signed [PHY_WIDTH:0] RIGHT_VEL_X = -1;
 localparam signed [PHY_WIDTH:0] JUMP_VEL_X = 4;
 localparam signed [PHY_WIDTH:0] JUMP_VEL_Y = 8;
+localparam signed [PHY_WIDTH:0] FALLING_VEL_THRESHOLD = -MAX_VEL / 3;
 
 reg signed [PHY_WIDTH:0] acc_x_reg, acc_y_reg; // 11-bit signed integer
 reg signed [PHY_WIDTH:0] vel_x_reg, vel_y_reg;
@@ -80,33 +82,51 @@ reg [6:0] jump_cnt;
 reg signed [3:0] jump_factor;
 wire max_charge;
 
-// collision type
-localparam FALLING_VEL_THRESHOLD = MAX_VEL / 3;
-wire [1:0] collision_type; // 0: no collision, 1: collision horizontal, 2: collision vertical
-wire fall_to_ground;
-wire on_ground;
-assign collision_type = detect_collision(pos_x_reg, pos_y_reg);
-assign fall_to_ground = detect_fall_to_ground(pos_x_reg, pos_y_reg, vel_y_reg);
-assign on_ground = detect_on_ground(pos_x_reg, pos_y_reg);
+// collision signal
+reg [1:0] collision_type;
+reg [1:0] collision_type_next;
+reg fall_to_ground;
+reg fall_to_ground_next;
+reg on_ground;
+reg on_ground_next;
+
+always @(posedge sys_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n) begin
+        collision_type <= 0;
+        fall_to_ground <= 0;
+        on_ground <= 0;
+    end else begin
+        collision_type_next = detect_collision(pos_x_reg, pos_y_reg);
+        collision_type <= collision_type_next;
+
+        fall_to_ground_next = detect_fall_to_ground(pos_x_reg, pos_y_reg, vel_y_reg);
+        fall_to_ground <= fall_to_ground_next;
+
+        on_ground_next = detect_on_ground(pos_x_reg, pos_y_reg);
+        on_ground <= on_ground_next;
+    end
+end
+
+
 
 // button edge detection
 wire left_btn_posedge, right_btn_posedge, jump_btn_posedge;
-reg left_btn_d, right_btn_d, jump_btn_d;
+reg [2:0] left_btn_sync, right_btn_sync, jump_btn_sync;
 
-always @(posedge character_clk or negedge sys_rst_n) begin
+always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
-        left_btn_d <= 0;
-        right_btn_d <= 0;
-        jump_btn_d <= 0;
+        left_btn_sync <= 0;
+        right_btn_sync <= 0;
+        jump_btn_sync <= 0;
     end else begin
-        left_btn_d <= left_btn;
-        right_btn_d <= right_btn;
-        jump_btn_d <= jump_btn;
+        left_btn_sync <= {left_btn_sync[1], left_btn_sync[0], left_btn};
+        right_btn_sync <= {right_btn_sync[1], right_btn_sync[0], right_btn};
+        jump_btn_sync <= {jump_btn_sync[1], jump_btn_sync[0], jump_btn};
     end
 end
-assign left_btn_posedge = ~left_btn_d && left_btn;
-assign right_btn_posedge = ~right_btn_d && right_btn;
-assign jump_btn_posedge = ~jump_btn_d && jump_btn;
+assign left_btn_posedge = ~left_btn_sync[2] && left_btn_sync[1];
+assign right_btn_posedge = ~right_btn_sync[2] && right_btn_sync[1];
+assign jump_btn_posedge = ~jump_btn_sync[2] && jump_btn_sync[1];
 
 
 //-----------------------------------------FSM-----------------------------------------
@@ -119,52 +139,38 @@ always @(posedge character_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    case (state)
-        IDLE, LEFT, RIGHT: begin
-            if (fall_to_ground) begin
-                next_state = FALL_TO_GROUND;
-            end else if (collision_type > 0) begin
-                next_state = COLLISION;
-            end else if (left_btn_posedge) begin
-                next_state = LEFT;
-            end else if (right_btn_posedge) begin
-                next_state = RIGHT;
-            end else if (jump_btn_posedge) begin
-                next_state = CHARGE;
-            end else begin 
+    if (fall_to_ground) begin
+        next_state = FALL_TO_GROUND;
+    end else if (collision_type > 0) begin
+        next_state = COLLISION;
+    end else begin
+        case (state)
+            IDLE, LEFT, RIGHT: begin
+                if (left_btn_posedge) begin
+                    next_state = LEFT;
+                end else if (right_btn_posedge) begin
+                    next_state = RIGHT;
+                end else if (jump_btn_posedge) begin
+                    next_state = CHARGE;
+                end else begin 
+                    next_state = IDLE;
+                end
+            end
+            CHARGE: begin
+                if (max_charge || ~jump_btn_sync[2]) begin
+                    next_state = JUMP;
+                end else begin
+                    next_state = CHARGE;
+                end
+            end
+            JUMP, FALL_TO_GROUND, COLLISION: begin
                 next_state = IDLE;
             end
-        end
-        CHARGE: begin
-            if (fall_to_ground) begin
-                next_state = FALL_TO_GROUND;
-            end else if (collision_type > 0) begin
-                next_state = COLLISION;
-            end else if (max_charge || ~jump_btn) begin
-                next_state = JUMP;
-            end else begin
-                next_state = CHARGE;
-            end
-        end
-        JUMP, FALL_TO_GROUND, COLLISION: begin
-            if (fall_to_ground) begin
-                next_state = FALL_TO_GROUND;
-            end else if (collision_type > 0) begin
-                next_state = COLLISION;
-            end else begin
+            default: begin
                 next_state = IDLE;
             end
-        end
-        default: begin
-            if (fall_to_ground) begin
-                next_state = FALL_TO_GROUND;
-            end else if (collision_type > 0) begin
-                next_state = COLLISION;
-            end else begin
-                next_state = IDLE;
-            end
-        end
-    endcase
+        endcase
+    end
 end
 assign max_charge = (state == CHARGE) && (jump_cnt >= MAX_CHARGE);
 //-----------------------------------------FSM-----------------------------------------
@@ -228,8 +234,8 @@ always @(*) begin
     end else if (collision_type == 2) begin
         vel_x = -2 * vel_x_reg;
         vel_y = 0;
-    end else if (state == CHARGE && (max_charge || !jump_btn)) begin
-        vel_x = JUMP_VEL_X *  jump_factor * face;
+    end else if (state == JUMP) begin
+        vel_x = JUMP_VEL_X * jump_factor * face;
         vel_y = JUMP_VEL_Y * jump_factor;
     end else begin
         vel_x = 0;
@@ -240,10 +246,10 @@ end
 always @(*) begin
     if (fall_to_ground) begin
         {pos_x, pos_y} = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
-    end else if (left_btn_posedge) begin
+    end else if (state == LEFT) begin
         pos_x = LEFT_VEL_X;
         pos_y = 0;
-    end else if (right_btn_posedge) begin
+    end else if (state == RIGHT) begin
         pos_x = RIGHT_VEL_X;
         pos_y = 0;
     end else begin
@@ -267,8 +273,22 @@ always @(posedge character_clk or negedge sys_rst_n) begin
         vel_x_reg <= 0;
         vel_y_reg <= 0;
     end else begin
-        vel_x_reg <= ((vel_x_reg + vel_x) + (acc_x)) > MAX_VEL ? MAX_VEL : ((vel_x_reg + vel_x) + (acc_x));
-        vel_y_reg <= ((vel_y_reg + vel_y) + (acc_y)) > MAX_VEL ? MAX_VEL : ((vel_y_reg + vel_y) + (acc_y));
+        // determine the max, min of the velocity
+        if (vel_x_reg + vel_x + acc_x >= MAX_VEL) begin
+            vel_x_reg <= MAX_VEL;
+        end else if (vel_x_reg + vel_x + acc_x < -MAX_VEL) begin
+            vel_x_reg <= -MAX_VEL;
+        end else begin
+            vel_x_reg <= vel_x_reg + vel_x + acc_x;
+        end
+
+        if (vel_y_reg + vel_y + acc_y >= MAX_VEL) begin
+            vel_y_reg <= MAX_VEL;
+        end else if (vel_y_reg + vel_y + acc_y < -MAX_VEL) begin
+            vel_y_reg <= -MAX_VEL;
+        end else begin
+            vel_y_reg <= vel_y_reg + vel_y + acc_y;
+        end
     end
 end
 
@@ -302,12 +322,12 @@ wire [CHAR_WIDTH_Y-1:0] right_col_frame; //row detection
 genvar i;
 generate
     for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-        assign top_row_frame[i] = (i < LEFT_WALL || i >= RIGHT_WALL + WALL_WIDTH);
-        assign bottom_row_frame[i] = (i < LEFT_WALL || i >= RIGHT_WALL + WALL_WIDTH);
+        assign top_row_frame[i] = (i + pos_x_reg < LEFT_WALL || i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
+        assign bottom_row_frame[i] = (i + pos_x_reg < LEFT_WALL || i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
     end
     for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
-        assign left_col_frame[i] = (i < TOP_WALL || i >= BOTTOM_WALL + WALL_WIDTH);
-        assign right_col_frame[i] = (i < TOP_WALL || i >= BOTTOM_WALL + WALL_WIDTH);
+        assign left_col_frame[i] = (i + pos_y_reg < TOP_WALL || i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
+        assign right_col_frame[i] = (i + pos_y_reg < TOP_WALL || i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
     end
 endgenerate
 
@@ -398,21 +418,16 @@ function automatic [1:0] detect_collision;
 
     reg [1:0] row_detection; // 0: no detect, 1: detect once, 2: detect twice
     reg [1:0] col_detection; // 0: no detect, 1: detect once, 2: detect twice
-    reg row_enable, col_enable;
     begin
-        row_enable = 1;
-        col_enable = 1;
         for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
-            if (!detect_row_boundary(i) && row_enable) begin
+            if (!detect_row_boundary(pos_y_reg + i)) begin
                 row_detection = 1;
-                row_enable = 0;
             end
         end
 
         for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-            if (!detect_col_boundary(i) && col_enable) begin
+            if (!detect_col_boundary(pos_x_reg + i)) begin
                 col_detection = 1;
-                col_enable = 0;
             end
         end
 

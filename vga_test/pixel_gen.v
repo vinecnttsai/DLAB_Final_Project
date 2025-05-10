@@ -112,7 +112,7 @@ module pixel_gen #(
         if(~video_on) begin
             rgb = BLACK;
         end else begin
-            
+
             if(debug_seq_on[0]) begin
                 rgb = debug_seq[0 * UNIT_SEQ_WIDTH + (debug_seq_y[0] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(debug_seq_on[1]) begin
@@ -160,8 +160,8 @@ module pixel_gen #(
         .MAP_WIDTH_X(MAP_WIDTH_X),
         .MAP_WIDTH_Y(MAP_WIDTH_Y)
     ) map_inst(
-        .x(map_x),
-        .y(map_y),
+        .map_x(map_x),
+        .map_y(map_y),
         .map_on(map_on),
         .rgb(map_rgb)
     );

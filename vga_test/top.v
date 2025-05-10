@@ -159,6 +159,7 @@ module top(
         .CHAR_WIDTH_X(CHAR_WIDTH_X),
         .CHAR_WIDTH_Y(CHAR_WIDTH_Y) 
         ) char (
+        .sys_clk(sys_clk),
         .character_clk(debug_char_clk),
         .sys_rst_n(sys_rst_n),
         .left_btn(debounced_left_btn),
@@ -243,6 +244,7 @@ wire [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_sig;
     pad_sign #(.seq_len(2 + 1), .SEQ_LEN(SEQ_LEN)) pad_14( .seq(out_collision_type), .padded_seq(debug_padded_sig[13]) );
     pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_15( .seq(out_fall_to_ground), .padded_seq(debug_padded_sig[14]) );
     pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_16( .seq(out_on_ground), .padded_seq(debug_padded_sig[15]) );
+    // state : IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, FALL_TO_GROUND = 6;
     
 
     genvar i;
