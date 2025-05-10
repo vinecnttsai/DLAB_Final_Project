@@ -36,7 +36,8 @@ module tb_character #(
     output [1:0] out_fall_to_ground,
     output [1:0] out_on_ground,
     //debug
-    output [PHY_WIDTH:0] out_dis_to_ob
+    output [PHY_WIDTH:0] out_dis_to_ob,
+    output [16:0] out_row_detect
 );
 // output wire
 assign out_pos_x = pos_x_reg;
@@ -318,6 +319,7 @@ end
 // -----------------------
 wire [CHAR_WIDTH_X-1:0] col_detect;
 wire [MAX_VEL+1:0] row_detect;
+wire row_detect_below; // for a block below the character
 
 genvar i;
 generate
@@ -328,7 +330,7 @@ generate
         assign row_detect[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
     end
 endgenerate
-
+assign row_detect_below = (pos_y_reg - 1 < TOP_WALL && pos_y_reg - 1 >= BOTTOM_WALL + WALL_WIDTH);
 //-----------------------------------------detect boundary-----------------------------------------
 
 //-----------------------------------------Push Character to the Ground-----------------------------------------
@@ -349,10 +351,11 @@ endfunction
 
 // debug
 wire signed [PHY_WIDTH + PHY_WIDTH + 1:0] impact_pos_result;
+wire [16:0] out_row_detect;
 
 assign impact_pos_result = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
 assign out_dis_to_ob = impact_pos_result[PHY_WIDTH:0];
-
+assign out_row_detect = row_detect[16:0];
 
 function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
     input signed [PHY_WIDTH:0] pos_x_reg;
@@ -365,15 +368,15 @@ function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
     reg enable;
     begin
         distance_to_nearest_ob = 0;
-        if (row_detect(pos_y_reg)) begin // if the bottom of the character is not fully in the wall
+        if (row_detect[0]) begin // if the bottom of the character is not fully in the wall
             for (i = 1; i <= MAX_VEL+1; i = i + 1) begin
-                if (!row_detect[pos_y_reg + i] && distance_to_nearest_ob == 0) begin
+                if (!row_detect[i] && distance_to_nearest_ob == 0) begin
                     distance_to_nearest_ob = i + WALL_WIDTH;
                 end
             end
         end else begin // if the bottom of the character is fully in the wall
             for (i = 1; i <= MAX_VEL+1; i = i + 1) begin
-                if (row_detect[pos_y_reg + i] && distance_to_nearest_ob == 0) begin
+                if (row_detect[i] && distance_to_nearest_ob == 0) begin
                     distance_to_nearest_ob = i;
                 end
             end
@@ -410,13 +413,13 @@ function automatic [1:0] detect_collision;
     reg col_detection; // 0: no detect, 1: detect once, 2: detect twice
     begin
         for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
-            if (!row_detect[pos_y_reg + i]) begin
+            if (!row_detect[i]) begin
                 row_detection = 1;
             end
         end
 
         for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-            if (!col_detect[pos_x_reg + i]) begin
+            if (!col_detect[i]) begin
                 col_detection = 1;
             end
         end
@@ -444,7 +447,7 @@ function detect_on_ground;
     input signed [PHY_WIDTH:0] pos_x_reg;
     input signed [PHY_WIDTH:0] pos_y_reg;
     begin
-        detect_on_ground =  (row_detect(pos_y_reg) && !row_detect(pos_y_reg - 1));
+        detect_on_ground =  (row_detect[0] && !row_detect_below);
     end
 endfunction
 //-----------------------------------------Character Detection-----------------------------------------

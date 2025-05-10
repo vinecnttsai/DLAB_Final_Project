@@ -30,7 +30,7 @@ module top(
     //-----------Sequence debug parameters-----------
     localparam SEQ_LEN = 16;
     localparam SEQ_DIGITS = SEQ_LEN / 4 + 1; // 1 for sign digit
-    localparam SEQ_NUM = 17;
+    localparam SEQ_NUM = 16 + 1 + 17;
     localparam FONT_WIDTH = 8;
     localparam UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH;
     //-----------Sequence debug parameters-----------
@@ -148,6 +148,7 @@ module top(
 //-----------------------------------Character-----------------------------------
     wire [SCREEN_WIDTH:0] out_pos_x, out_pos_y, out_vel_x, out_vel_y, out_acc_x, out_acc_y, out_jump_cnt;
     wire [SCREEN_WIDTH:0] out_dis_to_ob; //debug
+    wire [16:0] out_row_detect; //debug
     wire [1:0] out_face;
     tb_character #( 
         .PHY_WIDTH(SCREEN_WIDTH),
@@ -178,7 +179,8 @@ module top(
         .out_collision_type(out_collision_type),
         .out_fall_to_ground(out_fall_to_ground),
         .out_on_ground(out_on_ground),
-        .out_dis_to_ob(out_dis_to_ob)
+        .out_dis_to_ob(out_dis_to_ob),
+        .out_row_detect(out_row_detect)
     );
 //-----------------------------------Character-----------------------------------
 
@@ -248,6 +250,13 @@ wire [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_sig;
     pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_16( .seq(out_on_ground), .padded_seq(debug_padded_sig[15]) );
     //-----------------debug signal-----------------
     pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_17( .seq(out_dis_to_ob), .padded_seq(debug_padded_sig[16]) );
+    genvar j;
+    generate
+        for (j = 0; j < 17; j = j + 1) begin : debug_row_detect
+            pad_sign #(.seq_len(1), .SEQ_LEN(SEQ_LEN)) pad_18( .seq(out_row_detect[j]), .padded_seq(debug_padded_sig[17 + j]) );
+        end
+    endgenerate
+    
     // state : IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, FALL_TO_GROUND = 6;
     
 

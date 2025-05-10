@@ -3,7 +3,7 @@
 module pixel_gen #(
     //-----------Sequence debug parameters-----------
     parameter SEQ_DIGITS = 4,
-    parameter SEQ_NUM = 17,
+    parameter SEQ_NUM = 16 + 1 + 17,
     parameter PIXEL_WIDTH = 12,
     parameter FONT_WIDTH = 8,
     parameter UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH,
@@ -53,7 +53,7 @@ module pixel_gen #(
     //----------------------------------------------------------------------------
 
     //------------------------------Utility variables------------------------------
-    localparam SEQ_INTERVAL = 5;
+    localparam SEQ_INTERVAL = 3;
     //----------------------------------------------------------------------------
     
     //------------------------------Pixel Location Status Signals------------------------------
@@ -147,6 +147,40 @@ module pixel_gen #(
                 rgb = debug_seq[15 * UNIT_SEQ_WIDTH + (debug_seq_y[15] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(debug_seq_on[16]) begin
                 rgb = debug_seq[16 * UNIT_SEQ_WIDTH + (debug_seq_y[16] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[17]) begin
+                rgb = debug_seq[17 * UNIT_SEQ_WIDTH + (debug_seq_y[17] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[18]) begin
+                rgb = debug_seq[18 * UNIT_SEQ_WIDTH + (debug_seq_y[18] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[19]) begin
+                rgb = debug_seq[19 * UNIT_SEQ_WIDTH + (debug_seq_y[19] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[20]) begin
+                rgb = debug_seq[20 * UNIT_SEQ_WIDTH + (debug_seq_y[20] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[21]) begin
+                rgb = debug_seq[21 * UNIT_SEQ_WIDTH + (debug_seq_y[21] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[22]) begin
+                rgb = debug_seq[22 * UNIT_SEQ_WIDTH + (debug_seq_y[22] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[23]) begin
+                rgb = debug_seq[23 * UNIT_SEQ_WIDTH + (debug_seq_y[23] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[24]) begin
+                rgb = debug_seq[24 * UNIT_SEQ_WIDTH + (debug_seq_y[24] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[25]) begin
+                rgb = debug_seq[25 * UNIT_SEQ_WIDTH + (debug_seq_y[25] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[26]) begin
+                rgb = debug_seq[26 * UNIT_SEQ_WIDTH + (debug_seq_y[26] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[27]) begin
+                rgb = debug_seq[27 * UNIT_SEQ_WIDTH + (debug_seq_y[27] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[28]) begin
+                rgb = debug_seq[28 * UNIT_SEQ_WIDTH + (debug_seq_y[28] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[29]) begin
+                rgb = debug_seq[29 * UNIT_SEQ_WIDTH + (debug_seq_y[29] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[30]) begin
+                rgb = debug_seq[30 * UNIT_SEQ_WIDTH + (debug_seq_y[30] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[31]) begin
+                rgb = debug_seq[31 * UNIT_SEQ_WIDTH + (debug_seq_y[31] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[32]) begin
+                rgb = debug_seq[32 * UNIT_SEQ_WIDTH + (debug_seq_y[32] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[33]) begin
+                rgb = debug_seq[33 * UNIT_SEQ_WIDTH + (debug_seq_y[33] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(char_on) begin
                 rgb = char_rgb;
             end else if(map_on) begin
