@@ -102,7 +102,7 @@ module top(
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if (!sys_rst_n) begin
             left_btn_cnt <= 0;
-        end else if(left_btn_posedge) begin
+        end else if(out_left_btn_posedge) begin
             left_btn_cnt <= left_btn_cnt + 1;
         end
     end
@@ -110,7 +110,7 @@ module top(
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if (!sys_rst_n) begin
             right_btn_cnt <= 0;
-        end else if(right_btn_posedge) begin
+        end else if(out_right_btn_posedge) begin
             right_btn_cnt <= right_btn_cnt + 1;
         end
     end
@@ -118,7 +118,7 @@ module top(
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if (!sys_rst_n) begin
             jump_btn_cnt <= 0;
-        end else if(debounced_jump_btn && debug_char_clk) begin
+        end else if(out_jump_btn_posedge && debug_char_clk) begin
             jump_btn_cnt <= jump_btn_cnt + 1;
         end
     end
@@ -149,6 +149,7 @@ module top(
     wire [SCREEN_WIDTH:0] out_pos_x, out_pos_y, out_vel_x, out_vel_y, out_acc_x, out_acc_y, out_jump_cnt;
     wire [SCREEN_WIDTH:0] out_dis_to_ob; //debug
     wire [16:0] out_row_detect; //debug
+    wire out_left_btn_posedge, out_right_btn_posedge, out_jump_btn_posedge;
     wire [1:0] out_face;
     tb_character #( 
         .PHY_WIDTH(SCREEN_WIDTH),
@@ -164,9 +165,9 @@ module top(
         .sys_clk(sys_clk),
         .character_clk(debug_char_clk),
         .sys_rst_n(sys_rst_n),
-        .left_btn(debounced_left_btn),
-        .right_btn(debounced_right_btn),
-        .jump_btn(debounced_jump_btn),
+        .left_btn(debounced_left_btn_d),
+        .right_btn(debounced_right_btn_d),
+        .jump_btn(debounced_jump_btn_d),
         .out_pos_x(out_pos_x),
         .out_pos_y(out_pos_y),
         .out_vel_x(out_vel_x),
@@ -180,7 +181,10 @@ module top(
         .out_fall_to_ground(out_fall_to_ground),
         .out_on_ground(out_on_ground),
         .out_dis_to_ob(out_dis_to_ob),
-        .out_row_detect(out_row_detect)
+        .out_row_detect(out_row_detect),
+        .out_left_btn_posedge(out_left_btn_posedge),
+        .out_right_btn_posedge(out_right_btn_posedge),
+        .out_jump_btn_posedge(out_jump_btn_posedge)
     );
 //-----------------------------------Character-----------------------------------
 

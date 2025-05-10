@@ -35,6 +35,9 @@ module tb_character #(
     output [2:0] out_collision_type,
     output [1:0] out_fall_to_ground,
     output [1:0] out_on_ground,
+    output out_left_btn_posedge,
+    output out_right_btn_posedge,
+    output out_jump_btn_posedge,
     //debug
     output [PHY_WIDTH:0] out_dis_to_ob,
     output [16:0] out_row_detect
@@ -52,6 +55,9 @@ assign out_state = {1'b0, state};
 assign out_collision_type = {1'b0, collision_type};
 assign out_fall_to_ground = {1'b0, fall_to_ground};
 assign out_on_ground = {1'b0, on_ground};
+assign out_left_btn_posedge = left_btn_posedge;
+assign out_right_btn_posedge = right_btn_posedge;
+assign out_jump_btn_posedge = jump_btn_posedge;
 
 
 // FSM variables
@@ -99,13 +105,13 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         fall_to_ground <= 0;
         on_ground <= 0;
     end else begin
-        collision_type_next = detect_collision(pos_x_reg, pos_y_reg);
+        collision_type_next = detect_collision(pos_x_reg, pos_y_reg, row_detect, col_detect);
         collision_type <= collision_type_next;
 
-        fall_to_ground_next = detect_fall_to_ground(pos_x_reg, pos_y_reg, vel_y_reg);
+        fall_to_ground_next = detect_fall_to_ground(collision_type, vel_y_reg, on_ground);
         fall_to_ground <= fall_to_ground_next;
 
-        on_ground_next = detect_on_ground(pos_x_reg, pos_y_reg);
+        on_ground_next = detect_on_ground(row_detect[0], row_detect_below);
         on_ground <= on_ground_next;
     end
 end
@@ -114,22 +120,22 @@ end
 
 // button edge detection
 wire left_btn_posedge, right_btn_posedge, jump_btn_posedge;
-reg [2:0] left_btn_sync, right_btn_sync, jump_btn_sync;
+reg left_btn_d, right_btn_d, jump_btn_d;
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
-        left_btn_sync <= 0;
-        right_btn_sync <= 0;
-        jump_btn_sync <= 0;
+        left_btn_d <= 0;
+        right_btn_d <= 0;
+        jump_btn_d <= 0;
     end else begin
-        left_btn_sync <= {left_btn_sync[1], left_btn_sync[0], left_btn};
-        right_btn_sync <= {right_btn_sync[1], right_btn_sync[0], right_btn};
-        jump_btn_sync <= {jump_btn_sync[1], jump_btn_sync[0], jump_btn};
+        left_btn_d <= left_btn;
+        right_btn_d <= right_btn;
+        jump_btn_d <= jump_btn;
     end
 end
-assign left_btn_posedge = ~left_btn_sync[2] && left_btn_sync[1];
-assign right_btn_posedge = ~right_btn_sync[2] && right_btn_sync[1];
-assign jump_btn_posedge = ~jump_btn_sync[2] && jump_btn_sync[1];
+assign left_btn_posedge = left_btn && ~left_btn_d;
+assign right_btn_posedge = right_btn && ~right_btn_d;
+assign jump_btn_posedge = jump_btn && ~jump_btn_d;
 
 
 //-----------------------------------------FSM-----------------------------------------
@@ -237,7 +243,7 @@ always @(*) begin
     end else if (collision_type == 2) begin
         vel_x = -2 * vel_x_reg;
         vel_y = 0;
-    end else if (state == JUMP) begin
+    end else if (state == CHARGE && (!jump_btn || max_charge)) begin
         vel_x = JUMP_VEL_X * jump_factor * face;
         vel_y = JUMP_VEL_Y * jump_factor;
     end else begin
@@ -248,11 +254,11 @@ end
 
 always @(*) begin
     if (fall_to_ground) begin
-        {pos_x, pos_y} = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
-    end else if (state == LEFT) begin
+        {pos_x, pos_y} = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg, row_detect, col_detect);
+    end else if (left_btn_posedge) begin
         pos_x = LEFT_VEL_X;
         pos_y = 0;
-    end else if (state == RIGHT) begin
+    end else if (right_btn_posedge) begin
         pos_x = RIGHT_VEL_X;
         pos_y = 0;
     end else begin
@@ -353,7 +359,7 @@ endfunction
 wire signed [PHY_WIDTH + PHY_WIDTH + 1:0] impact_pos_result;
 wire [16:0] out_row_detect;
 
-assign impact_pos_result = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
+assign impact_pos_result = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg, row_detect, col_detect);
 assign out_dis_to_ob = impact_pos_result[PHY_WIDTH:0];
 assign out_row_detect = row_detect[16:0];
 
@@ -362,6 +368,8 @@ function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
     input signed [PHY_WIDTH:0] pos_y_reg;
     input signed [PHY_WIDTH:0] vel_x_reg;
     input signed [PHY_WIDTH:0] vel_y_reg;
+    input [MAX_VEL+1:0] row_detect;
+    input [CHAR_WIDTH_X-1:0] col_detect;
     integer i;
 
     reg signed [PHY_WIDTH:0] distance_to_nearest_ob;
@@ -382,7 +390,7 @@ function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
             end
         end
 
-        calculate_impact_pos = {-(multi_div(vel_x_reg, distance_to_nearest_ob, vel_y_reg)), distance_to_nearest_ob};
+        calculate_impact_pos = { (multi_div(vel_x_reg, distance_to_nearest_ob, vel_y_reg)), distance_to_nearest_ob}; // since vel_y must < 0
     end
 endfunction
 //-----------------------------------------Push Character to the Ground-----------------------------------------
@@ -407,6 +415,8 @@ endfunction
 function automatic [1:0] detect_collision;
     input signed [PHY_WIDTH:0] pos_x_reg;
     input signed [PHY_WIDTH:0] pos_y_reg;
+    input [MAX_VEL+1:0] row_detect;
+    input [CHAR_WIDTH_X-1:0] col_detect;
     integer i;
 
     reg row_detection; // 0: no detect, 1: detect once, 2: detect twice
@@ -435,19 +445,19 @@ function automatic [1:0] detect_collision;
 endfunction
 
 function detect_fall_to_ground;
-    input signed [PHY_WIDTH:0] pos_x_reg;
-    input signed [PHY_WIDTH:0] pos_y_reg;
+    input collision_type;
     input signed [PHY_WIDTH:0] vel_y_reg;
+    input on_ground;
     begin
-        detect_fall_to_ground = (collision_type == 1) && (vel_y_reg <= 0);
+        detect_fall_to_ground = (collision_type == 1) && (vel_y_reg < 0) && (!on_ground);
     end
 endfunction
 
 function detect_on_ground;
-    input signed [PHY_WIDTH:0] pos_x_reg;
-    input signed [PHY_WIDTH:0] pos_y_reg;
+    input row_detect_bottom;
+    input row_detect_below_bottom;
     begin
-        detect_on_ground =  (row_detect[0] && !row_detect_below);
+        detect_on_ground =  (row_detect_bottom && !row_detect_below_bottom);
     end
 endfunction
 //-----------------------------------------Character Detection-----------------------------------------
