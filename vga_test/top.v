@@ -20,7 +20,7 @@ module top(
     
 //-----------------------------------VGA signals-----------------------------------
     wire [9:0] w_x, w_y;
-    wire w_p_tick, w_video_on, sys_rst_n;
+    wire w_p_tick, w_video_on;
     reg [11:0] rgb_reg;
     wire [11:0] rgb_next;
 //-----------------------------------VGA signals-----------------------------------
@@ -146,9 +146,13 @@ module top(
 //-----------------------------------Button debug-----------------------------------
 
 //-----------------------------------Character-----------------------------------
-    wire [SCREEN_WIDTH:0] out_pos_x, out_pos_y, out_vel_x, out_vel_y, out_acc_x, out_acc_y, out_jump_cnt;
-    wire [SCREEN_WIDTH:0] out_dis_to_ob; //debug
-    wire [16:0] out_row_detect; //debug
+    wire [SCREEN_WIDTH:0] out_pos_x, out_pos_y, out_vel_x, out_vel_y, out_acc_x, out_acc_y;
+    wire [7:0] out_jump_cnt;
+    wire [3:0] out_state;
+    wire [2:0] out_collision_type;
+    wire [1:0] out_fall_to_ground, out_on_ground;
+    wire [SCREEN_WIDTH:0] out_dis_to_ob;
+    wire [16:0] out_row_detect;
     wire out_left_btn_posedge, out_right_btn_posedge, out_jump_btn_posedge;
     wire [1:0] out_face;
     tb_character #( 

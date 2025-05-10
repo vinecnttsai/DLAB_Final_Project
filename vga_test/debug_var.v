@@ -12,7 +12,7 @@ wire [SEQ_LEN - 1:0] seq_bcd;
 
 assign seq_2scomplement = seq[SEQ_LEN - 1] ? ~seq + 1 : seq;
 
-bin_to_bcd_converter #(.DIGITS(SEQ_DIGIT)) uut1 (
+bin_to_bcd_converter #(.DIGITS(SEQ_DIGIT - 1)) uut1 (
     .in(seq_2scomplement),
     .out(seq_bcd)
 );
