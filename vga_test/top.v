@@ -147,15 +147,17 @@ module top(
 //-----------------------------------Character-----------------------------------
     wire [SCREEN_WIDTH:0] out_pos_x, out_pos_y, out_vel_x, out_vel_y, out_acc_x, out_acc_y, out_jump_cnt;
     wire [1:0] out_face;
-    tb_character #( .PHY_WIDTH(SCREEN_WIDTH),
-                    .PIXEL_WIDTH(PIXEL_WIDTH),
-                    .MAP_WIDTH_X(MAP_WIDTH_X),
-                    .MAP_WIDTH_Y(MAP_WIDTH_Y),
-                    .MAP_X_OFFSET(MAP_X_OFFEST),
-                    .MAP_Y_OFFSET(MAP_Y_OFFEST),
-                    .WALL_WIDTH(WALL_WIDTH),
-                    .CHAR_WIDTH_X(CHAR_WIDTH_X),
-                    .CHAR_WIDTH_Y(CHAR_WIDTH_Y) ) char (
+    tb_character #( 
+        .PHY_WIDTH(SCREEN_WIDTH),
+        .PIXEL_WIDTH(PIXEL_WIDTH),
+        .MAP_WIDTH_X(MAP_WIDTH_X),
+        .MAP_WIDTH_Y(MAP_WIDTH_Y),
+        .MAP_X_OFFSET(MAP_X_OFFEST),
+        .MAP_Y_OFFSET(MAP_Y_OFFEST),
+        .WALL_WIDTH(WALL_WIDTH),
+        .CHAR_WIDTH_X(CHAR_WIDTH_X),
+        .CHAR_WIDTH_Y(CHAR_WIDTH_Y) 
+        ) char (
         .character_clk(debug_char_clk),
         .sys_rst_n(sys_rst_n),
         .left_btn(debounced_left_btn),
@@ -204,16 +206,17 @@ module top(
                 .MAP_WIDTH_X(MAP_WIDTH_X),
                 .MAP_WIDTH_Y(MAP_WIDTH_Y),
                 .MAP_X_OFFEST(MAP_X_OFFEST),
-                .MAP_Y_OFFEST(MAP_Y_OFFEST)) pg (
-                        .sys_clk(sys_clk),
-                        .sys_rst_n(sys_rst_n),
-                        .video_on(w_video_on),
-                        .x(w_x),
-                        .y(w_y),
-                        .char_x(out_pos_x[SCREEN_WIDTH - 1:0]),
-                        .char_y(out_pos_y[SCREEN_WIDTH - 1:0]),
-                        .debug_seq(debug_sig),
-                        .rgb(rgb_next));
+                .MAP_Y_OFFEST(MAP_Y_OFFEST)
+                ) pg (
+                .sys_clk(sys_clk),
+                .sys_rst_n(sys_rst_n),
+                .video_on(w_video_on),
+                .x(w_x),
+                .y(w_y),
+                .char_x(out_pos_x[SCREEN_WIDTH - 1:0]),
+                .char_y(out_pos_y[SCREEN_WIDTH - 1:0]),
+                .debug_seq(debug_sig),
+                .rgb(rgb_next));
 //-----------------------------------Pixel generator-----------------------------------
 
 
