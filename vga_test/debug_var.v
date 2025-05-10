@@ -194,6 +194,7 @@ always @( * ) begin
             3'd1: bitmap_row = 8'b00000000; //
             3'd0: bitmap_row = 8'b00000000; //
         default: bitmap_row = 8'b00000000;
+        endcase
     endcase
 end
 

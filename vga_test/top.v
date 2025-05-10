@@ -26,19 +26,35 @@ module top(
 //-----------------------------------VGA signals-----------------------------------
 
 //-----------------------------------localparam-----------------------------------
+
+    //-----------Sequence debug parameters-----------
     localparam SEQ_LEN = 16;
     localparam SEQ_DIGITS = SEQ_LEN / 4 + 1; // 1 for sign digit
     localparam SEQ_NUM = 16;
-    localparam PIXEL_WIDTH = 12;
     localparam FONT_WIDTH = 8;
+    //-----------Sequence debug parameters-----------
+
+    //-----------Pixel generator parameters-----------
+    localparam PIXEL_WIDTH = 12;
+    //-----------Pixel generator parameters-----------
+
+    //-----------Map parameters-----------
     localparam MAP_WIDTH_X = 100;
     localparam MAP_WIDTH_Y = 100;
-    localparam MAP_X = 270;
-    localparam MAP_Y = 50;
+    localparam MAP_X_OFFEST = 270;
+    localparam MAP_Y_OFFEST = 50;
+    localparam WALL_WIDTH = 10;
+    //-----------Map parameters-----------
+
+    //-----------Character parameters-----------
     localparam CHAR_WIDTH_X = 32;
     localparam CHAR_WIDTH_Y = 32;
+    //-----------Character parameters-----------
 
+    //-----------Screen parameters-----------
     localparam SCREEN_WIDTH = 10;
+    //-----------Screen parameters-----------
+
 //-----------------------------------localparam-----------------------------------
 
 
@@ -131,9 +147,13 @@ module top(
 //-----------------------------------Character-----------------------------------
     wire [SCREEN_WIDTH:0] out_pos_x, out_pos_y, out_vel_x, out_vel_y, out_acc_x, out_acc_y, out_jump_cnt;
     wire [1:0] out_face;
-    tb_character #( .GROUND_POS_Y(MAP_Y),
+    tb_character #( .PHY_WIDTH(SCREEN_WIDTH),
+                    .PIXEL_WIDTH(PIXEL_WIDTH),
                     .MAP_WIDTH_X(MAP_WIDTH_X),
                     .MAP_WIDTH_Y(MAP_WIDTH_Y),
+                    .MAP_X_OFFSET(MAP_X_OFFEST),
+                    .MAP_Y_OFFSET(MAP_Y_OFFEST),
+                    .WALL_WIDTH(WALL_WIDTH),
                     .CHAR_WIDTH_X(CHAR_WIDTH_X),
                     .CHAR_WIDTH_Y(CHAR_WIDTH_Y) ) char (
         .character_clk(debug_char_clk),
@@ -141,7 +161,6 @@ module top(
         .left_btn(debounced_left_btn),
         .right_btn(debounced_right_btn),
         .jump_btn(debounced_jump_btn),
-        .map(map),
         .out_pos_x(out_pos_x),
         .out_pos_y(out_pos_y),
         .out_vel_x(out_vel_x),
@@ -184,8 +203,8 @@ module top(
                 .CHAR_WIDTH_Y(CHAR_WIDTH_Y),
                 .MAP_WIDTH_X(MAP_WIDTH_X),
                 .MAP_WIDTH_Y(MAP_WIDTH_Y),
-                .MAP_X(MAP_X),
-                .MAP_Y(MAP_Y)) pg (
+                .MAP_X_OFFEST(MAP_X_OFFEST),
+                .MAP_Y_OFFEST(MAP_Y_OFFEST)) pg (
                         .sys_clk(sys_clk),
                         .sys_rst_n(sys_rst_n),
                         .video_on(w_video_on),
@@ -206,7 +225,7 @@ wire [SEQ_DIGITS * FONT_WIDTH * FONT_WIDTH * PIXEL_WIDTH - 1:0] debug_sig [SEQ_N
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_2 ( .seq(left_btn_cnt), .padded_seq(debug_padded_sig[1]) );
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_3 ( .seq(right_btn_cnt), .padded_seq(debug_padded_sig[2]) );
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_4 ( .seq(jump_btn_cnt), .padded_seq(debug_padded_sig[3]) );
-    //-----------------signed signal-----------------
+    //-----------------signed signal----------------- 1 for sign digit
     pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_5 ( .seq(out_pos_x), .padded_seq(debug_padded_sig[4]) );
     pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_6 ( .seq(out_pos_y), .padded_seq(debug_padded_sig[5]) );
     pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_7 ( .seq(out_vel_x), .padded_seq(debug_padded_sig[6]) );
@@ -214,7 +233,7 @@ wire [SEQ_DIGITS * FONT_WIDTH * FONT_WIDTH * PIXEL_WIDTH - 1:0] debug_sig [SEQ_N
     pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_9 ( .seq(out_acc_x), .padded_seq(debug_padded_sig[8]) );
     pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_10( .seq(out_acc_y), .padded_seq(debug_padded_sig[9]) );
     pad_sign #(.seq_len(2), .SEQ_LEN(SEQ_LEN)) pad_11( .seq(out_face), .padded_seq(debug_padded_sig[10]) );
-    //-----------------unsigned signal-----------------
+    //-----------------unsigned signal----------------- 1 for sign digit
     pad_sign #(.seq_len(7 + 1), .SEQ_LEN(SEQ_LEN)) pad_12( .seq(out_jump_cnt), .padded_seq(debug_padded_sig[11]) );
     pad_sign #(.seq_len(3 + 1), .SEQ_LEN(SEQ_LEN)) pad_13( .seq(out_state), .padded_seq(debug_padded_sig[12]) );
     pad_sign #(.seq_len(2 + 1), .SEQ_LEN(SEQ_LEN)) pad_14( .seq(out_collision_type), .padded_seq(debug_padded_sig[13]) );

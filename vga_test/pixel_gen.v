@@ -1,26 +1,31 @@
 `timescale 1ns / 1ps
 
-module pixel_gen #(parameter SEQ_DIGITS = 4,
-                   parameter SEQ_NUM = 16,
-                   parameter PIXEL_WIDTH = 12,
-                   parameter FONT_WIDTH = 8,
-                   parameter MAP_WIDTH_X = 100,
-                   parameter MAP_WIDTH_Y = 100,
-                   parameter MAP_X = 270, // start position of map
-                   parameter MAP_Y = 50,
-                   parameter CHAR_WIDTH_X = 32, // width of character
-                   parameter CHAR_WIDTH_Y = 32
+module pixel_gen #(//-----------Sequence debug parameters-----------
+                    parameter SEQ_DIGITS = 4,
+                    parameter SEQ_NUM = 16,
+                    parameter PIXEL_WIDTH = 12,
+                    parameter FONT_WIDTH = 8,
+                    //-----------Map parameters-----------
+                    parameter MAP_WIDTH_X = 100,
+                    parameter MAP_WIDTH_Y = 100,
+                    parameter MAP_X_OFFEST = 270, // start position of map
+                    parameter MAP_Y_OFFEST = 50,
+                    //-----------Character parameters-----------
+                    parameter CHAR_WIDTH_X = 32, // width of character
+                    parameter CHAR_WIDTH_Y = 32, // height of character
+                    //-----------Screen parameters-----------
+                    parameter SCREEN_WIDTH = 10
     )(
     input sys_clk,
     input sys_rst_n,
     input video_on,     // from VGA controller
-    input [9:0] x,      // from VGA controller
-    input [9:0] y,      // from VGA controller
-    input [9:0] char_x, // from character
-    input [9:0] char_y, // from character
+    input [SCREEN_WIDTH - 1:0] x,      // from VGA controller
+    input [SCREEN_WIDTH - 1:0] y,      // from VGA controller
+    input [SCREEN_WIDTH - 1:0] char_x, // from character
+    input [SCREEN_WIDTH - 1:0] char_y, // from character
     output reg [PIXEL_WIDTH - 1:0] rgb,   // to VGA port
     //------------------------------data signals------------------------------
-    input [SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH - 1:0] debug_seq [SEQ_NUM - 1:0];
+    input [SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH - 1:0] debug_seq [SEQ_NUM - 1:0]
     );
     
     //------------------------------RGB Color Values------------------------------
@@ -75,15 +80,15 @@ module pixel_gen #(parameter SEQ_DIGITS = 4,
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Map Position Signals-----------------------------
-    wire [9:0] map_y;
-    wire [9:0] map_x;
-    assign map_y = y - MAP_Y;
-    assign map_x = x - MAP_X;
+    wire [SCREEN_WIDTH - 1:0] map_y;
+    wire [SCREEN_WIDTH - 1:0] map_x;
+    assign map_y = y - MAP_Y_OFFEST;
+    assign map_x = x - MAP_X_OFFEST;
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Character Position Signals-----------------------------
-    wire [9:0] char_y_rom;
-    wire [9:0] char_x_rom;
+    wire [SCREEN_WIDTH - 1:0] char_y_rom;
+    wire [SCREEN_WIDTH - 1:0] char_x_rom;
     assign char_y_rom = y - char_y;
     assign char_x_rom = x - char_x;
     //----------------------------------------------------------------------------------------
@@ -95,7 +100,7 @@ module pixel_gen #(parameter SEQ_DIGITS = 4,
             assign debug_seq_on[k] = ((x >= 0) && (x < SEQ_DIGITS * FONT_WIDTH) && (y >= debug_seq_pos_y[k]) && (y < debug_seq_pos_y[k] + FONT_WIDTH));
         end
     endgenerate
-    assign map_on = ((x >= MAP_X) && (x < MAP_X + MAP_WIDTH_X) && (y >= MAP_Y) && (y < MAP_Y + MAP_WIDTH_Y));
+    assign map_on = ((x >= MAP_X_OFFEST) && (x < MAP_X_OFFEST + MAP_WIDTH_X) && (y >= MAP_Y_OFFEST) && (y < MAP_Y_OFFEST + MAP_WIDTH_Y));
     assign char_on = ((x >= char_x) && (x < char_x + CHAR_WIDTH_X) && (y >= char_y) && (y < char_y + CHAR_WIDTH_Y));
     //----------------------------------------------------------------------------------------
     

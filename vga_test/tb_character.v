@@ -1,24 +1,29 @@
 module tb_character #(
     parameter PHY_WIDTH = 10,
+    parameter PIXEL_WIDTH = 12,
+    //-----------Map Parameters-----------
     parameter MAP_WIDTH_X = 100,
     parameter MAP_WIDTH_Y = 100,
-    parameter PIXEL_WIDTH = 12,
-    parameter CHAR_WIDTH_X = 32,
-    parameter CHAR_WIDTH_Y = 32,
-    parameter INITIAL_POS_X = 0,
-    parameter INITIAL_POS_Y = BOTTOM_WALL + WALL_WIDTH + 1,
+    parameter MAP_X_OFFSET = 270,
+    parameter MAP_Y_OFFSET = 50,
     parameter LEFT_WALL = MAP_WIDTH_X - WALL_WIDTH,
     parameter RIGHT_WALL = 0,
     parameter TOP_WALL = MAP_WIDTH_Y - WALL_WIDTH,
     parameter BOTTOM_WALL = 0,
-    parameter WALL_WIDTH = 10 ) (
+    parameter WALL_WIDTH = 10,
+    //-----------Character Parameters-----
+    parameter CHAR_WIDTH_X = 32,
+    parameter CHAR_WIDTH_Y = 32,
+    parameter INITIAL_POS_X = MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
+    parameter INITIAL_POS_Y = MAP_Y_OFFSET + (MAP_WIDTH_Y - CHAR_WIDTH_Y) / 2
+     ) (
     input character_clk,
     input sys_rst_n,
     input left_btn,
     input right_btn,
     input jump_btn,
-    output [PHY_WIDTH:0] out_pos_x,
-    output [PHY_WIDTH:0] out_pos_y,
+    output [PHY_WIDTH:0] out_pos_x, // character x offset
+    output [PHY_WIDTH:0] out_pos_y, // character y offset
     output [PHY_WIDTH:0] out_vel_x,
     output [PHY_WIDTH:0] out_vel_y,
     output [PHY_WIDTH:0] out_acc_x,
@@ -50,12 +55,12 @@ localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION 
 reg [2:0] state, next_state;
 
 // physics simulation
-localparam GRAVITY = 1;
-localparam POSITIVE = GRAVITY;
-localparam LEFT_VEL_X = 1;
-localparam RIGHT_VEL_X = 1;
-localparam JUMP_VEL_X = 4;
-localparam JUMP_VEL_Y = 8;
+localparam signed [PHY_WIDTH:0] GRAVITY = -1;
+localparam signed [PHY_WIDTH:0] POSITIVE = 1;
+localparam signed [PHY_WIDTH:0] LEFT_VEL_X = 1;
+localparam signed [PHY_WIDTH:0] RIGHT_VEL_X = -1;
+localparam signed [PHY_WIDTH:0] JUMP_VEL_X = 4;
+localparam signed [PHY_WIDTH:0] JUMP_VEL_Y = 8;
 
 reg signed [PHY_WIDTH:0] acc_x_reg, acc_y_reg; // 11-bit signed integer
 reg signed [PHY_WIDTH:0] vel_x_reg, vel_y_reg;
@@ -195,7 +200,7 @@ always @(*) begin
         acc_y = 0;
     end else begin
         acc_x = 0;
-        acc_y = -GRAVITY;
+        acc_y = GRAVITY;
     end
 end
 
@@ -210,8 +215,8 @@ always @(*) begin
         vel_x = -2 * vel_x_reg;
         vel_y = 0;
     end else if (state == CHARGE && (max_charge || !jump_btn)) begin
-        vel_x = JUMP_VEL_X * $clog2(jump_cnt) * face;
-        vel_y = JUMP_VEL_Y * $clog2(jump_cnt);
+        vel_x = JUMP_VEL_X *  $signed($clog2(jump_cnt)) * face;
+        vel_y = JUMP_VEL_Y * $signed($clog2(jump_cnt));
     end
 end
 
@@ -222,7 +227,7 @@ always @(*) begin
         pos_x = LEFT_VEL_X;
         pos_y = 0;
     end else if (right_btn_posedge) begin
-        pos_x = -RIGHT_VEL_X;
+        pos_x = RIGHT_VEL_X;
         pos_y = 0;
     end else begin
         pos_x = 0;
@@ -230,7 +235,6 @@ always @(*) begin
     end
 end
 
-// ???|?�Z?
 always @(posedge character_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         acc_x_reg <= 0;
@@ -278,7 +282,7 @@ wire [CHAR_WIDTH_X-1:0] bottom_row_frame; //collumn detection
 wire [CHAR_WIDTH_Y-1:0] left_col_frame;
 wire [CHAR_WIDTH_Y-1:0] right_col_frame; //row detection
 
-integer i;
+genvar i;
 generate
     for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
         assign top_row_frame[i] = (i < LEFT_WALL || i >= RIGHT_WALL + WALL_WIDTH);
@@ -291,14 +295,14 @@ generate
 endgenerate
 
 
-function detect_row_boundary;
+function automatic detect_row_boundary; // 1 for in the boundary, 0 for not in the boundary
     input [$clog2(CHAR_WIDTH_Y + 1)-1:0] row;
     begin
         detect_row_boundary = left_col_frame[row] && right_col_frame[row];
     end
 endfunction
 
-function detect_col_boundary;
+function automatic detect_col_boundary; // 1 for in the boundary, 0 for not in the boundary
     input [$clog2(CHAR_WIDTH_X + 1)-1:0] col;
     begin
         detect_col_boundary = top_row_frame[col] && bottom_row_frame[col];
@@ -308,39 +312,50 @@ endfunction
 //-----------------------------------------detect boundary-----------------------------------------
 
 //-----------------------------------------Push Character to the Ground-----------------------------------------
-function signed [PHY_WIDTH:0] calculate_impact_pos;
+function automatic signed [PHY_WIDTH:0] multi_div;
+    input signed [PHY_WIDTH:0] org;
+    input signed [PHY_WIDTH:0] mul;
+    input signed [PHY_WIDTH:0] div;
+    begin
+        reg signed [PHY_WIDTH + PHY_WIDTH + 1:0] result;
+        result = org * mul;
+        if (div == 0) begin
+            multi_div = 0;
+        end else begin
+            multi_div = result / div;
+        end
+    end
+endfunction
+
+function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
     input signed [PHY_WIDTH:0] pos_x_reg;
     input signed [PHY_WIDTH:0] pos_y_reg;
     input signed [PHY_WIDTH:0] vel_x_reg;
     input signed [PHY_WIDTH:0] vel_y_reg;
     integer i;
 
-    reg signed [PHY_WIDTH:0] distance_to_ground;
+    reg signed [PHY_WIDTH:0] distance_to_nearest_ob;
     reg enable;
     begin
         enable = 1;
-        distance_to_ground = 0;
-        if (detect_row_boundary(pos_y_reg)) begin
+        distance_to_nearest_ob = 0;
+        if (detect_row_boundary(pos_y_reg)) begin // if the bottom of the character is not fully in the wall
             for (i = pos_y_reg + 1; i < MAP_WIDTH_Y; i = i + 1) begin
-                if (!detect_row_boundary(i)) begin
-                    distance_to_ground = i - pos_y_reg + WALL_WIDTH;
+                if (!detect_row_boundary(i) && enable) begin
+                    distance_to_nearest_ob = i - pos_y_reg + WALL_WIDTH;
                     enable = 0;
-                end else begin
-                    distance_to_ground = distance_to_ground;
                 end
             end
-        end else begin
+        end else begin // if the bottom of the character is fully in the wall
             for (i = pos_y_reg + 1; i < MAP_WIDTH_Y; i = i + 1) begin
-                if (detect_row_boundary(i)) begin
-                    distance_to_ground = i - pos_y_reg;
+                if (detect_row_boundary(i) && enable) begin
+                    distance_to_nearest_ob = i - pos_y_reg;
                     enable = 0;
-                end else begin
-                    distance_to_ground = distance_to_ground;
                 end
             end
         end
 
-        calculate_impact_pos = {-(vel_x_reg * distance_to_ground) / vel_y_reg, distance_to_ground};
+        calculate_impact_pos = {-(multi_div(vel_x_reg, distance_to_nearest_ob, vel_y_reg)), distance_to_nearest_ob};
     end
 endfunction
 //-----------------------------------------Push Character to the Ground-----------------------------------------
@@ -362,31 +377,28 @@ endfunction
 // |    |
 // |      |
 // |         | 
-function [1:0] detect_collision;
+function automatic [1:0] detect_collision;
     input signed [PHY_WIDTH:0] pos_x_reg;
     input signed [PHY_WIDTH:0] pos_y_reg;
     integer i;
 
     reg [1:0] row_detection; // 0: no detect, 1: detect once, 2: detect twice
     reg [1:0] col_detection; // 0: no detect, 1: detect once, 2: detect twice
+    reg row_enable, col_enable;
     begin
+        row_enable = 1;
+        col_enable = 1;
         for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
-            if (row_detection >= 1) begin
+            if (!detect_row_boundary(i) && row_enable) begin
                 row_detection = 1;
-            end else if (!detect_row_boundary(i)) begin
-                row_detection = 1;
-            end else begin
-                row_detection = 0;
+                row_enable = 0;
             end
         end
 
         for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-            if (col_detection >= 1) begin
+            if (!detect_col_boundary(i) && col_enable) begin
                 col_detection = 1;
-            end else if (!detect_col_boundary(i)) begin
-                col_detection = 1;
-            end else begin
-                col_detection = 0;
+                col_enable = 0;
             end
         end
 
