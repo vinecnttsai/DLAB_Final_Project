@@ -1,7 +1,6 @@
 from PIL import Image
 import sys
 import os
-import math
 
 def avg_color(pixels, x0, y0, cell_width, cell_height, img_width, img_height):
     r_total = g_total = b_total = count = 0
@@ -40,7 +39,6 @@ def process_image(image_path, grid_cols, grid_rows):
     color_list = []
     color_map = {}
     color_counter = 0
-
     known_colors = []
 
     for row in range(grid_rows):
@@ -58,7 +56,6 @@ def process_image(image_path, grid_cols, grid_rows):
                     known_colors.append(rgb12)
                     color_counter += 1
             else:
-                # 找最接近的顏色
                 best_match = min(known_colors, key=lambda c: color_distance(rgb12, c))
                 rgb12 = best_match
 
@@ -66,26 +63,45 @@ def process_image(image_path, grid_cols, grid_rows):
 
     return color_map, color_list
 
-def export_verilog(color_map, color_list, grid_cols, output_filename):
+def export_verilog(color_map, color_list, grid_cols, grid_rows, output_filename, module_name):
     with open(output_filename, 'w') as f:
-        f.write("// Auto-generated Verilog pixel data (12-bit RGB)\n\n")
+        f.write("// Auto-generated Verilog pixel data (12-bit RGB)\n")
+        f.write(f"module {module_name} #(\n")
+        f.write("    parameter PIXEL_WIDTH = 12,\n")
+        f.write("    parameter SCREEN_WIDTH = 10,\n")
+        f.write(f"    parameter CHAR_WIDTH_X = {grid_cols},\n")
+        f.write(f"    parameter CHAR_WIDTH_Y = {grid_rows}\n")
+        f.write(") (\n")
+        f.write("    input [SCREEN_WIDTH - 1:0] char_x_rom,\n")
+        f.write("    input [SCREEN_WIDTH - 1:0] char_y_rom,\n")
+        f.write("    input char_on,\n")
+        f.write("    output [PIXEL_WIDTH - 1:0] rgb\n")
+        f.write(");\n\n")
 
+        # Parameters for colors
         for rgb12, identifier in color_map.items():
             r12, g12, b12 = rgb12
             hex_color = rgb12_to_hexstr(r12, g12, b12)
             f.write(f"parameter {identifier} = 12'h{hex_color};\n")
-
         f.write("\n")
 
-        total_cells = len(color_list)
-        f.write(f"reg [11:0] pixel_map [0:{total_cells-1}] = '{{\n")
+        # Pixel map
+        f.write(f"(* rom_style = \"block\" *) reg [CHAR_WIDTH_X * CHAR_WIDTH_Y * PIXEL_WIDTH - 1:0] pixel_map = {{\n")
 
         for idx, color in enumerate(color_list):
             if idx % grid_cols == 0 and idx != 0:
                 f.write("\n")
-            f.write(f"    {color}, ")
+            if idx == len(color_list) - 1:
+                f.write(f"    {color}\n")  # 最後一個沒有逗號
+            else:
+                f.write(f"    {color}, ")
 
-        f.write("\n};\n")
+        f.write("\n};\n\n")
+
+        # 這是新增的 assign rgb
+        f.write("assign rgb = (char_on) ? pixel_map[char_y_rom * CHAR_WIDTH_X + char_x_rom] : 12'hFFF;\n\n")
+
+        f.write("endmodule\n")
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
@@ -99,8 +115,9 @@ if __name__ == "__main__":
     color_map, color_list = process_image(image_path, grid_cols, grid_rows)
 
     base_name = os.path.splitext(os.path.basename(image_path))[0]
+    module_name = base_name.upper() + "_CHAR"
     output_filename = base_name + ".v"
 
-    export_verilog(color_map, color_list, grid_cols, output_filename)
+    export_verilog(color_map, color_list, grid_cols, grid_rows, output_filename, module_name)
 
     print(f"Verilog file '{output_filename}' generated successfully!")

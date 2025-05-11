@@ -2,6 +2,7 @@
 // continuous right, left like jump_btn
 // smooth velocity, divider by 100 to increase char_clk by 10 times
 // change button xdc
+// change clock style
 module tb_character #(
     parameter PHY_WIDTH = 10,
     parameter PIXEL_WIDTH = 12,
@@ -39,9 +40,9 @@ module tb_character #(
     output [2:0] out_collision_type,
     output [1:0] out_fall_to_ground,
     output [1:0] out_on_ground,
-    output [1:0] out_left_btn_posedge,
-    output [1:0] out_right_btn_posedge,
-    output [1:0] out_jump_btn_posedge,
+    output out_left_btn_posedge,
+    output out_right_btn_posedge,
+    output out_jump_btn_posedge,
     //debug
     output [PHY_WIDTH:0] out_dis_to_ob,
     output [16:0] out_row_detect
@@ -59,9 +60,9 @@ assign out_state = {1'b0, state};
 assign out_collision_type = {1'b0, collision_type};
 assign out_fall_to_ground = {1'b0, fall_to_ground};
 assign out_on_ground = {1'b0, on_ground};
-assign out_left_btn_posedge = {1'b0, left_btn_posedge};
-assign out_right_btn_posedge = {1'b0, right_btn_posedge};
-assign out_jump_btn_posedge = {1'b0, jump_btn_posedge};
+assign out_left_btn_posedge = left_btn_posedge;
+assign out_right_btn_posedge = right_btn_posedge;
+assign out_jump_btn_posedge = jump_btn_posedge;
 
 // FSM variables
 localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, FALL_TO_GROUND = 6;
@@ -179,9 +180,9 @@ always @(*) begin
         case (state)
             IDLE, LEFT, RIGHT: begin
                 if (on_ground) begin
-                    if (left_btn_posedge_flag) begin
+                    if (left_btn_d) begin
                         next_state = LEFT;
-                    end else if (right_btn_posedge_flag) begin
+                    end else if (right_btn_d) begin
                         next_state = RIGHT;
                     end else if (jump_btn_posedge_flag) begin
                         next_state = CHARGE;

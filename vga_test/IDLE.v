@@ -54,9 +54,9 @@ parameter COLOR_9 = 12'hA98;
     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_9,     COLOR_3,     COLOR_8,     COLOR_8,     COLOR_4,     COLOR_0,     COLOR_3,     COLOR_8,     COLOR_3,     COLOR_9,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_0, 
     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_5,     COLOR_6,     COLOR_6,     COLOR_3,     COLOR_7,     COLOR_9,     COLOR_5,     COLOR_3,     COLOR_8,     COLOR_5,     COLOR_9,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0, 
     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_7,     COLOR_7,     COLOR_7,     COLOR_7,     COLOR_0,     COLOR_0,     COLOR_7,     COLOR_7,     COLOR_7,     COLOR_7,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0, 
-    COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_0 
+    COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_0
 };
 
-assign rgb = (char_on) ? pixel_map[char_y_rom * CHAR_WIDTH_X + char_x_rom ] : 12'hFFF;
+assign rgb = (char_on) ? pixel_map[char_y_rom * CHAR_WIDTH_X + char_x_rom] : 12'hFFF;
 
 endmodule

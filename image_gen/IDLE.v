@@ -1,4 +1,15 @@
 // Auto-generated Verilog pixel data (12-bit RGB)
+module IDLE_CHAR #(
+    parameter PIXEL_WIDTH = 12,
+    parameter SCREEN_WIDTH = 10,
+    parameter CHAR_WIDTH_X = 32,
+    parameter CHAR_WIDTH_Y = 32
+) (
+    input [SCREEN_WIDTH - 1:0] char_x_rom,
+    input [SCREEN_WIDTH - 1:0] char_y_rom,
+    input char_on,
+    output [PIXEL_WIDTH - 1:0] rgb
+);
 
 parameter COLOR_0 = 12'hDBA;
 parameter COLOR_1 = 12'hDCA;
@@ -11,7 +22,7 @@ parameter COLOR_7 = 12'h533;
 parameter COLOR_8 = 12'h422;
 parameter COLOR_9 = 12'hA98;
 
-reg [11:0] pixel_map [0:1023] = '{
+(* rom_style = "block" *) reg [CHAR_WIDTH_X * CHAR_WIDTH_Y * PIXEL_WIDTH - 1:0] pixel_map = {
     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0, 
     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0, 
     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_2,     COLOR_2,     COLOR_2,     COLOR_2,     COLOR_2,     COLOR_2,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_0, 
@@ -43,5 +54,9 @@ reg [11:0] pixel_map [0:1023] = '{
     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_9,     COLOR_3,     COLOR_8,     COLOR_8,     COLOR_4,     COLOR_0,     COLOR_3,     COLOR_8,     COLOR_3,     COLOR_9,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_0, 
     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_5,     COLOR_6,     COLOR_6,     COLOR_3,     COLOR_7,     COLOR_9,     COLOR_5,     COLOR_3,     COLOR_8,     COLOR_5,     COLOR_9,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0, 
     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_7,     COLOR_7,     COLOR_7,     COLOR_7,     COLOR_0,     COLOR_0,     COLOR_7,     COLOR_7,     COLOR_7,     COLOR_7,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0, 
-    COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_0, 
+    COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_1,     COLOR_1,     COLOR_0,     COLOR_0,     COLOR_0
 };
+
+assign rgb = (char_on) ? pixel_map[char_y_rom * CHAR_WIDTH_X + char_x_rom] : 12'hFFF;
+
+endmodule

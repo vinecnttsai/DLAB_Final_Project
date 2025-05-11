@@ -56,6 +56,10 @@ module pixel_gen #(
     localparam SEQ_INTERVAL = 3;
     //----------------------------------------------------------------------------
     
+    //
+    wire [PIXEL_WIDTH - 1:0] char_rgb;
+    wire [PIXEL_WIDTH - 1:0] map_rgb;
+    
     //------------------------------Pixel Location Status Signals------------------------------
     wire debug_seq_on [SEQ_NUM - 1:0];
     wire map_on;
