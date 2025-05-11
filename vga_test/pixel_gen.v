@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
-
+// camera_y is the y coordinate of the camera, is TODO
+// obstacle_print_module
 module pixel_gen #(
     //-----------Sequence debug parameters-----------
     parameter SEQ_DIGITS = 4,
@@ -7,6 +8,8 @@ module pixel_gen #(
     parameter PIXEL_WIDTH = 12,
     parameter FONT_WIDTH = 8,
     parameter UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH,
+    //-----------Block parameters-----------
+    parameter BLOCK_WIDTH = 480,
     //-----------Map parameters-----------
     parameter MAP_WIDTH_X = 100,
     parameter MAP_WIDTH_Y = 100,
@@ -15,16 +18,24 @@ module pixel_gen #(
     //-----------Character parameters-----------
     parameter CHAR_WIDTH_X = 32, // width of character
     parameter CHAR_WIDTH_Y = 32, // height of character
+    //-----------Obstacle parameters-----------
+    parameter OBSTACLE_NUM = 10,
+    parameter OBSTACLE_WIDTH = 10,
     //-----------Screen parameters-----------
-    parameter SCREEN_WIDTH = 10
+    parameter SCREEN_WIDTH = 10,
+    parameter PHY_WIDTH = 14
     )(
     input sys_clk,
     input sys_rst_n,
     input video_on,     // from VGA controller
+    input [4:0] camera_y,
     input [SCREEN_WIDTH - 1:0] x,      // from VGA controller
     input [SCREEN_WIDTH - 1:0] y,      // from VGA controller
-    input [SCREEN_WIDTH - 1:0] char_x, // from character
-    input [SCREEN_WIDTH - 1:0] char_y, // from character
+    input [PHY_WIDTH-1:0] char_x, // from character
+    input [PHY_WIDTH-1:0] char_y, // from character
+    input [PHY_WIDTH * OBSTACLE_NUM - 1:0] obstacle_pos_x,
+    input [PHY_WIDTH * OBSTACLE_NUM - 1:0] obstacle_pos_y,
+    input [PHY_WIDTH * OBSTACLE_NUM - 1:0] obstacle_block_width,
     output reg [PIXEL_WIDTH - 1:0] rgb,   // to VGA port
     //------------------------------data signals------------------------------
     input [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_seq
@@ -55,15 +66,23 @@ module pixel_gen #(
     //------------------------------Utility variables------------------------------
     localparam SEQ_INTERVAL = 3;
     //----------------------------------------------------------------------------
+
+    //------------------------------Camera offset--------------------------------
+    wire [PHY_WIDTH - 1:0] camera_offset;
+    assign camera_offset = camera_y * BLOCK_WIDTH;
+    //----------------------------------------------------------------------------
     
-    //
+    //------------------------------RGB Signals------------------------------
     wire [PIXEL_WIDTH - 1:0] char_rgb;
     wire [PIXEL_WIDTH - 1:0] map_rgb;
+    wire [PIXEL_WIDTH - 1:0] obstacle_rgb;
+    //----------------------------------------------------------------------------
     
     //------------------------------Pixel Location Status Signals------------------------------
-    wire debug_seq_on [SEQ_NUM - 1:0];
+    wire [SEQ_NUM - 1:0] debug_seq_on;
     wire map_on;
     wire char_on;
+    wire [OBSTACLE_NUM - 1:0] obstacle_on;
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Debug Sequence Position Signals-----------------------------
@@ -94,10 +113,22 @@ module pixel_gen #(
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Character Position Signals-----------------------------
-    wire [SCREEN_WIDTH - 1:0] char_y_rom;
-    wire [SCREEN_WIDTH - 1:0] char_x_rom;
+    wire [PHY_WIDTH - 1:0] char_y_rom;
+    wire [PHY_WIDTH - 1:0] char_x_rom;
     assign char_y_rom = y - char_y;
     assign char_x_rom = x - char_x;
+    //----------------------------------------------------------------------------------------
+
+    //-----------------------------Obstacle Position Signals-----------------------------
+    wire [PHY_WIDTH - 1:0] obstacle_y_rom [OBSTACLE_NUM - 1:0];
+    wire [PHY_WIDTH - 1:0] obstacle_x_rom [OBSTACLE_NUM - 1:0];
+    genvar l;
+    generate
+        for(l = 0; l < OBSTACLE_NUM; l = l + 1) begin : obstacle_pos
+            assign obstacle_y_rom[l] = y - obstacle_pos_y[l];
+            assign obstacle_x_rom[l] = x - obstacle_pos_x[l];
+        end
+    endgenerate
     //----------------------------------------------------------------------------------------
     
     //------------------------------Drivers for Status Signals------------------------------
@@ -109,6 +140,12 @@ module pixel_gen #(
     endgenerate
     assign map_on = ((x >= MAP_X_OFFSET) && (x < MAP_X_OFFSET + MAP_WIDTH_X) && (y >= MAP_Y_OFFSET) && (y < MAP_Y_OFFSET + MAP_WIDTH_Y));
     assign char_on = ((x >= char_x) && (x < char_x + CHAR_WIDTH_X) && (y >= char_y) && (y < char_y + CHAR_WIDTH_Y));
+    genvar m;
+    generate
+        for(m = 0; m < OBSTACLE_NUM; m = m + 1) begin : obstacle_on
+            assign obstacle_on[m] = ((x >= obstacle_x_rom[m]) && (x < obstacle_x_rom[m] + obstacle_block_width[m] * OBSTACLE_WIDTH) && (y >= obstacle_y_rom[m]) && (y < obstacle_y_rom[m] + OBSTACLE_WIDTH));
+        end
+    endgenerate
     //----------------------------------------------------------------------------------------
     
     // Set RGB output value based on status signals
@@ -185,6 +222,8 @@ module pixel_gen #(
                 rgb = debug_seq[32 * UNIT_SEQ_WIDTH + (debug_seq_y[32] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(debug_seq_on[33]) begin
                 rgb = debug_seq[33 * UNIT_SEQ_WIDTH + (debug_seq_y[33] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(obstacle_on > 0) begin // not all blank
+                rgb = obstacle_rgb;
             end else if(char_on) begin
                 rgb = char_rgb;
             end else if(map_on) begin
@@ -214,10 +253,23 @@ module pixel_gen #(
         .CHAR_WIDTH_X(CHAR_WIDTH_X),
         .CHAR_WIDTH_Y(CHAR_WIDTH_Y)
     ) char_inst(
-        .char_x_rom(char_x_rom),
-        .char_y_rom(char_y_rom),
+        .char_x_rom(char_x_rom[SCREEN_WIDTH - 1:0]),
+        .char_y_rom(char_y_rom[SCREEN_WIDTH - 1:0]),
         .char_on(char_on),
         .rgb(char_rgb)
+    );
+    //-----------------------------------------------------------------
+
+    //------------------------------Obstacle-------------------------------- // TODO: write module for obstacle print
+    OBSTACLE #(
+        .OBSTACLE_NUM(OBSTACLE_NUM),
+        .OBSTACLE_WIDTH(OBSTACLE_WIDTH),
+        .SCREEN_WIDTH(SCREEN_WIDTH),
+    ) obstacle_inst(
+        .obstacle_pos_x(obstacle_pos_x),
+        .obstacle_pos_y(obstacle_pos_y),
+        .obstacle_block_width(obstacle_block_width),
+        .rgb(obstacle_rgb)
     );
     //-----------------------------------------------------------------
 

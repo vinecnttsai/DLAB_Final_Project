@@ -30,7 +30,7 @@ module top(
     //-----------Sequence debug parameters-----------
     localparam SEQ_LEN = 16;
     localparam SEQ_DIGITS = SEQ_LEN / 4 + 1; // 1 for sign digit
-    localparam SEQ_NUM = 16 + 1 + 17;
+    localparam SEQ_NUM = 16 + 1 + 17 + 1;
     localparam FONT_WIDTH = 8;
     localparam UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH;
     //-----------Sequence debug parameters-----------
@@ -55,6 +55,15 @@ module top(
     //-----------Screen parameters-----------
     localparam SCREEN_WIDTH = 10;
     //-----------Screen parameters-----------
+
+    //-----------Physical parameters-----------
+    localparam PHY_WIDTH = 14; // 2 ^ 14 = 16384
+    //-----------Physical parameters-----------
+
+    //-----------Obstacle parameters-----------
+    localparam OBSTACLE_NUM = 10;
+    localparam OBSTACLE_WIDTH = 10;
+    //-----------Obstacle parameters-----------
 
 //-----------------------------------localparam-----------------------------------
 
@@ -146,17 +155,23 @@ module top(
 //-----------------------------------Button debug-----------------------------------
 
 //-----------------------------------Character-----------------------------------
-    wire [SCREEN_WIDTH:0] out_pos_x, out_pos_y, out_vel_x, out_vel_y, out_acc_x, out_acc_y;
+    wire [PHY_WIDTH:0] out_pos_x, out_pos_y, out_vel_x, out_vel_y, out_acc_x, out_acc_y;
     wire [7:0] out_jump_cnt;
     wire [3:0] out_state;
     wire [2:0] out_collision_type;
     wire [1:0] out_fall_to_ground, out_on_ground;
-    wire [SCREEN_WIDTH:0] out_dis_to_ob;
+    wire [PHY_WIDTH:0] out_dis_to_ob;
     wire [16:0] out_row_detect;
     wire out_left_btn_posedge, out_right_btn_posedge, out_jump_btn_posedge;
     wire [1:0] out_face;
+    wire [3:0] out_print_state; // TODO: print character state
+    // TODO: add debug signal : out_print_state, current block type, current camera y
+    // TODO: check obstacle collision logic
+    // Note: clock condition has changed
+    // Note: paramter, signal must be connected, check twice
+    // Note: check all screen_width, phy_width
     tb_character #( 
-        .PHY_WIDTH(SCREEN_WIDTH),
+        .PHY_WIDTH(PHY_WIDTH),
         .PIXEL_WIDTH(PIXEL_WIDTH),
         .MAP_WIDTH_X(MAP_WIDTH_X),
         .MAP_WIDTH_Y(MAP_WIDTH_Y),
@@ -164,7 +179,9 @@ module top(
         .MAP_Y_OFFSET(MAP_Y_OFFSET),
         .WALL_WIDTH(WALL_WIDTH),
         .CHAR_WIDTH_X(CHAR_WIDTH_X),
-        .CHAR_WIDTH_Y(CHAR_WIDTH_Y) 
+        .CHAR_WIDTH_Y(CHAR_WIDTH_Y),
+        .OBSTACLE_NUM(OBSTACLE_NUM),
+        .OBSTACLE_WIDTH(OBSTACLE_WIDTH)
         ) char (
         .sys_clk(sys_clk),
         .character_clk(debug_char_clk),
@@ -172,6 +189,9 @@ module top(
         .left_btn(debounced_left_btn_d),
         .right_btn(debounced_right_btn_d),
         .jump_btn(debounced_jump_btn_d),
+        .obstacle_pos_x(obstacle_pos_x),
+        .obstacle_pos_y(obstacle_pos_y),
+        .obstacle_block_width(obstacle_block_width),
         .out_pos_x(out_pos_x),
         .out_pos_y(out_pos_y),
         .out_vel_x(out_vel_x),
@@ -220,15 +240,22 @@ module top(
                 .MAP_WIDTH_X(MAP_WIDTH_X),
                 .MAP_WIDTH_Y(MAP_WIDTH_Y),
                 .MAP_X_OFFSET(MAP_X_OFFSET),
-                .MAP_Y_OFFSET(MAP_Y_OFFSET)
+                .MAP_Y_OFFSET(MAP_Y_OFFSET),
+                .SCREEN_WIDTH(SCREEN_WIDTH),
+                .PHY_WIDTH(PHY_WIDTH),
+                .OBSTACLE_NUM(OBSTACLE_NUM),
+                .OBSTACLE_WIDTH(OBSTACLE_WIDTH)
                 ) pg (
                 .sys_clk(sys_clk),
                 .sys_rst_n(sys_rst_n),
                 .video_on(w_video_on),
                 .x(w_x),
                 .y(w_y),
-                .char_x(out_pos_x[SCREEN_WIDTH - 1:0]),
-                .char_y(out_pos_y[SCREEN_WIDTH - 1:0]),
+                .char_x(out_pos_x[PHY_WIDTH - 1:0]),
+                .char_y(out_pos_y[PHY_WIDTH - 1:0]),
+                .obstacle_pos_x(obstacle_pos_x),
+                .obstacle_pos_y(obstacle_pos_y),
+                .obstacle_block_width(obstacle_block_width),
                 .debug_seq(debug_sig),
                 .rgb(rgb_next));
 //-----------------------------------Pixel generator-----------------------------------
@@ -243,12 +270,12 @@ wire [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_sig;
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_3 ( .seq(right_btn_cnt), .padded_seq(debug_padded_sig[2]) );
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_4 ( .seq(jump_btn_cnt), .padded_seq(debug_padded_sig[3]) );
     //-----------------signed signal----------------- 1 for sign digit
-    pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_5 ( .seq(out_pos_x), .padded_seq(debug_padded_sig[4]) );
-    pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_6 ( .seq(out_pos_y), .padded_seq(debug_padded_sig[5]) );
-    pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_7 ( .seq(out_vel_x), .padded_seq(debug_padded_sig[6]) );
-    pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_8 ( .seq(out_vel_y), .padded_seq(debug_padded_sig[7]) );
-    pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_9 ( .seq(out_acc_x), .padded_seq(debug_padded_sig[8]) );
-    pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_10( .seq(out_acc_y), .padded_seq(debug_padded_sig[9]) );
+    pad_sign #(.seq_len(PHY_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_5 ( .seq(out_pos_x), .padded_seq(debug_padded_sig[4]) );
+    pad_sign #(.seq_len(PHY_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_6 ( .seq(out_pos_y), .padded_seq(debug_padded_sig[5]) );
+    pad_sign #(.seq_len(PHY_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_7 ( .seq(out_vel_x), .padded_seq(debug_padded_sig[6]) );
+    pad_sign #(.seq_len(PHY_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_8 ( .seq(out_vel_y), .padded_seq(debug_padded_sig[7]) );
+    pad_sign #(.seq_len(PHY_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_9 ( .seq(out_acc_x), .padded_seq(debug_padded_sig[8]) );
+    pad_sign #(.seq_len(PHY_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_10( .seq(out_acc_y), .padded_seq(debug_padded_sig[9]) );
     pad_sign #(.seq_len(2), .SEQ_LEN(SEQ_LEN)) pad_11( .seq(out_face), .padded_seq(debug_padded_sig[10]) );
     //-----------------unsigned signal----------------- 1 for sign digit
     pad_sign #(.seq_len(7 + 1), .SEQ_LEN(SEQ_LEN)) pad_12( .seq(out_jump_cnt), .padded_seq(debug_padded_sig[11]) );
@@ -257,7 +284,7 @@ wire [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_sig;
     pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_15( .seq(out_fall_to_ground), .padded_seq(debug_padded_sig[14]) );
     pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_16( .seq(out_on_ground), .padded_seq(debug_padded_sig[15]) );
     //-----------------debug signal-----------------
-    pad_sign #(.seq_len(SCREEN_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_17( .seq(out_dis_to_ob), .padded_seq(debug_padded_sig[16]) );
+    pad_sign #(.seq_len(PHY_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_17( .seq(out_dis_to_ob), .padded_seq(debug_padded_sig[16]) );
     genvar j;
     generate
         for (j = 0; j < 17; j = j + 1) begin : debug_row_detect

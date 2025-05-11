@@ -93,6 +93,7 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b01100010; //  ██   █ 
             3'd1: bitmap_row = 8'b01000010; //  █    █ 
             3'd0: bitmap_row = 8'b00111100; //   ████  
+            default: bitmap_row = 8'b00000000;
         endcase
         4'd1: case (row)
             3'd7: bitmap_row = 8'b00011000; //    ██   
@@ -103,6 +104,7 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b00001000; //     █   
             3'd1: bitmap_row = 8'b00001000; //     █   
             3'd0: bitmap_row = 8'b01111110; //  ██████ 
+            default: bitmap_row = 8'b00000000;
         endcase
         4'd2: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
@@ -113,6 +115,7 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b00010000; //    █    
             3'd1: bitmap_row = 8'b00100000; //   █     
             3'd0: bitmap_row = 8'b01111110; //  ██████ 
+            default: bitmap_row = 8'b00000000;
         endcase
         4'd3: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
@@ -123,6 +126,7 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b00000010; //       █ 
             3'd1: bitmap_row = 8'b01000010; //  █    █ 
             3'd0: bitmap_row = 8'b00111100; //   ████  
+            default: bitmap_row = 8'b00000000;
         endcase
         4'd4: case (row)
             3'd7: bitmap_row = 8'b00000100; //      █  
@@ -133,6 +137,7 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b01111110; //  ██████ 
             3'd1: bitmap_row = 8'b00000100; //      █  
             3'd0: bitmap_row = 8'b00000100; //      █  
+            default: bitmap_row = 8'b00000000;
         endcase
         4'd5: case (row)
             3'd7: bitmap_row = 8'b01111110; //  ██████ 
@@ -143,6 +148,7 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b00000010; //       █ 
             3'd1: bitmap_row = 8'b01000010; //  █    █ 
             3'd0: bitmap_row = 8'b00111100; //   ████  
+            default: bitmap_row = 8'b00000000;
         endcase
         4'd6: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
@@ -153,6 +159,7 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b01000010; //  █    █ 
             3'd1: bitmap_row = 8'b01000010; //  █    █ 
             3'd0: bitmap_row = 8'b00111100; //   ████  
+            default: bitmap_row = 8'b00000000;
         endcase
         4'd7: case (row)
             3'd7: bitmap_row = 8'b01111110; //  ██████ 
@@ -163,6 +170,7 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b00010000; //    █    
             3'd1: bitmap_row = 8'b00010000; //    █    
             3'd0: bitmap_row = 8'b00010000; //    █    
+            default: bitmap_row = 8'b00000000;
         endcase
         4'd8: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
@@ -173,6 +181,7 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b01000010; //  █    █ 
             3'd1: bitmap_row = 8'b01000010; //  █    █ 
             3'd0: bitmap_row = 8'b00111100; //   ████  
+            default: bitmap_row = 8'b00000000;
         endcase
         4'd9: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
@@ -183,6 +192,7 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b00000010; //       █ 
             3'd1: bitmap_row = 8'b00000010; //       █ 
             3'd0: bitmap_row = 8'b00111100; //   ████  
+            default: bitmap_row = 8'b00000000;
         endcase
         4'd10: case (row) // minius sign
             3'd7: bitmap_row = 8'b00000000; //
@@ -193,8 +203,9 @@ always @( * ) begin
             3'd2: bitmap_row = 8'b00000000; //
             3'd1: bitmap_row = 8'b00000000; //
             3'd0: bitmap_row = 8'b00000000; //
-        default: bitmap_row = 8'b00000000;
+            default: bitmap_row = 8'b00000000;
         endcase
+        default: bitmap_row = 8'b00000000;
     endcase
 end
 

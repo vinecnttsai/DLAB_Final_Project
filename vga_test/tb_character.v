@@ -1,10 +1,9 @@
+// TODO:
 // jump factor change to addition-based
-// continuous right, left like jump_btn
 // smooth velocity, divider by 100 to increase char_clk by 10 times
-// change button xdc
-// change clock style
+// print character state
 module tb_character #(
-    parameter PHY_WIDTH = 10,
+    parameter PHY_WIDTH = 14,
     parameter PIXEL_WIDTH = 12,
     //-----------Map Parameters-----------
     parameter WALL_WIDTH = 10,
@@ -20,14 +19,19 @@ module tb_character #(
     parameter CHAR_WIDTH_X = 32,
     parameter CHAR_WIDTH_Y = 32,
     parameter INITIAL_POS_X = MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
-    parameter INITIAL_POS_Y = MAP_Y_OFFSET + (MAP_WIDTH_Y - CHAR_WIDTH_Y) / 2
-     ) (
+    parameter INITIAL_POS_Y = MAP_Y_OFFSET + (MAP_WIDTH_Y - CHAR_WIDTH_Y) / 2,
+    parameter OBSTACLE_NUM = 10,
+    parameter OBSTACLE_WIDTH = 10
+    ) (
     input sys_clk,
     input character_clk,
     input sys_rst_n,
     input left_btn,
     input right_btn,
     input jump_btn,
+    input [OBSTACLE_NUM * PHY_WIDTH:0] obstacle_pos_x,
+    input [OBSTACLE_NUM * PHY_WIDTH:0] obstacle_pos_y,
+    input [OBSTACLE_NUM * PHY_WIDTH:0] obstacle_block_width,
     output [PHY_WIDTH:0] out_pos_x, // character x offset
     output [PHY_WIDTH:0] out_pos_y, // character y offset
     output [PHY_WIDTH:0] out_vel_x,
@@ -64,6 +68,17 @@ assign out_left_btn_posedge = left_btn_posedge;
 assign out_right_btn_posedge = right_btn_posedge;
 assign out_jump_btn_posedge = jump_btn_posedge;
 
+reg character_clk_d;
+
+always @(posedge sys_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n) begin
+        character_clk_d <= 0;
+    end else begin
+        character_clk_d <= character_clk;
+    end
+end
+
+
 // FSM variables
 localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, FALL_TO_GROUND = 6;
 reg [2:0] state, next_state;
@@ -78,7 +93,7 @@ localparam signed [PHY_WIDTH:0] JUMP_VEL_X = 4;
 localparam signed [PHY_WIDTH:0] JUMP_VEL_Y = 8;
 localparam signed [PHY_WIDTH:0] FALLING_VEL_THRESHOLD = -MAX_VEL / 3;
 
-reg signed [PHY_WIDTH:0] acc_x_reg, acc_y_reg; // 11-bit signed integer
+reg signed [PHY_WIDTH:0] acc_x_reg, acc_y_reg; // (PHY_WIDTH + 1)-bit signed integer
 reg signed [PHY_WIDTH:0] vel_x_reg, vel_y_reg;
 reg signed [PHY_WIDTH:0] pos_x_reg, pos_y_reg;
 reg signed [PHY_WIDTH:0] acc_x, acc_y;
@@ -163,10 +178,10 @@ assign jump_btn_posedge = ~jump_btn_d && jump_btn;
 
 
 //-----------------------------------------FSM-----------------------------------------
-always @(posedge character_clk or negedge sys_rst_n) begin
+always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         state <= IDLE;
-    end else begin
+    end else if (character_clk_d) begin
         state <= next_state;
     end
 end
@@ -215,10 +230,10 @@ assign max_charge = (state == CHARGE) && (jump_cnt >= MAX_CHARGE);
 
 
 //-----------------------------------------Character Movement-----------------------------------------
-always @(posedge character_clk or negedge sys_rst_n) begin
+always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         jump_cnt <= 1;
-    end else begin
+    end else if (character_clk_d) begin
         if (state == CHARGE) begin
             jump_cnt <= jump_cnt + JUMP_INCREMENT;
         end else if (state == JUMP) begin
@@ -239,15 +254,17 @@ always @(*) begin
     end
 end
 
-always @(posedge character_clk or negedge sys_rst_n) begin
+always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         face <= 1;
-    end else if (collision_type == 2) begin
-        face <= -face;
-    end else if (state == LEFT) begin
-        face <= 1;
-    end else if (state == RIGHT) begin
-        face <= -1;
+    end else if (character_clk_d) begin
+        if (collision_type == 2) begin
+            face <= -face;
+        end else if (state == LEFT) begin
+            face <= 1;
+        end else if (state == RIGHT) begin
+            face <= -1;
+        end
     end
 end
 
@@ -332,36 +349,58 @@ always @(*) begin
     end
 end
 
-always @(posedge character_clk or negedge sys_rst_n) begin
+always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         acc_x_reg <= 0;
         acc_y_reg <= 0;
-    end else begin
+    end else if (character_clk_d) begin
         acc_x_reg <= acc_x_reg + acc_x;
         acc_y_reg <= acc_y_reg + acc_y;
     end
 end
 
-always @(posedge character_clk or negedge sys_rst_n) begin
+always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         vel_x_reg <= 0;
         vel_y_reg <= 0;
-    end else begin
+    end else if (character_clk_d) begin
         vel_x_reg <= vel_x_next;
         vel_y_reg <= vel_y_next;
     end
 end
 
-always @(posedge character_clk or negedge sys_rst_n) begin
+always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         pos_x_reg <= INITIAL_POS_X;
         pos_y_reg <= INITIAL_POS_Y;
-    end else begin
+    end else if (character_clk_d) begin
         pos_x_reg <= pos_x_next + vel_x_next;
         pos_y_reg <= pos_y_next + vel_y_next;
     end
 end
 //-----------------------------------------Character Movement-----------------------------------------
+
+//-----------------------------------------detect obstacle-----------------------------------------
+wire [CHAR_WIDTH_X-1:0] ob_detect_col;
+wire [MAX_VEL+1:0] ob_detect_row;
+genvar i, j;
+generate
+    for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
+        for (j = 0 ; j < OBSTACLE_NUM; j = j + 1) begin
+            assign ob_detect_col[i] = (pos_x_reg + i >= obstacle_pos_x[j] && pos_x_reg + i < obstacle_pos_x[j] + obstacle_block_width[j] * OBSTACLE_WIDTH);
+        end
+    end
+endgenerate
+
+genvar i, j;
+generate
+    for (i = 0; i <= MAX_VEL+1; i = i + 1) begin
+        for (j = 0 ; j < OBSTACLE_NUM; j = j + 1) begin
+            assign ob_detect_row[i] = (pos_y_reg + i >= obstacle_pos_y[j] && pos_y_reg + i < obstacle_pos_y[j] + OBSTACLE_WIDTH);
+        end
+    end
+endgenerate
+//-----------------------------------------detect obstacle-----------------------------------------
 
 
 //-----------------------------------------detect boundary-----------------------------------------
@@ -381,10 +420,10 @@ wire row_detect_below; // for a block below the character
 genvar i;
 generate
     for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-        assign col_detect[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH);
+        assign col_detect[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH) || ob_detect_col[i];
     end
     for (i = 0; i <= MAX_VEL+1; i = i + 1) begin
-        assign row_detect[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH);
+        assign row_detect[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH) || ob_detect_row[i];
     end
 endgenerate
 assign row_detect_below = (pos_y_reg - 1 < TOP_WALL && pos_y_reg - 1 >= BOTTOM_WALL + WALL_WIDTH);
