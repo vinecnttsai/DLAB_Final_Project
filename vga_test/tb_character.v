@@ -79,6 +79,8 @@ reg signed [PHY_WIDTH:0] pos_x_reg, pos_y_reg;
 reg signed [PHY_WIDTH:0] acc_x, acc_y;
 reg signed [PHY_WIDTH:0] vel_x, vel_y;
 reg signed [PHY_WIDTH:0] pos_x, pos_y;
+reg signed [PHY_WIDTH:0] pos_x_next, pos_y_next;
+reg signed [PHY_WIDTH:0] vel_x_next, vel_y_next;
 
 // 0: no face, 1: face left, -1: face right
 reg signed [1:0] face;
@@ -120,6 +122,7 @@ end
 // button edge detection
 wire left_btn_posedge, right_btn_posedge, jump_btn_posedge;
 reg left_btn_d, right_btn_d, jump_btn_d;
+reg left_btn_posedge_flag, right_btn_posedge_flag, jump_btn_posedge_flag;
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
@@ -130,6 +133,23 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         left_btn_d <= left_btn;
         right_btn_d <= right_btn;
         jump_btn_d <= jump_btn;
+    end
+end
+always @(posedge sys_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n) begin
+        left_btn_posedge_flag <= 0;
+        right_btn_posedge_flag <= 0;
+        jump_btn_posedge_flag <= 0;
+    end else if (left_btn_posedge) begin
+        left_btn_posedge_flag <= 1;
+    end else if (right_btn_posedge) begin
+        right_btn_posedge_flag <= 1;
+    end else if (jump_btn_posedge) begin
+        jump_btn_posedge_flag <= 1;
+    end else if (state == LEFT || state == RIGHT || state == JUMP) begin
+        left_btn_posedge_flag <= 0;
+        right_btn_posedge_flag <= 0;
+        jump_btn_posedge_flag <= 0;
     end
 end
 assign left_btn_posedge = ~left_btn_d && left_btn;
@@ -154,12 +174,16 @@ always @(*) begin
     end else begin
         case (state)
             IDLE, LEFT, RIGHT: begin
-                if (left_btn_posedge) begin
-                    next_state = LEFT;
-                end else if (right_btn_posedge) begin
-                    next_state = RIGHT;
-                end else if (jump_btn_posedge) begin
-                    next_state = CHARGE;
+                if (on_ground) begin
+                    if (left_btn_posedge_flag) begin
+                        next_state = LEFT;
+                    end else if (right_btn_posedge_flag) begin
+                        next_state = RIGHT;
+                    end else if (jump_btn_posedge_flag) begin
+                        next_state = CHARGE;
+                    end else begin
+                        next_state = IDLE;
+                    end
                 end else begin 
                     next_state = IDLE;
                 end
@@ -266,6 +290,43 @@ always @(*) begin
     end
 end
 
+// determine the max, min of the velocity, position
+always @(*) begin
+    if (vel_x_reg + vel_x + acc_x >= MAX_VEL) begin
+        vel_x_next = MAX_VEL;
+    end else if (vel_x_reg + vel_x + acc_x < -MAX_VEL) begin
+        vel_x_next = -MAX_VEL;
+    end else begin
+        vel_x_next = vel_x_reg + vel_x + acc_x;
+    end
+
+    if (vel_y_reg + vel_y + acc_y >= MAX_VEL) begin
+        vel_y_next = MAX_VEL;
+    end else if (vel_y_reg + vel_y + acc_y < -MAX_VEL) begin
+        vel_y_next = -MAX_VEL;
+    end else begin
+        vel_y_next = vel_y_reg + vel_y + acc_y;
+    end
+end
+
+always @(*) begin
+    if (pos_x_reg + pos_x + CHAR_WIDTH_X - 1 >= LEFT_WALL) begin
+        pos_x_next = LEFT_WALL - CHAR_WIDTH_X;
+    end else if (pos_x_reg + pos_x < RIGHT_WALL + WALL_WIDTH) begin
+        pos_x_next = RIGHT_WALL + WALL_WIDTH;
+    end else begin
+        pos_x_next = pos_x_reg + pos_x;
+    end
+
+    if (pos_y_reg + pos_y + CHAR_WIDTH_Y - 1 >= TOP_WALL) begin
+        pos_y_next = TOP_WALL - CHAR_WIDTH_Y;
+    end else if (pos_y_reg + pos_y < BOTTOM_WALL + WALL_WIDTH) begin
+        pos_y_next = BOTTOM_WALL + WALL_WIDTH;
+    end else begin
+        pos_y_next = pos_y_reg + pos_y;
+    end
+end
+
 always @(posedge character_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         acc_x_reg <= 0;
@@ -281,22 +342,8 @@ always @(posedge character_clk or negedge sys_rst_n) begin
         vel_x_reg <= 0;
         vel_y_reg <= 0;
     end else begin
-        // determine the max, min of the velocity
-        if (vel_x_reg + vel_x + acc_x >= MAX_VEL) begin
-            vel_x_reg <= MAX_VEL;
-        end else if (vel_x_reg + vel_x + acc_x < -MAX_VEL) begin
-            vel_x_reg <= -MAX_VEL;
-        end else begin
-            vel_x_reg <= vel_x_reg + vel_x + acc_x;
-        end
-
-        if (vel_y_reg + vel_y + acc_y >= MAX_VEL) begin
-            vel_y_reg <= MAX_VEL;
-        end else if (vel_y_reg + vel_y + acc_y < -MAX_VEL) begin
-            vel_y_reg <= -MAX_VEL;
-        end else begin
-            vel_y_reg <= vel_y_reg + vel_y + acc_y;
-        end
+        vel_x_reg <= vel_x_next;
+        vel_y_reg <= vel_y_next;
     end
 end
 
@@ -305,8 +352,8 @@ always @(posedge character_clk or negedge sys_rst_n) begin
         pos_x_reg <= INITIAL_POS_X;
         pos_y_reg <= INITIAL_POS_Y;
     end else begin
-        pos_x_reg <= (pos_x_reg + pos_x) + (vel_x_reg + vel_x);
-        pos_y_reg <= (pos_y_reg + pos_y) + (vel_y_reg + vel_y);
+        pos_x_reg <= pos_x_next + vel_x_next;
+        pos_y_reg <= pos_y_next + vel_y_next;
     end
 end
 //-----------------------------------------Character Movement-----------------------------------------
@@ -369,7 +416,7 @@ function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
     integer i;
 
     reg signed [PHY_WIDTH:0] distance_to_nearest_ob;
-    reg enable;
+    reg signed [PHY_WIDTH:0] impact_pos_x;
     begin
         distance_to_nearest_ob = 0;
         if (row_detect[0]) begin // if the bottom of the character is not fully in the wall
@@ -386,7 +433,9 @@ function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
             end
         end
 
-        calculate_impact_pos = {(multi_div(vel_x_reg, distance_to_nearest_ob, vel_y_reg)), distance_to_nearest_ob};
+        impact_pos_x = multi_div(vel_x_reg, distance_to_nearest_ob, vel_y_reg);
+
+        calculate_impact_pos = {impact_pos_x, distance_to_nearest_ob};
     end
 endfunction
 //-----------------------------------------Push Character to the Ground-----------------------------------------
@@ -416,6 +465,8 @@ function automatic [1:0] detect_collision;
     reg row_detection; // 0: no detect, 1: detect once, 2: detect twice
     reg col_detection; // 0: no detect, 1: detect once, 2: detect twice
     begin
+        row_detection = 0;
+        col_detection = 0;
         for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
             if (!row_detect[i]) begin
                 row_detection = 1;
@@ -438,12 +489,12 @@ function automatic [1:0] detect_collision;
     end
 endfunction
 
-function detect_fall_to_ground;
+function automatic detect_fall_to_ground;
     input signed [PHY_WIDTH:0] pos_x_reg;
     input signed [PHY_WIDTH:0] pos_y_reg;
     input signed [PHY_WIDTH:0] vel_y_reg;
     begin
-        detect_fall_to_ground = (collision_type == 1) && (vel_y_reg <= 0) && (on_ground == 0);
+        detect_fall_to_ground = (collision_type == 1) && (vel_y_reg < 0) && (on_ground == 0);
     end
 endfunction
 

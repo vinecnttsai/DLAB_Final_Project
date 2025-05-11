@@ -71,7 +71,7 @@ module top(
         end
     end
 
-    fq_div #(.N(100000000)) fq_div1(
+    fq_div #(.N(10000000)) fq_div1( // slowest clock : 100000000
         .org_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .div_n_clk(debug_char_clk)
