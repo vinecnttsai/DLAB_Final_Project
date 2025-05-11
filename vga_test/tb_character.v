@@ -1,3 +1,7 @@
+// jump factor change to addition-based
+// continuous right, left like jump_btn
+// smooth velocity, divider by 100 to increase char_clk by 10 times
+// change button xdc
 module tb_character #(
     parameter PHY_WIDTH = 10,
     parameter PIXEL_WIDTH = 12,

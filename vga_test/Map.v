@@ -15,11 +15,11 @@ localparam RIGHT_WALL = 0;
 
 always @(*) begin
     if (map_on) begin
-        if (map_x >= LEFT_WALL) begin
+        if (map_x >= LEFT_WALL || map_x < RIGHT_WALL + WALL_WIDTH) begin
             rgb = 12'h000;
         end
         else begin
-            rgb = 12'hFFF;
+            rgb = 12'hf80;
         end
     end
     else begin
