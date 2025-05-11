@@ -225,7 +225,7 @@ module pixel_gen #(
             end else if(obstacle_on > 0) begin // not all blank
                 rgb = obstacle_rgb;
             end else if(char_on) begin
-                rgb = char_rgb;
+                rgb = YELLOW; //char_rgb, remember to change back
             end else if(map_on) begin
                 rgb = map_rgb;
             end else begin
@@ -247,6 +247,7 @@ module pixel_gen #(
     //-----------------------------------------------------------------
 
     //------------------------------Character--------------------------------
+    // TODO: disable first, fill character in all black first
     IDLE_CHAR #(
         .PIXEL_WIDTH(PIXEL_WIDTH),
         .SCREEN_WIDTH(SCREEN_WIDTH),

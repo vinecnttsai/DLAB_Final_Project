@@ -1,4 +1,5 @@
 // TODO:
+// debug mode, character can move up / down. up velocity is larger than gravity
 // jump factor change to addition-based
 // smooth velocity, divider by 100 to increase char_clk by 10 times
 // print character state
