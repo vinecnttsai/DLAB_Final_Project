@@ -141,11 +141,11 @@ module pixel_gen #(
         end
     endgenerate
     assign map_on = ((x >= MAP_X_OFFSET) && (x < MAP_X_OFFSET + MAP_WIDTH_X) && (y >= MAP_Y_OFFSET)); // && (y < MAP_Y_OFFSET + MAP_WIDTH_Y));
-    assign char_on = ((x >= char_x_rom) && (x < char_x_rom + CHAR_WIDTH_X) && (y >= char_y_rom) && (y < char_y_rom + CHAR_WIDTH_Y));
+    assign char_on = ((x >= char_abs_x) && (x < char_abs_x + CHAR_WIDTH_X) && (y >= char_abs_y - camera_offset) && (y < char_abs_y + CHAR_WIDTH_Y - camera_offset));
     genvar m;
     generate
         for(m = 0; m < OBSTACLE_NUM; m = m + 1) begin: ob_on
-            assign obstacle_on[m] = ((x >= obstacle_x_rom[m]) && (x < obstacle_x_rom[m] + obstacle_block_width[m*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH) && (y >= obstacle_y_rom[m]) && (y < obstacle_y_rom[m] + OBSTACLE_WIDTH));
+            assign obstacle_on[m] = ((x >= obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH]) && (x < obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH] + obstacle_block_width[m*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH) && (y >= obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH]) && (y < obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] + OBSTACLE_WIDTH));
         end
     endgenerate
     //----------------------------------------------------------------------------------------
@@ -184,7 +184,7 @@ module pixel_gen #(
     //-----------------------------------------------------------------
 
     //------------------------------Character--------------------------------
-    /* // TODO: disable first, fill character in all black first
+     // TODO: disable first, fill character in all black first
     IDLE_CHAR #(
         .PIXEL_WIDTH(PIXEL_WIDTH),
         .SCREEN_WIDTH(SCREEN_WIDTH),
@@ -195,7 +195,7 @@ module pixel_gen #(
         .char_y_rom(char_y_rom[SCREEN_WIDTH - 1:0]),
         .char_on(char_on),
         .rgb(char_rgb)
-    );*/
+    );
     //-----------------------------------------------------------------
 
     //------------------------------Obstacle-------------------------------- // TODO: write module for obstacle print

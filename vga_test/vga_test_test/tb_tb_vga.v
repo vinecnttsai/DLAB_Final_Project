@@ -1,15 +1,16 @@
 module tb_tb_vga;
 
-    reg sys_clk;
-    reg sys_rst_n;
-    reg left_btn;
-    reg right_btn;
-    reg jump_btn;
+    reg sys_clk = 0;
+    reg sys_rst_n = 0;
+    reg left_btn = 0;
+    reg right_btn = 0;
+    reg jump_btn = 0;
+
     wire hsync;
     wire vsync;
     wire [11:0] rgb;
 
-    top uut(
+    top uut (
         .sys_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .left_btn(left_btn),
@@ -20,18 +21,22 @@ module tb_tb_vga;
         .rgb(rgb)
     );
 
-    // Reset
-    initial begin
-        sys_clk = 0;
-        sys_rst_n = 0;
-        left_btn = 0;
-        right_btn = 0;
-        jump_btn = 0;
-        #10 sys_rst_n = 1;
+   
+always #1 sys_clk = ~sys_clk;
 
-        #1000000000 $finish;
-    end
+initial begin
+    sys_clk = 0;
+    sys_rst_n = 1;
+    left_btn = 0;
+    right_btn = 0;
+    jump_btn = 0;
 
-    always #5 sys_clk = ~sys_clk;
+    #3 sys_rst_n = 0;
+    #3 sys_rst_n = 1;
+
+    #1000000000;
+    $finish;
+end
+
 
 endmodule
