@@ -1,14 +1,14 @@
 `timescale 1ns / 1ps
 
 module top(
-    input sys_clk,       // Basys 3 oscillator
-    input sys_rst_n,        // btnC
-    input left_btn,         // btnL
-    input right_btn,        // btnR
-    input jump_btn,         // btnD
-    output hsync,           // to VGA port
-    output vsync,           // to VGA port
-    output [11:0] rgb       // to DAC, to VGA port
+    input sys_clk,
+    input sys_rst_n,
+    input left_btn,
+    input right_btn,
+    input jump_btn,
+    output hsync,
+    output vsync,
+    output [11:0] rgb
     );
     
 //-----------------------------------VGA signals-----------------------------------
