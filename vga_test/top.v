@@ -176,8 +176,13 @@ module top(
         .switch_up()
     );
 
-    assign obstacle_abs_pos_x = obstacle_relative_pos_x + MAP_X_OFFSET;
-    assign obstacle_abs_pos_y = obstacle_relative_pos_y + camera_y * BLOCK_WIDTH + MAP_Y_OFFSET;
+    genvar k;
+    generate
+        for (k = 0; k < OBSTACLE_NUM; k = k + 1) begin : obstacle_abs_pos
+            assign obstacle_abs_pos_x[k*PHY_WIDTH +: PHY_WIDTH] = obstacle_relative_pos_x[k*PHY_WIDTH +: PHY_WIDTH] + MAP_X_OFFSET;
+            assign obstacle_abs_pos_y[k*PHY_WIDTH +: PHY_WIDTH] = obstacle_relative_pos_y[k*PHY_WIDTH +: PHY_WIDTH] + camera_y * BLOCK_WIDTH + MAP_Y_OFFSET;
+        end
+    endgenerate
 
 //-----------------------------------Obstacle-----------------------------------
 
