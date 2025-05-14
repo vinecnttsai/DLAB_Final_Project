@@ -55,7 +55,7 @@ module top(
     //-----------Physical parameters-----------
 
     //-----------Obstacle parameters-----------
-    localparam OBSTACLE_NUM = 10;
+    localparam OBSTACLE_NUM = 7;
     localparam OBSTACLE_WIDTH = 10;
     localparam BLOCK_WIDTH = 480;
     localparam BLOCK_LEN_WIDTH = 4; // max 15
@@ -176,8 +176,8 @@ module top(
         .switch_up()
     );
 
-    assign obstacle_abs_pos_x = obstacle_relative_pos_x;
-    assign obstacle_abs_pos_y = obstacle_relative_pos_y + camera_y * BLOCK_WIDTH;
+    assign obstacle_abs_pos_x = obstacle_relative_pos_x + MAP_X_OFFSET;
+    assign obstacle_abs_pos_y = obstacle_relative_pos_y + camera_y * BLOCK_WIDTH + MAP_Y_OFFSET;
 
 //-----------------------------------Obstacle-----------------------------------
 

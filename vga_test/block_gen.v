@@ -1,9 +1,10 @@
 // block_gen.v
 // 完整7個block配置，平台長度加長，X軸範圍擴大至480
 //pla_len at most 15
+// 每個障礙物至少間隔50
 module block_gen #(
     parameter BLOCK_NUM = 7,
-    parameter PLATFORM_NUM_PER_BLOCK = 10,
+    parameter PLATFORM_NUM_PER_BLOCK = 7,
     parameter PHY_WIDTH = 14,
     parameter BLOCK_WIDTH = 480,
     parameter MAX_JUMP_HEIGHT = 40,
@@ -62,7 +63,7 @@ module block_gen #(
         case (cur_block_type)
             // Block 0: 基礎練習 (寬平台)
             0: begin
-                plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 400; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 60;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
+                plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 280; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 60;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 10;
                 plat_relative_x[1*PHY_WIDTH +: PHY_WIDTH] = 100; plat_relative_y[1*PHY_WIDTH +: PHY_WIDTH] = 80;  plat_len[1*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
                 plat_relative_x[2*PHY_WIDTH +: PHY_WIDTH] = 350; plat_relative_y[2*PHY_WIDTH +: PHY_WIDTH] = 140; plat_len[2*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
                 plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 50;  plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 200; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;

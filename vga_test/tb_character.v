@@ -3,6 +3,7 @@
 // jump factor change to addition-based
 // smooth velocity, divider by 100 to increase char_clk by 10 times
 // print character state
+// deal with coillide to long, add an velocity
 module tb_character #(
     parameter PHY_WIDTH = 14,
     parameter PIXEL_WIDTH = 12,
@@ -23,7 +24,7 @@ module tb_character #(
     parameter INITIAL_POS_X = MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
     parameter INITIAL_POS_Y = MAP_Y_OFFSET + WALL_WIDTH * 2,
     //-----------Obstacle Parameters-----
-    parameter OBSTACLE_NUM = 10,
+    parameter OBSTACLE_NUM = 7,
     parameter OBSTACLE_WIDTH = 10,
     parameter BLOCK_LEN_WIDTH = 4 // max 15
     ) (
@@ -390,6 +391,24 @@ generate
     end
 endgenerate
 
+function automatic in_obstacle;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_x;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_y;
+    input signed [SIGNED_PHY_WIDTH-1:0] obstacle_x;
+    input signed [SIGNED_PHY_WIDTH-1:0] obstacle_y;
+    input [BLOCK_LEN_WIDTH-1:0] obstacle_len;
+    begin
+        if (pos_x >= obstacle_x &&
+            pos_x < obstacle_x + obstacle_len * OBSTACLE_WIDTH &&
+            pos_y >= obstacle_y && 
+            pos_y < obstacle_y + OBSTACLE_WIDTH) begin
+            in_obstacle = 1;
+        end else begin
+            in_obstacle = 0;
+        end
+    end
+endfunction
+
 reg [CHAR_WIDTH_X-1:0] ob_detect_col;
 reg [MAX_VEL+1:0] ob_detect_row;
 reg ob_detect_below;
@@ -398,8 +417,7 @@ always @(*) begin
     for (a = 0; a < CHAR_WIDTH_X; a = a + 1) begin
         ob_detect_col[a] = 1'b1;
         for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
-            if ((pos_x_reg + a >= obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH]) &&
-                (pos_x_reg + a <  obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] + OBSTACLE_WIDTH * obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
+            if (in_obstacle(pos_x_reg + a, pos_y_reg, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
                 ob_detect_col[a] = 1'b0;
             end
         end
@@ -410,8 +428,7 @@ always @(*) begin
     for (a = 0; a <= MAX_VEL + 1; a = a + 1) begin
         ob_detect_row[a] = 1'b1;
         for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
-            if ((pos_y_reg + a >= obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH]) &&
-                (pos_y_reg + a <  obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] + OBSTACLE_WIDTH)) begin
+            if (in_obstacle(pos_x_reg, pos_y_reg + a, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
                 ob_detect_row[a] = 1'b0;
             end
         end
@@ -421,8 +438,7 @@ end
 always @(*) begin
     ob_detect_below = 1'b1;
     for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
-        if ((pos_y_reg - 1 >= obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH]) &&
-            (pos_y_reg - 1 <  obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] + OBSTACLE_WIDTH)) begin
+        if (in_obstacle(pos_x_reg, pos_y_reg - 1, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
             ob_detect_below = 1'b0;
         end
     end
