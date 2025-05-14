@@ -6,23 +6,26 @@
 module tb_character #(
     parameter PHY_WIDTH = 14,
     parameter PIXEL_WIDTH = 12,
+    parameter SIGNED_PHY_WIDTH = PHY_WIDTH + 1,
     //-----------Map Parameters-----------
     parameter WALL_WIDTH = 10,
-    parameter MAP_WIDTH_X = 100,
-    parameter MAP_WIDTH_Y = 100,
-    parameter MAP_X_OFFSET = 270,
-    parameter MAP_Y_OFFSET = 50,
+    parameter MAP_WIDTH_X = 480,
+    //parameter MAP_WIDTH_Y = 100,
+    parameter MAP_X_OFFSET = 120, // (640 - 480) / 2
+    parameter MAP_Y_OFFSET = 0,
     parameter LEFT_WALL = MAP_WIDTH_X - WALL_WIDTH + MAP_X_OFFSET,
     parameter RIGHT_WALL = MAP_X_OFFSET,
-    parameter TOP_WALL = MAP_WIDTH_Y - WALL_WIDTH + MAP_Y_OFFSET,
+    //parameter TOP_WALL = MAP_WIDTH_Y - WALL_WIDTH + MAP_Y_OFFSET,
     parameter BOTTOM_WALL = MAP_Y_OFFSET,
     //-----------Character Parameters-----
     parameter CHAR_WIDTH_X = 32,
     parameter CHAR_WIDTH_Y = 32,
     parameter INITIAL_POS_X = MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
-    parameter INITIAL_POS_Y = MAP_Y_OFFSET + (MAP_WIDTH_Y - CHAR_WIDTH_Y) / 2,
+    parameter INITIAL_POS_Y = MAP_Y_OFFSET + WALL_WIDTH * 2,
+    //-----------Obstacle Parameters-----
     parameter OBSTACLE_NUM = 10,
-    parameter OBSTACLE_WIDTH = 10
+    parameter OBSTACLE_WIDTH = 10,
+    parameter BLOCK_LEN_WIDTH = 4 // max 15
     ) (
     input sys_clk,
     input character_clk,
@@ -30,15 +33,15 @@ module tb_character #(
     input left_btn,
     input right_btn,
     input jump_btn,
-    input [OBSTACLE_NUM * PHY_WIDTH:0] obstacle_pos_x,
-    input [OBSTACLE_NUM * PHY_WIDTH:0] obstacle_pos_y,
-    input [OBSTACLE_NUM * PHY_WIDTH:0] obstacle_block_width,
-    output [PHY_WIDTH:0] out_pos_x, // character x offset
-    output [PHY_WIDTH:0] out_pos_y, // character y offset
-    output [PHY_WIDTH:0] out_vel_x,
-    output [PHY_WIDTH:0] out_vel_y,
-    output [PHY_WIDTH:0] out_acc_x,
-    output [PHY_WIDTH:0] out_acc_y,
+    input [OBSTACLE_NUM * PHY_WIDTH-1:0] obstacle_abs_pos_x, // obstacle absolute x position
+    input [OBSTACLE_NUM * PHY_WIDTH-1:0] obstacle_abs_pos_y, // obstacle absolute y position
+    input [OBSTACLE_NUM * BLOCK_LEN_WIDTH-1:0] obstacle_block_width, // obstacle block width
+    output [SIGNED_PHY_WIDTH-1:0] out_pos_x, // character absolute x position
+    output [SIGNED_PHY_WIDTH-1:0] out_pos_y, // character absolute y position
+    output [SIGNED_PHY_WIDTH-1:0] out_vel_x,
+    output [SIGNED_PHY_WIDTH-1:0] out_vel_y,
+    output [SIGNED_PHY_WIDTH-1:0] out_acc_x,
+    output [SIGNED_PHY_WIDTH-1:0] out_acc_y,
     output [1:0] out_face,
     output [7:0] out_jump_cnt,
     output [3:0] out_state,
@@ -49,8 +52,9 @@ module tb_character #(
     output out_right_btn_posedge,
     output out_jump_btn_posedge,
     //debug
-    output [PHY_WIDTH:0] out_dis_to_ob,
-    output [16:0] out_row_detect
+    output [SIGNED_PHY_WIDTH-1:0] out_dis_to_ob,
+    output [1:0] out_row_detect,
+    output [1:0] out_col_detect
 );
 // output wire
 assign out_pos_x = pos_x_reg;
@@ -85,23 +89,23 @@ localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION 
 reg [2:0] state, next_state;
 
 // physics simulation
-localparam signed [PHY_WIDTH:0] MAX_VEL = WALL_WIDTH + CHAR_WIDTH_Y - 2; // assure that the character can not pass the wall without being detected
-localparam signed [PHY_WIDTH:0] GRAVITY = -1;
-localparam signed [PHY_WIDTH:0] POSITIVE = 1;
-localparam signed [PHY_WIDTH:0] LEFT_VEL_X = 1;
-localparam signed [PHY_WIDTH:0] RIGHT_VEL_X = -1;
-localparam signed [PHY_WIDTH:0] JUMP_VEL_X = 4;
-localparam signed [PHY_WIDTH:0] JUMP_VEL_Y = 8;
-localparam signed [PHY_WIDTH:0] FALLING_VEL_THRESHOLD = -MAX_VEL / 3;
+localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_VEL = WALL_WIDTH + CHAR_WIDTH_Y - 2; // assure that the character can not pass the wall without being detected
+localparam signed [SIGNED_PHY_WIDTH-1:0] GRAVITY = -1;
+localparam signed [SIGNED_PHY_WIDTH-1:0] POSITIVE = 1;
+localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_VEL_X = 1;
+localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_VEL_X = -1;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 4;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 8;
+localparam signed [SIGNED_PHY_WIDTH-1:0] FALLING_VEL_THRESHOLD = -MAX_VEL / 3;
 
-reg signed [PHY_WIDTH:0] acc_x_reg, acc_y_reg; // (PHY_WIDTH + 1)-bit signed integer
-reg signed [PHY_WIDTH:0] vel_x_reg, vel_y_reg;
-reg signed [PHY_WIDTH:0] pos_x_reg, pos_y_reg;
-reg signed [PHY_WIDTH:0] acc_x, acc_y;
-reg signed [PHY_WIDTH:0] vel_x, vel_y;
-reg signed [PHY_WIDTH:0] pos_x, pos_y;
-reg signed [PHY_WIDTH:0] pos_x_next, pos_y_next;
-reg signed [PHY_WIDTH:0] vel_x_next, vel_y_next;
+reg signed [SIGNED_PHY_WIDTH-1:0] acc_x_reg, acc_y_reg; // SIGNED_PHY_WIDTH-bit signed integer
+reg signed [SIGNED_PHY_WIDTH-1:0] vel_x_reg, vel_y_reg;
+reg signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg, pos_y_reg;
+reg signed [SIGNED_PHY_WIDTH-1:0] acc_x, acc_y;
+reg signed [SIGNED_PHY_WIDTH-1:0] vel_x, vel_y;
+reg signed [SIGNED_PHY_WIDTH-1:0] pos_x, pos_y;
+reg signed [SIGNED_PHY_WIDTH-1:0] pos_x_next, pos_y_next;
+reg signed [SIGNED_PHY_WIDTH-1:0] vel_x_next, vel_y_next;
 
 // 0: no face, 1: face left, -1: face right
 reg signed [1:0] face;
@@ -143,7 +147,7 @@ end
 // button edge detection
 wire left_btn_posedge, right_btn_posedge, jump_btn_posedge;
 reg left_btn_d, right_btn_d, jump_btn_d;
-reg left_btn_posedge_flag, right_btn_posedge_flag, jump_btn_posedge_flag;
+reg jump_btn_posedge_flag;
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
@@ -158,18 +162,10 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
-        left_btn_posedge_flag <= 0;
-        right_btn_posedge_flag <= 0;
         jump_btn_posedge_flag <= 0;
-    end else if (left_btn_posedge) begin
-        left_btn_posedge_flag <= 1;
-    end else if (right_btn_posedge) begin
-        right_btn_posedge_flag <= 1;
     end else if (jump_btn_posedge) begin
         jump_btn_posedge_flag <= 1;
-    end else if (state == LEFT || state == RIGHT || state == JUMP) begin
-        left_btn_posedge_flag <= 0;
-        right_btn_posedge_flag <= 0;
+    end else if (state == JUMP) begin
         jump_btn_posedge_flag <= 0;
     end
 end
@@ -210,7 +206,7 @@ always @(*) begin
                 end
             end
             CHARGE: begin
-                if (max_charge || ~jump_btn) begin
+                if (max_charge || ~jump_btn_d) begin
                     next_state = JUMP;
                 end else begin
                     next_state = CHARGE;
@@ -332,6 +328,7 @@ always @(*) begin
     end
 end
 
+//注意這邊只有檢查到牆壁, 沒有障礙物
 always @(*) begin
     if (pos_x_reg + pos_x + CHAR_WIDTH_X - 1 >= LEFT_WALL) begin
         pos_x_next = LEFT_WALL - CHAR_WIDTH_X;
@@ -341,9 +338,9 @@ always @(*) begin
         pos_x_next = pos_x_reg + pos_x;
     end
 
-    if (pos_y_reg + pos_y + CHAR_WIDTH_Y - 1 >= TOP_WALL) begin
-        pos_y_next = TOP_WALL - CHAR_WIDTH_Y;
-    end else if (pos_y_reg + pos_y < BOTTOM_WALL + WALL_WIDTH) begin
+    /*if (pos_y_reg + pos_y + CHAR_WIDTH_Y - 1 >= TOP_WALL) begin
+        pos_y_next = TOP_WALL - CHAR_WIDTH_Y;*/
+    if (pos_y_reg + pos_y < BOTTOM_WALL + WALL_WIDTH) begin
         pos_y_next = BOTTOM_WALL + WALL_WIDTH;
     end else begin
         pos_y_next = pos_y_reg + pos_y;
@@ -382,25 +379,55 @@ end
 //-----------------------------------------Character Movement-----------------------------------------
 
 //-----------------------------------------detect obstacle-----------------------------------------
-wire [CHAR_WIDTH_X-1:0] ob_detect_col;
-wire [MAX_VEL+1:0] ob_detect_row;
-genvar i, j;
+wire [OBSTACLE_NUM*SIGNED_PHY_WIDTH-1:0] obstacle_signed_abs_pos_x;
+wire [OBSTACLE_NUM*SIGNED_PHY_WIDTH-1:0] obstacle_signed_abs_pos_y;
+
+genvar k;
 generate
-    for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-        for (j = 0 ; j < OBSTACLE_NUM; j = j + 1) begin
-            assign ob_detect_col[i] = (pos_x_reg + i >= obstacle_pos_x[j] && pos_x_reg + i < obstacle_pos_x[j] + obstacle_block_width[j] * OBSTACLE_WIDTH);
-        end
+    for (k = 0; k < OBSTACLE_NUM; k = k + 1) begin
+        assign obstacle_signed_abs_pos_x[k*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] = {1'b0, obstacle_abs_pos_x[k*PHY_WIDTH +: PHY_WIDTH]};
+        assign obstacle_signed_abs_pos_y[k*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] = {1'b0, obstacle_abs_pos_y[k*PHY_WIDTH +: PHY_WIDTH]};
     end
 endgenerate
 
-genvar i, j;
-generate
-    for (i = 0; i <= MAX_VEL+1; i = i + 1) begin
-        for (j = 0 ; j < OBSTACLE_NUM; j = j + 1) begin
-            assign ob_detect_row[i] = (pos_y_reg + i >= obstacle_pos_y[j] && pos_y_reg + i < obstacle_pos_y[j] + OBSTACLE_WIDTH);
+reg [CHAR_WIDTH_X-1:0] ob_detect_col;
+reg [MAX_VEL+1:0] ob_detect_row;
+reg ob_detect_below;
+integer a, b;
+always @(*) begin
+    for (a = 0; a < CHAR_WIDTH_X; a = a + 1) begin
+        ob_detect_col[a] = 1'b1;
+        for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
+            if ((pos_x_reg + a >= obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH]) &&
+                (pos_x_reg + a <  obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] + OBSTACLE_WIDTH * obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
+                ob_detect_col[a] = 1'b0;
+            end
         end
     end
-endgenerate
+end
+
+always @(*) begin
+    for (a = 0; a <= MAX_VEL + 1; a = a + 1) begin
+        ob_detect_row[a] = 1'b1;
+        for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
+            if ((pos_y_reg + a >= obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH]) &&
+                (pos_y_reg + a <  obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] + OBSTACLE_WIDTH)) begin
+                ob_detect_row[a] = 1'b0;
+            end
+        end
+    end
+end
+
+always @(*) begin
+    ob_detect_below = 1'b1;
+    for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
+        if ((pos_y_reg - 1 >= obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH]) &&
+            (pos_y_reg - 1 <  obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] + OBSTACLE_WIDTH)) begin
+            ob_detect_below = 1'b0;
+        end
+    end
+end
+
 //-----------------------------------------detect obstacle-----------------------------------------
 
 
@@ -421,21 +448,22 @@ wire row_detect_below; // for a block below the character
 genvar i;
 generate
     for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-        assign col_detect[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH) || ob_detect_col[i];
+        assign col_detect[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH) && ob_detect_col[i];
     end
     for (i = 0; i <= MAX_VEL+1; i = i + 1) begin
-        assign row_detect[i] = (i + pos_y_reg < TOP_WALL && i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH) || ob_detect_row[i];
+        assign row_detect[i] = (i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH) && ob_detect_row[i];
     end
 endgenerate
-assign row_detect_below = (pos_y_reg - 1 < TOP_WALL && pos_y_reg - 1 >= BOTTOM_WALL + WALL_WIDTH);
+
+assign row_detect_below = (pos_y_reg - 1 >= BOTTOM_WALL + WALL_WIDTH) && ob_detect_below;
 //-----------------------------------------detect boundary-----------------------------------------
 
 //-----------------------------------------Push Character to the Ground-----------------------------------------
-function automatic signed [PHY_WIDTH:0] multi_div;
-    input signed [PHY_WIDTH:0] org;
-    input signed [PHY_WIDTH:0] mul;
-    input signed [PHY_WIDTH:0] div;
-    reg signed [PHY_WIDTH + PHY_WIDTH + 1:0] result;
+function automatic signed [SIGNED_PHY_WIDTH-1:0] multi_div;
+    input signed [SIGNED_PHY_WIDTH-1:0] org;
+    input signed [SIGNED_PHY_WIDTH-1:0] mul;
+    input signed [SIGNED_PHY_WIDTH-1:0] div;
+    reg signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] result;
     begin
         result = org * mul;
         if (div == 0) begin
@@ -447,21 +475,22 @@ function automatic signed [PHY_WIDTH:0] multi_div;
 endfunction
 
 // debug
-wire signed [PHY_WIDTH + PHY_WIDTH + 1:0] impact_pos_result;
+wire signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] impact_pos_result;
 
 assign impact_pos_result = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
-assign out_dis_to_ob = impact_pos_result[PHY_WIDTH:0];
-assign out_row_detect = row_detect[16:0];
+assign out_dis_to_ob = impact_pos_result[SIGNED_PHY_WIDTH-1:0];
+assign out_row_detect = {1'b0, |row_detect};
+assign out_col_detect = {1'b0, |col_detect};
 
-function signed [PHY_WIDTH + PHY_WIDTH + 1:0] calculate_impact_pos;
-    input signed [PHY_WIDTH:0] pos_x_reg;
-    input signed [PHY_WIDTH:0] pos_y_reg;
-    input signed [PHY_WIDTH:0] vel_x_reg;
-    input signed [PHY_WIDTH:0] vel_y_reg;
+function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] vel_x_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] vel_y_reg;
     integer i;
 
-    reg signed [PHY_WIDTH:0] distance_to_nearest_ob;
-    reg signed [PHY_WIDTH:0] impact_pos_x;
+    reg signed [SIGNED_PHY_WIDTH-1:0] distance_to_nearest_ob;
+    reg signed [SIGNED_PHY_WIDTH-1:0] impact_pos_x;
     begin
         distance_to_nearest_ob = 0;
         if (row_detect[0]) begin // if the bottom of the character is not fully in the wall
@@ -503,8 +532,8 @@ endfunction
 // |      |
 // |         | 
 function automatic [1:0] detect_collision;
-    input signed [PHY_WIDTH:0] pos_x_reg;
-    input signed [PHY_WIDTH:0] pos_y_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg;
     integer i;
 
     reg row_detection; // 0: no detect, 1: detect once, 2: detect twice
@@ -535,17 +564,17 @@ function automatic [1:0] detect_collision;
 endfunction
 
 function automatic detect_fall_to_ground;
-    input signed [PHY_WIDTH:0] pos_x_reg;
-    input signed [PHY_WIDTH:0] pos_y_reg;
-    input signed [PHY_WIDTH:0] vel_y_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] vel_y_reg;
     begin
         detect_fall_to_ground = (collision_type == 1) && (vel_y_reg < 0) && (on_ground == 0);
     end
 endfunction
 
-function detect_on_ground;
-    input signed [PHY_WIDTH:0] pos_x_reg;
-    input signed [PHY_WIDTH:0] pos_y_reg;
+function automatic detect_on_ground;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg;
     begin
         detect_on_ground =  (row_detect[0] && !row_detect_below);
     end
