@@ -13,7 +13,7 @@ module block_gen #(
 )(
     input sys_clk,
     input sys_rst_n,
-    input [PHY_WIDTH-1:0] abs_char_y,
+    input signed [PHY_WIDTH:0] abs_char_y,
     
     output reg [4:0] camera_y,
     output reg [3:0] cur_block_type,
@@ -25,14 +25,15 @@ module block_gen #(
 );
 
     reg [4:0] prev_block;
-    wire [PHY_WIDTH-1:0] block_base_y = (abs_char_y / BLOCK_WIDTH) * BLOCK_WIDTH;
+    wire [PHY_WIDTH-1:0] abs_positive_y = (abs_char_y < 0) ? 0 : abs_char_y[PHY_WIDTH-1:0];
+    wire [PHY_WIDTH-1:0] block_base_y = (abs_positive_y / BLOCK_WIDTH) * BLOCK_WIDTH;
     wire [4:0] computed_block = block_base_y % BLOCK_NUM; // Be careful with the range of block_num
 
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if (!sys_rst_n) begin
             camera_y <= 0;
         end else begin
-            camera_y <= abs_char_y / BLOCK_WIDTH;
+            camera_y <= abs_positive_y / BLOCK_WIDTH;
         end
     end
     
@@ -51,7 +52,7 @@ module block_gen #(
             switch_up <= 0;
         end else begin
             block_switch <= (computed_block != prev_block);
-            switch_up <= (abs_char_y >= block_base_y + BLOCK_WIDTH);
+            switch_up <= (abs_positive_y >= block_base_y + BLOCK_WIDTH);
             prev_block <= computed_block;
         end
     end

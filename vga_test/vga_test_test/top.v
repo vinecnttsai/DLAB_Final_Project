@@ -41,8 +41,8 @@ module top(
     //-----------Map parameters-----------
 
     //-----------Character parameters-----------
-    localparam CHAR_WIDTH_X = 32;
-    localparam CHAR_WIDTH_Y = 32;
+    localparam CHAR_WIDTH_X = 40;
+    localparam CHAR_WIDTH_Y = 40;
     //-----------Character parameters-----------
 
     //-----------Screen parameters-----------

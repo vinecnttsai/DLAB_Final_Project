@@ -55,7 +55,7 @@ module tb_character #(
     //debug
     output [SIGNED_PHY_WIDTH-1:0] out_dis_to_ob,
     output [1:0] out_row_detect,
-    output [1:0] out_col_detect
+    output [$clog2(OBSTACLE_NUM+2):0] out_ob_detect
 );
 // output wire
 assign out_pos_x = pos_x_reg;
@@ -108,6 +108,8 @@ reg signed [SIGNED_PHY_WIDTH-1:0] pos_x, pos_y;
 reg signed [SIGNED_PHY_WIDTH-1:0] pos_x_next, pos_y_next;
 reg signed [SIGNED_PHY_WIDTH-1:0] vel_x_next, vel_y_next;
 
+reg signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg_d, pos_y_reg_d;
+
 // 0: no face, 1: face left, -1: face right
 reg signed [1:0] face;
 
@@ -132,7 +134,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         fall_to_ground <= 0;
         on_ground <= 0;
     end else begin
-        collision_type_next <= detect_collision(pos_x_reg, pos_y_reg);
+        collision_type_next <= detect_collision(pos_x_reg, pos_y_reg, pos_x_reg_d, pos_y_reg_d);
         collision_type <= collision_type_next;
 
         fall_to_ground_next <= detect_fall_to_ground(pos_x_reg, pos_y_reg, vel_y_reg);
@@ -377,6 +379,18 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         pos_y_reg <= pos_y_next + vel_y_next;
     end
 end
+
+// delay the position by 1 clock cycle to detect the collision
+always @(posedge sys_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n) begin
+        pos_x_reg_d <= INITIAL_POS_X;
+        pos_y_reg_d <= INITIAL_POS_Y;
+    end else if (character_clk_d) begin
+        pos_x_reg_d <= pos_x_reg;
+        pos_y_reg_d <= pos_y_reg;
+    end
+end
+
 //-----------------------------------------Character Movement-----------------------------------------
 
 //-----------------------------------------detect obstacle-----------------------------------------
@@ -398,38 +412,27 @@ function automatic in_obstacle;
     input signed [SIGNED_PHY_WIDTH-1:0] obstacle_y;
     input [BLOCK_LEN_WIDTH-1:0] obstacle_len;
     begin
-        if (pos_x >= obstacle_x &&
+        in_obstacle = (pos_x >= obstacle_x &&
             pos_x < obstacle_x + obstacle_len * OBSTACLE_WIDTH &&
             pos_y >= obstacle_y && 
-            pos_y < obstacle_y + OBSTACLE_WIDTH) begin
-            in_obstacle = 1;
-        end else begin
-            in_obstacle = 0;
-        end
+            pos_y < obstacle_y + OBSTACLE_WIDTH);
     end
 endfunction
 
-reg [CHAR_WIDTH_X-1:0] ob_detect_col;
 reg [MAX_VEL+1:0] ob_detect_row;
+reg [$clog2(OBSTACLE_NUM+2)-1:0] ob_detect; // default value == OBSTACLE_NUM
 reg ob_detect_below;
 integer a, b;
-always @(*) begin
-    for (a = 0; a < CHAR_WIDTH_X; a = a + 1) begin
-        ob_detect_col[a] = 1'b1;
-        for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
-            if (in_obstacle(pos_x_reg + a, pos_y_reg, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
-                ob_detect_col[a] = 1'b0;
-            end
-        end
-    end
-end
 
 always @(*) begin
+    ob_detect = OBSTACLE_NUM;
     for (a = 0; a <= MAX_VEL + 1; a = a + 1) begin
         ob_detect_row[a] = 1'b1;
         for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
-            if (in_obstacle(pos_x_reg, pos_y_reg + a, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
+            if (in_obstacle(pos_x_reg, pos_y_reg + a, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]) ||
+                in_obstacle(pos_x_reg + CHAR_WIDTH_X - 1, pos_y_reg + a, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
                 ob_detect_row[a] = 1'b0;
+                ob_detect = b;
             end
         end
     end
@@ -438,7 +441,8 @@ end
 always @(*) begin
     ob_detect_below = 1'b1;
     for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
-        if (in_obstacle(pos_x_reg, pos_y_reg - 1, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
+        if (in_obstacle(pos_x_reg, pos_y_reg - 1, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]) || 
+            in_obstacle(pos_x_reg + CHAR_WIDTH_X - 1, pos_y_reg - 1, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
             ob_detect_below = 1'b0;
         end
     end
@@ -457,15 +461,11 @@ end
 // |                     |
 // |                     |
 // -----------------------
-wire [CHAR_WIDTH_X-1:0] col_detect;
-wire [MAX_VEL+1:0] row_detect;
+wire [MAX_VEL+1:0] row_detect; // 1 for no collision, 0 for collision
 wire row_detect_below; // for a block below the character
 
 genvar i;
 generate
-    for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-        assign col_detect[i] = (i + pos_x_reg < LEFT_WALL && i + pos_x_reg >= RIGHT_WALL + WALL_WIDTH) && ob_detect_col[i];
-    end
     for (i = 0; i <= MAX_VEL+1; i = i + 1) begin
         assign row_detect[i] = (i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH) && ob_detect_row[i];
     end
@@ -496,7 +496,7 @@ wire signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] impact_pos_result;
 assign impact_pos_result = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
 assign out_dis_to_ob = impact_pos_result[SIGNED_PHY_WIDTH-1:0];
 assign out_row_detect = {1'b0, |row_detect};
-assign out_col_detect = {1'b0, |col_detect};
+assign out_ob_detect = {1'b0, ob_detect};
 
 function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
@@ -550,29 +550,34 @@ endfunction
 function automatic [1:0] detect_collision;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg_d;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg_d;
     integer i;
 
-    reg row_detection; // 0: no detect, 1: detect once, 2: detect twice
-    reg col_detection; // 0: no detect, 1: detect once, 2: detect twice
+    reg detection; // 0: no detect, 1: detect once, 2: detect twice
     begin
-        row_detection = 0;
-        col_detection = 0;
+        detection = (pos_x_reg < RIGHT_WALL + WALL_WIDTH) || (pos_x_reg + CHAR_WIDTH_X - 1 >= LEFT_WALL);
         for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
             if (!row_detect[i]) begin
-                row_detection = 1;
+                detection = 1;
             end
         end
 
-        for (i = 0; i < CHAR_WIDTH_X; i = i + 1) begin
-            if (!col_detect[i]) begin
-                col_detection = 1;
+        if (detection == 1) begin
+            if (ob_detect == OBSTACLE_NUM) begin // collide with wall
+                if (pos_y_reg < BOTTOM_WALL + WALL_WIDTH) begin
+                    detect_collision = 1;
+                end else begin
+                    detect_collision = 2;
+                end
+            end else begin // collide with obstacle
+                if (pos_x_reg_d >= obstacle_signed_abs_pos_x[ob_detect*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] + obstacle_block_width[ob_detect*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH ||
+                    pos_x_reg_d + CHAR_WIDTH_X - 1 < obstacle_signed_abs_pos_x[ob_detect*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH]) begin
+                    detect_collision = 2; // horizontal collision
+                end else begin
+                    detect_collision = 1; // vertical collision
+                end
             end
-        end
-
-        if (row_detection == 1) begin
-            detect_collision = 1; // higher priority
-        end else if (col_detection == 1) begin
-            detect_collision = 2;
         end else begin
             detect_collision = 0;
         end

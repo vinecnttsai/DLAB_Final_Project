@@ -166,7 +166,7 @@ module top(
     ) block_gen_inst(
         .sys_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
-        .abs_char_y(out_pos_y[PHY_WIDTH - 1:0]),
+        .abs_char_y(out_pos_y),
         .camera_y(camera_y),
         .plat_relative_x(obstacle_relative_pos_x),
         .plat_relative_y(obstacle_relative_pos_y),
@@ -193,7 +193,8 @@ module top(
     wire [2:0] out_collision_type;
     wire [1:0] out_fall_to_ground, out_on_ground;
     wire [SIGNED_PHY_WIDTH-1:0] out_dis_to_ob;
-    wire [1:0] out_row_detect, out_col_detect;
+    wire [1:0] out_row_detect;
+    wire [$clog2(OBSTACLE_NUM+2):0] out_ob_detect;
     wire out_left_btn_posedge, out_right_btn_posedge, out_jump_btn_posedge;
     wire [1:0] out_face;
     wire [3:0] out_print_state; // TODO: print character state
@@ -243,7 +244,7 @@ module top(
         .out_on_ground(out_on_ground),
         .out_dis_to_ob(out_dis_to_ob),
         .out_row_detect(out_row_detect),
-        .out_col_detect(out_col_detect),
+        .out_ob_detect(out_ob_detect),
         .out_left_btn_posedge(out_left_btn_posedge),
         .out_right_btn_posedge(out_right_btn_posedge),
         .out_jump_btn_posedge(out_jump_btn_posedge)
@@ -333,7 +334,7 @@ wire [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_sig;
     //-----------------debug signal-----------------
     pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_17( .seq(out_dis_to_ob), .padded_seq(debug_padded_sig[16]) );
     pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_18( .seq(out_row_detect), .padded_seq(debug_padded_sig[17]) );
-    pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_19( .seq(out_col_detect), .padded_seq(debug_padded_sig[18]) );
+    pad_sign #(.seq_len($clog2(OBSTACLE_NUM+2) + 1), .SEQ_LEN(SEQ_LEN)) pad_19( .seq(out_ob_detect), .padded_seq(debug_padded_sig[18]) );
     pad_sign #(.seq_len(5 + 1), .SEQ_LEN(SEQ_LEN)) pad_20( .seq({1'b0, camera_y}), .padded_seq(debug_padded_sig[19]) );
     
     

@@ -107,21 +107,21 @@ module pixel_gen #(
     endgenerate
     //----------------------------------------------------------------------------------------
 
-    //-----------------------------Map Relative Position Signals-----------------------------
+    //-----------------------------Map ROM Position Signals-----------------------------
     wire [PHY_WIDTH-1:0] map_y;
     wire [PHY_WIDTH-1:0] map_x;
     assign map_y = y + camera_offset - MAP_Y_OFFSET;
     assign map_x = x - MAP_X_OFFSET;
     //----------------------------------------------------------------------------------------
 
-    //-----------------------------Character Relative Position Signals-----------------------------
+    //-----------------------------Character ROM Position Signals-----------------------------
     wire [PHY_WIDTH - 1:0] char_y_rom;
     wire [PHY_WIDTH - 1:0] char_x_rom;
     assign char_y_rom = y + camera_offset - char_abs_y;
     assign char_x_rom = x - char_abs_x;
     //----------------------------------------------------------------------------------------
 
-    //-----------------------------Obstacle Relative Position Signals-----------------------------
+    //-----------------------------Obstacle ROM Position Signals-----------------------------
     wire [PHY_WIDTH - 1:0] obstacle_y_rom [OBSTACLE_NUM - 1:0];
     wire [PHY_WIDTH - 1:0] obstacle_x_rom [OBSTACLE_NUM - 1:0];
     genvar l;
@@ -145,7 +145,7 @@ module pixel_gen #(
     genvar m;
     generate
         for(m = 0; m < OBSTACLE_NUM; m = m + 1) begin: ob_on
-            assign obstacle_on[m] = ((x >= obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH]) && (x < obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH] + obstacle_block_width[m*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH) && (y >= obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH]) && (y < obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] + OBSTACLE_WIDTH));
+            assign obstacle_on[m] = ((x >= obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH]) && (x < obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH] + obstacle_block_width[m*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH) && (y >= obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] - camera_offset) && (y < obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] + OBSTACLE_WIDTH - camera_offset));
         end
     endgenerate
     //----------------------------------------------------------------------------------------

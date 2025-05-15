@@ -16,8 +16,8 @@ module pixel_gen #(
     parameter MAP_X_OFFSET = 120, // start position of map (640 - 480) / 2
     parameter MAP_Y_OFFSET = 0,
     //-----------Character parameters-----------
-    parameter CHAR_WIDTH_X = 32, // width of character
-    parameter CHAR_WIDTH_Y = 32, // height of character
+    parameter CHAR_WIDTH_X = 40, // width of character
+    parameter CHAR_WIDTH_Y = 40, // height of character
     //-----------Obstacle parameters-----------
     parameter OBSTACLE_NUM = 10,
     parameter OBSTACLE_WIDTH = 10,
@@ -159,7 +159,7 @@ module pixel_gen #(
             if(debug_seq_on[0]) begin
                 rgb = debug_seq[0 * UNIT_SEQ_WIDTH + (debug_seq_y[0] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(char_on) begin
-                rgb = BLACK; //char_rgb, remember to change back
+                rgb = char_rgb; //char_rgb, remember to change back
             end else if(|obstacle_on) begin // not all blank
                 rgb = BLACK;
             end else if(map_on) begin

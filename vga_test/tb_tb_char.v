@@ -36,7 +36,7 @@ block_gen  #() uut2
 (
     .sys_clk(sys_clk),
     .sys_rst_n(sys_rst_n),
-    .abs_char_y(out_pos_y[14-1:0]),
+    .abs_char_y(out_pos_y),
     .camera_y(camera_y),
     .plat_relative_x(obstacle_relative_pos_x),
     .plat_relative_y(obstacle_relative_pos_y),
@@ -60,9 +60,12 @@ initial begin
 
     #3 sys_rst_n = 0;
     #3 sys_rst_n = 1;
+    
+    #100 left_btn = 1;
+    #10000 left_btn = 0;
 
-    #1000 jump_btn = 1;
-    #1000 jump_btn = 0;
+   #1000 jump_btn = 1;
+   #1000 jump_btn = 0;
 
     #2000 right_btn = 1;
     #10 right_btn = 0;
