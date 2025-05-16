@@ -65,7 +65,7 @@ initial begin
     #10000 left_btn = 0;
 
    #1000 jump_btn = 1;
-   #1000 jump_btn = 0;
+   #20000 jump_btn = 0;
 
     #2000 right_btn = 1;
     #10 right_btn = 0;

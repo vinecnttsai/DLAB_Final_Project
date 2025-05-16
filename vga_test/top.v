@@ -11,12 +11,6 @@ module top(
     output [11:0] rgb
     );
     
-//-----------------------------------VGA signals-----------------------------------
-    wire [9:0] w_x, w_y;
-    wire w_p_tick, w_video_on;
-    reg [11:0] rgb_reg;
-    wire [11:0] rgb_next;
-//-----------------------------------VGA signals-----------------------------------
 
 //-----------------------------------localparam-----------------------------------
 
@@ -47,8 +41,8 @@ module top(
 
     //-----------Screen parameters-----------
     localparam SCREEN_WIDTH = 10;
-    localparam SMOOTH_FACTOR = 50;
-    localparam SCREEN_N = 10000000 / SMOOTH_FACTOR;
+    localparam SMOOTH_FACTOR = 7; // Max = 7
+    localparam SCREEN_N = 25600000 >>> (SMOOTH_FACTOR >>> 1);
     //-----------Screen parameters-----------
 
     //-----------Physical parameters-----------
@@ -64,6 +58,51 @@ module top(
     //-----------Obstacle parameters-----------
 
 //-----------------------------------localparam-----------------------------------
+
+//-----------------------------------Signal-----------------------------------
+
+//--------------VGA signals----------------
+    wire [9:0] w_x, w_y;
+    wire w_p_tick, w_video_on;
+    reg [11:0] rgb_reg;
+    wire [11:0] rgb_next;
+//--------------VGA signals----------------
+
+//-----------------Button debug signals----------------
+    wire left_btn_posedge, right_btn_posedge, jump_btn_posedge;
+    wire debounced_left_btn, debounced_right_btn, debounced_jump_btn;
+    reg debounced_left_btn_d, debounced_right_btn_d, debounced_jump_btn_d;
+    reg [SEQ_LEN - 1:0] left_btn_cnt, right_btn_cnt, jump_btn_cnt;
+//-----------------Button debug signals----------------
+
+//---------------Character signals----------------
+    wire [SIGNED_PHY_WIDTH-1:0] out_pos_x, out_pos_y, out_vel_x, out_vel_y, out_acc_x, out_acc_y;
+    wire [7:0] out_jump_cnt;
+    wire [3:0] out_state;
+    wire [2:0] out_collision_type;
+    wire [1:0] out_fall_to_ground, out_on_ground;
+    wire [SIGNED_PHY_WIDTH-1:0] out_dis_to_ob;
+    wire [1:0] out_row_detect;
+    wire [$clog2(OBSTACLE_NUM+2):0] out_ob_detect;
+    wire out_left_btn_posedge, out_right_btn_posedge, out_jump_btn_posedge;
+    wire [1:0] out_face;
+    wire [3:0] out_print_state; // TODO: print character state
+//---------------Character signals----------------
+
+//--------------Obstacle signals----------------
+    wire signed [OBSTACLE_NUM * PHY_WIDTH - 1:0] obstacle_abs_pos_x, obstacle_abs_pos_y;
+    wire [OBSTACLE_NUM * PHY_WIDTH - 1:0] obstacle_relative_pos_x, obstacle_relative_pos_y;
+    wire [OBSTACLE_NUM * BLOCK_LEN_WIDTH - 1:0] obstacle_block_width;
+    wire [4:0] camera_y;
+//--------------Obstacle signals----------------
+
+//--------------Debug Sequence signals----------------
+    wire [SEQ_LEN - 1:0] debug_padded_sig [SEQ_NUM - 1:0];
+    wire [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_sig;
+//--------------Debug Sequence signals----------------
+
+
+//-----------------------------------Signal-----------------------------------
 
 
 //-----------------------------------Sequence debug-----------------------------------
@@ -87,10 +126,6 @@ module top(
 
 
 //-----------------------------------Button debug-----------------------------------
-    wire left_btn_posedge, right_btn_posedge, jump_btn_posedge;
-    wire debounced_left_btn, debounced_right_btn, debounced_jump_btn;
-    reg debounced_left_btn_d, debounced_right_btn_d, debounced_jump_btn_d;
-    reg [SEQ_LEN - 1:0] left_btn_cnt, right_btn_cnt, jump_btn_cnt;
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if (!sys_rst_n) begin
             debounced_left_btn_d <= 0;
@@ -152,11 +187,7 @@ module top(
     );
 //-----------------------------------Button debug-----------------------------------
 
-//-----------------------------------Obstacle-----------------------------------
-    wire signed [OBSTACLE_NUM * PHY_WIDTH - 1:0] obstacle_abs_pos_x, obstacle_abs_pos_y;
-    wire [OBSTACLE_NUM * PHY_WIDTH - 1:0] obstacle_relative_pos_x, obstacle_relative_pos_y;
-    wire [OBSTACLE_NUM * BLOCK_LEN_WIDTH - 1:0] obstacle_block_width;
-    wire [4:0] camera_y;
+//-----------------------------------Block generator-----------------------------------
     block_gen #(
         .PHY_WIDTH(PHY_WIDTH),
         .BLOCK_WIDTH(BLOCK_WIDTH),
@@ -185,21 +216,10 @@ module top(
             assign obstacle_abs_pos_y[k*PHY_WIDTH +: PHY_WIDTH] = obstacle_relative_pos_y[k*PHY_WIDTH +: PHY_WIDTH] + camera_y * BLOCK_WIDTH + MAP_Y_OFFSET;
         end
     endgenerate
+//-----------------------------------Block generator-----------------------------------
 
-//-----------------------------------Obstacle-----------------------------------
 
 //-----------------------------------Character-----------------------------------
-    wire [SIGNED_PHY_WIDTH-1:0] out_pos_x, out_pos_y, out_vel_x, out_vel_y, out_acc_x, out_acc_y;
-    wire [7:0] out_jump_cnt;
-    wire [3:0] out_state;
-    wire [2:0] out_collision_type;
-    wire [1:0] out_fall_to_ground, out_on_ground;
-    wire [SIGNED_PHY_WIDTH-1:0] out_dis_to_ob;
-    wire [1:0] out_row_detect;
-    wire [$clog2(OBSTACLE_NUM+2):0] out_ob_detect;
-    wire out_left_btn_posedge, out_right_btn_posedge, out_jump_btn_posedge;
-    wire [1:0] out_face;
-    wire [3:0] out_print_state; // TODO: print character state
     // TODO: add debug signal : out_print_state, current block type, current camera y
     // TODO: check obstacle collision logic
     // Note: clock condition has changed
@@ -313,8 +333,6 @@ module top(
 
 
 //-----------------------------------Debug variables-----------------------------------
-wire [SEQ_LEN - 1:0] debug_padded_sig [SEQ_NUM - 1:0];
-wire [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_sig;
 
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_1 ( .seq(cnt), .padded_seq(debug_padded_sig[0]) );
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_2 ( .seq(left_btn_cnt), .padded_seq(debug_padded_sig[1]) );

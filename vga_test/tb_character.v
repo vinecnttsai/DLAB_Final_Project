@@ -8,7 +8,7 @@ module tb_character #(
     parameter PHY_WIDTH = 14,
     parameter PIXEL_WIDTH = 12,
     parameter SIGNED_PHY_WIDTH = PHY_WIDTH + 1,
-    parameter SMOOTH_FACTOR = 50,
+    parameter SMOOTH_FACTOR = 7, // represent the power of 2, Max = 7
     //-----------Map Parameters-----------
     parameter WALL_WIDTH = 10,
     parameter MAP_WIDTH_X = 480,
@@ -58,32 +58,6 @@ module tb_character #(
     output [1:0] out_row_detect,
     output [$clog2(OBSTACLE_NUM+2):0] out_ob_detect
 );
-// output wire
-assign out_pos_x = pos_x_reg;
-assign out_pos_y = pos_y_reg;
-assign out_vel_x = vel_x_reg;
-assign out_vel_y = vel_y_reg;
-assign out_acc_x = acc_x_reg;
-assign out_acc_y = acc_y_reg;
-assign out_face = face;
-assign out_jump_cnt = {1'b0, jump_cnt};
-assign out_state = {1'b0, state};
-assign out_collision_type = {1'b0, collision_type};
-assign out_fall_to_ground = {1'b0, fall_to_ground};
-assign out_on_ground = {1'b0, on_ground};
-assign out_left_btn_posedge = left_btn_posedge;
-assign out_right_btn_posedge = right_btn_posedge;
-assign out_jump_btn_posedge = jump_btn_posedge;
-
-reg character_clk_d;
-
-always @(posedge sys_clk or negedge sys_rst_n) begin
-    if (!sys_rst_n) begin
-        character_clk_d <= 0;
-    end else begin
-        character_clk_d <= character_clk;
-    end
-end
 
 
 // FSM variables
@@ -91,13 +65,15 @@ localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION 
 reg [2:0] state, next_state;
 
 // physics simulation
-localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_VEL = (WALL_WIDTH + CHAR_WIDTH_Y - 2) * SMOOTH_FACTOR; // assure that the character can not pass the wall without being detected
-localparam signed [SIGNED_PHY_WIDTH-1:0] GRAVITY = -SMOOTH_FACTOR;
-localparam signed [SIGNED_PHY_WIDTH-1:0] POSITIVE = SMOOTH_FACTOR;
+// SMOOTH_FACTOR Maximum is 7
+localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_VEL = $signed((WALL_WIDTH + CHAR_WIDTH_Y - 2) <<< SMOOTH_FACTOR); // assure that the character can not pass the wall without being detected
+localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_DISPLACEMENT = (WALL_WIDTH + CHAR_WIDTH_Y - 2);
+localparam signed [SIGNED_PHY_WIDTH-1:0] GRAVITY = -(1 <<< SMOOTH_FACTOR);
+localparam signed [SIGNED_PHY_WIDTH-1:0] POSITIVE = 1 <<< SMOOTH_FACTOR;
 localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_POS_X = 3;
 localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_POS_X = -3;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 4 * SMOOTH_FACTOR;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 8 * SMOOTH_FACTOR;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 2 <<< SMOOTH_FACTOR;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 5 <<< SMOOTH_FACTOR;
 localparam signed [SIGNED_PHY_WIDTH-1:0] FALLING_VEL_THRESHOLD = -MAX_VEL / 3;
 
 reg signed [SIGNED_PHY_WIDTH-1:0] acc_x_reg, acc_y_reg; // SIGNED_PHY_WIDTH-bit signed integer
@@ -129,6 +105,40 @@ reg fall_to_ground_next;
 reg on_ground;
 reg on_ground_next;
 
+// button edge detection
+wire left_btn_posedge, right_btn_posedge, jump_btn_posedge;
+reg left_btn_d, right_btn_d, jump_btn_d;
+reg jump_btn_posedge_flag;
+
+
+// output wire
+assign out_pos_x = pos_x_reg;
+assign out_pos_y = pos_y_reg;
+assign out_vel_x = vel_x_reg;
+assign out_vel_y = vel_y_reg;
+assign out_acc_x = acc_x_reg;
+assign out_acc_y = acc_y_reg;
+assign out_face = face;
+assign out_jump_cnt = {1'b0, jump_cnt};
+assign out_state = {1'b0, state};
+assign out_collision_type = {1'b0, collision_type};
+assign out_fall_to_ground = {1'b0, fall_to_ground};
+assign out_on_ground = {1'b0, on_ground};
+assign out_left_btn_posedge = left_btn_posedge;
+assign out_right_btn_posedge = right_btn_posedge;
+assign out_jump_btn_posedge = jump_btn_posedge;
+
+reg character_clk_d;
+
+always @(posedge sys_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n) begin
+        character_clk_d <= 0;
+    end else begin
+        character_clk_d <= character_clk;
+    end
+end
+
+//--------------------------------------Collision detection-----------------------------------------
 always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         collision_type <= 0;
@@ -145,14 +155,11 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         on_ground <= on_ground_next;
     end
 end
+//--------------------------------------Collision detection-----------------------------------------
 
 
 
-// button edge detection
-wire left_btn_posedge, right_btn_posedge, jump_btn_posedge;
-reg left_btn_d, right_btn_d, jump_btn_d;
-reg jump_btn_posedge_flag;
-
+//--------------------------------------Button signals-----------------------------------------
 always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         left_btn_d <= 0;
@@ -167,7 +174,7 @@ end
 always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
         jump_btn_posedge_flag <= 0;
-    end else if (jump_btn_posedge) begin
+    end else if (jump_btn_posedge && on_ground) begin
         jump_btn_posedge_flag <= 1;
     end else if (state == JUMP) begin
         jump_btn_posedge_flag <= 0;
@@ -176,6 +183,7 @@ end
 assign left_btn_posedge = ~left_btn_d && left_btn;
 assign right_btn_posedge = ~right_btn_d && right_btn;
 assign jump_btn_posedge = ~jump_btn_d && jump_btn;
+//--------------------------------------Button signals-----------------------------------------
 
 
 //-----------------------------------------FSM-----------------------------------------
@@ -245,13 +253,13 @@ end
 
 always @(*) begin
     if (jump_cnt <= MAX_CHARGE / 4) begin
-        jump_factor = MAX_VEL / 4;
+        jump_factor = $signed(MAX_VEL) >>> 4;
     end else if (jump_cnt <= MAX_CHARGE * 2 / 4) begin
-        jump_factor = (2 * MAX_VEL) / 4;
+        jump_factor = $signed(MAX_VEL) >>> 3;
     end else if (jump_cnt <= MAX_CHARGE * 3 / 4) begin
-        jump_factor = (3 * MAX_VEL) / 4;
+        jump_factor = $signed(MAX_VEL) >>> 2;
     end else begin
-        jump_factor = MAX_VEL;
+        jump_factor = $signed(MAX_VEL) >>> 1;
     end
 end
 
@@ -376,8 +384,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         pos_x_reg <= INITIAL_POS_X;
         pos_y_reg <= INITIAL_POS_Y;
     end else if (character_clk_d) begin
-        pos_x_reg <= pos_x_next + (vel_x_next / SMOOTH_FACTOR);
-        pos_y_reg <= pos_y_next + (vel_y_next / SMOOTH_FACTOR);
+        pos_x_reg <= pos_x_next + ($signed(vel_x_next) >>> SMOOTH_FACTOR);
+        pos_y_reg <= pos_y_next + ($signed(vel_y_next) >>> SMOOTH_FACTOR);
     end
 end
 
@@ -416,18 +424,18 @@ function automatic in_obstacle;
         in_obstacle = (pos_x >= obstacle_x &&
             pos_x < obstacle_x + obstacle_len * OBSTACLE_WIDTH &&
             pos_y >= obstacle_y && 
-            pos_y < obstacle_y + (obstacle_len / 4) * OBSTACLE_WIDTH);
+            pos_y < obstacle_y + OBSTACLE_WIDTH);
     end
 endfunction
 
-reg [MAX_VEL+1:0] ob_detect_row;
+reg [MAX_DISPLACEMENT+1:0] ob_detect_row;
 reg [$clog2(OBSTACLE_NUM+2)-1:0] ob_detect; // default value == OBSTACLE_NUM
 reg ob_detect_below;
 integer a, b;
 
 always @(*) begin
     ob_detect = OBSTACLE_NUM;
-    for (a = 0; a <= MAX_VEL + 1; a = a + 1) begin
+    for (a = 0; a <= MAX_DISPLACEMENT + 1; a = a + 1) begin
         ob_detect_row[a] = 1'b1;
         for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
             if (in_obstacle(pos_x_reg, pos_y_reg + a, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]) ||
@@ -462,12 +470,12 @@ end
 // |                     |
 // |                     |
 // -----------------------
-wire [MAX_VEL+1:0] row_detect; // 1 for no collision, 0 for collision
+wire [MAX_DISPLACEMENT+1:0] row_detect; // 1 for no collision, 0 for collision
 wire row_detect_below; // for a block below the character
 
 genvar i;
 generate
-    for (i = 0; i <= MAX_VEL+1; i = i + 1) begin
+    for (i = 0; i <= MAX_DISPLACEMENT+1; i = i + 1) begin
         assign row_detect[i] = (i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH) && ob_detect_row[i];
     end
 endgenerate
@@ -511,13 +519,13 @@ function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos
     begin
         distance_to_nearest_ob = 0;
         if (row_detect[0]) begin // if the bottom of the character is not fully in the wall
-            for (i = 1; i <= MAX_VEL+1; i = i + 1) begin
+            for (i = 1; i <= MAX_DISPLACEMENT+1; i = i + 1) begin
                 if (!row_detect[i] && distance_to_nearest_ob == 0) begin
                     distance_to_nearest_ob = i + WALL_WIDTH;
                 end
             end
         end else begin // if the bottom of the character is fully in the wall
-            for (i = 1; i <= MAX_VEL+1; i = i + 1) begin
+            for (i = 1; i <= MAX_DISPLACEMENT+1; i = i + 1) begin
                 if (row_detect[i] && distance_to_nearest_ob == 0) begin
                     distance_to_nearest_ob = i;
                 end
