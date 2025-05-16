@@ -74,6 +74,10 @@ localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_POS_X = 3;
 localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_POS_X = -3;
 localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 2 <<< SMOOTH_FACTOR;
 localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 5 <<< SMOOTH_FACTOR;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_ACC_5 = $signed(MAX_VEL) >>> 5;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_ACC_4 = $signed(MAX_VEL) >>> 4;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_ACC_3 = $signed(MAX_VEL) >>> 3;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_ACC_2 = $signed(MAX_VEL) >>> 2;
 localparam signed [SIGNED_PHY_WIDTH-1:0] FALLING_VEL_THRESHOLD = -MAX_VEL / 3;
 
 reg signed [SIGNED_PHY_WIDTH-1:0] acc_x_reg, acc_y_reg; // SIGNED_PHY_WIDTH-bit signed integer
@@ -253,13 +257,13 @@ end
 
 always @(*) begin
     if (jump_cnt <= MAX_CHARGE / 4) begin
-        jump_factor = $signed(MAX_VEL) >>> 4;
+        jump_factor = JUMP_VEL_ACC_4;
     end else if (jump_cnt <= MAX_CHARGE * 2 / 4) begin
-        jump_factor = $signed(MAX_VEL) >>> 3;
+        jump_factor = JUMP_VEL_ACC_4 + JUMP_VEL_ACC_5;
     end else if (jump_cnt <= MAX_CHARGE * 3 / 4) begin
-        jump_factor = $signed(MAX_VEL) >>> 2;
+        jump_factor = JUMP_VEL_ACC_3 + JUMP_VEL_ACC_4;
     end else begin
-        jump_factor = $signed(MAX_VEL) >>> 1;
+        jump_factor = JUMP_VEL_ACC_2 + JUMP_VEL_ACC_4;
     end
 end
 
@@ -298,7 +302,7 @@ always @(*) begin
         vel_x = -2 * vel_x_reg;
         vel_y = 0;
     end else if (state == JUMP) begin
-        vel_x = (JUMP_VEL_X + jump_factor) * face;
+        vel_x = (JUMP_VEL_X + $signed(jump_factor) >>> 1) * face;
         vel_y = (JUMP_VEL_Y + jump_factor);
     end else begin
         vel_x = 0;
