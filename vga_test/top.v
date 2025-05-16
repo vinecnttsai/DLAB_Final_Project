@@ -47,6 +47,8 @@ module top(
 
     //-----------Screen parameters-----------
     localparam SCREEN_WIDTH = 10;
+    localparam SMOOTH_FACTOR = 50;
+    localparam SCREEN_N = 10000000 / SMOOTH_FACTOR;
     //-----------Screen parameters-----------
 
     //-----------Physical parameters-----------
@@ -76,7 +78,7 @@ module top(
         end
     end
 
-    fq_div #(.N(10000000)) fq_div1( // slowest clock : 100000000
+    fq_div #(.N(SCREEN_N)) fq_div1( // slowest clock : 100000000
         .org_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .div_n_clk(debug_char_clk)
@@ -204,6 +206,7 @@ module top(
     // Note: paramter, signal must be connected, check twice
     // Note: check all screen_width, phy_width
     tb_character #( 
+        .SMOOTH_FACTOR(SMOOTH_FACTOR),
         .PHY_WIDTH(PHY_WIDTH),
         .SIGNED_PHY_WIDTH(SIGNED_PHY_WIDTH),
         .PIXEL_WIDTH(PIXEL_WIDTH),

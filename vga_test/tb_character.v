@@ -8,6 +8,7 @@ module tb_character #(
     parameter PHY_WIDTH = 14,
     parameter PIXEL_WIDTH = 12,
     parameter SIGNED_PHY_WIDTH = PHY_WIDTH + 1,
+    parameter SMOOTH_FACTOR = 50,
     //-----------Map Parameters-----------
     parameter WALL_WIDTH = 10,
     parameter MAP_WIDTH_X = 480,
@@ -90,13 +91,13 @@ localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION 
 reg [2:0] state, next_state;
 
 // physics simulation
-localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_VEL = WALL_WIDTH + CHAR_WIDTH_Y - 2; // assure that the character can not pass the wall without being detected
-localparam signed [SIGNED_PHY_WIDTH-1:0] GRAVITY = -1;
-localparam signed [SIGNED_PHY_WIDTH-1:0] POSITIVE = 1;
-localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_VEL_X = 1;
-localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_VEL_X = -1;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 4;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 8;
+localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_VEL = (WALL_WIDTH + CHAR_WIDTH_Y - 2) * SMOOTH_FACTOR; // assure that the character can not pass the wall without being detected
+localparam signed [SIGNED_PHY_WIDTH-1:0] GRAVITY = -SMOOTH_FACTOR;
+localparam signed [SIGNED_PHY_WIDTH-1:0] POSITIVE = SMOOTH_FACTOR;
+localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_POS_X = 3;
+localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_POS_X = -3;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 4 * SMOOTH_FACTOR;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 8 * SMOOTH_FACTOR;
 localparam signed [SIGNED_PHY_WIDTH-1:0] FALLING_VEL_THRESHOLD = -MAX_VEL / 3;
 
 reg signed [SIGNED_PHY_WIDTH-1:0] acc_x_reg, acc_y_reg; // SIGNED_PHY_WIDTH-bit signed integer
@@ -117,7 +118,7 @@ reg signed [1:0] face;
 localparam MAX_CHARGE = 100;
 localparam JUMP_INCREMENT = 10;
 reg [6:0] jump_cnt;
-reg signed [3:0] jump_factor;
+reg signed [SIGNED_PHY_WIDTH-1:0] jump_factor;
 wire max_charge;
 
 // collision signal
@@ -244,13 +245,13 @@ end
 
 always @(*) begin
     if (jump_cnt <= MAX_CHARGE / 4) begin
-        jump_factor = 1;
+        jump_factor = MAX_VEL / 4;
     end else if (jump_cnt <= MAX_CHARGE * 2 / 4) begin
-        jump_factor = 2;
+        jump_factor = (2 * MAX_VEL) / 4;
     end else if (jump_cnt <= MAX_CHARGE * 3 / 4) begin
-        jump_factor = 3;
+        jump_factor = (3 * MAX_VEL) / 4;
     end else begin
-        jump_factor = 4;
+        jump_factor = MAX_VEL;
     end
 end
 
@@ -289,8 +290,8 @@ always @(*) begin
         vel_x = -2 * vel_x_reg;
         vel_y = 0;
     end else if (state == JUMP) begin
-        vel_x = JUMP_VEL_X * jump_factor * face;
-        vel_y = JUMP_VEL_Y * jump_factor;
+        vel_x = (JUMP_VEL_X + jump_factor) * face;
+        vel_y = (JUMP_VEL_Y + jump_factor);
     end else begin
         vel_x = 0;
         vel_y = 0;
@@ -301,10 +302,10 @@ always @(*) begin
     if (fall_to_ground) begin
         {pos_x, pos_y} = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
     end else if (state == LEFT) begin
-        pos_x = LEFT_VEL_X;
+        pos_x = LEFT_POS_X;
         pos_y = 0;
     end else if (state == RIGHT) begin
-        pos_x = RIGHT_VEL_X;
+        pos_x = RIGHT_POS_X;
         pos_y = 0;
     end else begin
         pos_x = 0;
@@ -375,8 +376,8 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         pos_x_reg <= INITIAL_POS_X;
         pos_y_reg <= INITIAL_POS_Y;
     end else if (character_clk_d) begin
-        pos_x_reg <= pos_x_next + vel_x_next;
-        pos_y_reg <= pos_y_next + vel_y_next;
+        pos_x_reg <= pos_x_next + (vel_x_next / SMOOTH_FACTOR);
+        pos_y_reg <= pos_y_next + (vel_y_next / SMOOTH_FACTOR);
     end
 end
 
@@ -415,7 +416,7 @@ function automatic in_obstacle;
         in_obstacle = (pos_x >= obstacle_x &&
             pos_x < obstacle_x + obstacle_len * OBSTACLE_WIDTH &&
             pos_y >= obstacle_y && 
-            pos_y < obstacle_y + OBSTACLE_WIDTH);
+            pos_y < obstacle_y + (obstacle_len / 4) * OBSTACLE_WIDTH);
     end
 endfunction
 
