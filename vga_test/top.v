@@ -17,7 +17,7 @@ module top(
     //-----------Sequence debug parameters-----------
     localparam SEQ_LEN = 16;
     localparam SEQ_DIGITS = SEQ_LEN / 4 + 1; // 1 for sign digit
-    localparam SEQ_NUM = 20;
+    localparam SEQ_NUM = 22;
     localparam FONT_WIDTH = 8;
     localparam UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH;
     //-----------Sequence debug parameters-----------
@@ -83,10 +83,12 @@ module top(
     wire [1:0] out_fall_to_ground, out_on_ground;
     wire [SIGNED_PHY_WIDTH-1:0] out_dis_to_ob;
     wire [1:0] out_row_detect;
-    wire [$clog2(OBSTACLE_NUM+2):0] out_ob_detect;
+    wire [$clog2(OBSTACLE_NUM+5):0] out_ob_detect;
     wire out_left_btn_posedge, out_right_btn_posedge, out_jump_btn_posedge;
     wire [1:0] out_face;
     wire [3:0] out_print_state; // TODO: print character state
+    wire [1:0] out_is_hold;
+    wire [1:0] out_hold;
 //---------------Character signals----------------
 
 //--------------Obstacle signals----------------
@@ -355,8 +357,10 @@ module top(
     //-----------------debug signal-----------------
     pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_17( .seq(out_dis_to_ob), .padded_seq(debug_padded_sig[16]) );
     pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_18( .seq(out_row_detect), .padded_seq(debug_padded_sig[17]) );
-    pad_sign #(.seq_len($clog2(OBSTACLE_NUM+2) + 1), .SEQ_LEN(SEQ_LEN)) pad_19( .seq(out_ob_detect), .padded_seq(debug_padded_sig[18]) );
+    pad_sign #(.seq_len($clog2(OBSTACLE_NUM+5) + 1), .SEQ_LEN(SEQ_LEN)) pad_19( .seq(out_ob_detect), .padded_seq(debug_padded_sig[18]) );
     pad_sign #(.seq_len(5 + 1), .SEQ_LEN(SEQ_LEN)) pad_20( .seq({1'b0, camera_y}), .padded_seq(debug_padded_sig[19]) );
+    pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_21( .seq(out_is_hold), .padded_seq(debug_padded_sig[20]) );
+    pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_22( .seq(out_hold), .padded_seq(debug_padded_sig[21]) );
     
     
     // state : IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, FALL_TO_GROUND = 6;

@@ -196,6 +196,10 @@ module pixel_gen #(
                 rgb = debug_seq[18 * UNIT_SEQ_WIDTH + (debug_seq_y[18] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(debug_seq_on[19]) begin
                 rgb = debug_seq[19 * UNIT_SEQ_WIDTH + (debug_seq_y[19] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[20]) begin
+                rgb = debug_seq[20 * UNIT_SEQ_WIDTH + (debug_seq_y[20] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[21]) begin
+                rgb = debug_seq[21 * UNIT_SEQ_WIDTH + (debug_seq_y[21] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(char_on) begin
                 rgb = 12'h000; //char_rgb, remember to change back
             end else if(|obstacle_on) begin // not all blank

@@ -14,7 +14,12 @@ wire [15-1:0] out_pos_y;
 wire character_clk;
 wire [4:0] camera_y;
 
-tb_character #() uut1
+tb_character #(
+    .INIT_POS_X(286),
+    .INIT_POS_Y(682),
+    .INIT_VEL_X(-1984),
+    .INIT_VEL_Y(-256)
+) uut1
 (
     .sys_clk(sys_clk),
     .character_clk(character_clk),
@@ -61,9 +66,9 @@ initial begin
     #3 sys_rst_n = 0;
     #3 sys_rst_n = 1;
     
-    #100 left_btn = 1;
-    #10000 left_btn = 0;
-
+    //#100 left_btn = 1;
+    //#10000 left_btn = 0;
+    #10000;
    #1000 jump_btn = 1;
    #20000 jump_btn = 0;
 

@@ -22,8 +22,10 @@ module tb_character #(
     //-----------Character Parameters-----
     parameter CHAR_WIDTH_X = 32,
     parameter CHAR_WIDTH_Y = 32,
-    parameter INITIAL_POS_X = MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
-    parameter INITIAL_POS_Y = MAP_Y_OFFSET + WALL_WIDTH * 2,
+    parameter signed INITIAL_POS_X = 286,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
+    parameter signed INITIAL_POS_Y = 682,//MAP_Y_OFFSET + WALL_WIDTH,
+    parameter signed INITIAL_VEL_X = -1984,
+    parameter signed INITIAL_VEL_Y = -256,
     //-----------Obstacle Parameters-----
     parameter OBSTACLE_NUM = 7,
     parameter OBSTACLE_WIDTH = 10,
@@ -56,12 +58,14 @@ module tb_character #(
     //debug
     output [SIGNED_PHY_WIDTH-1:0] out_dis_to_ob,
     output [1:0] out_row_detect,
-    output [$clog2(OBSTACLE_NUM+2):0] out_ob_detect
+    output [1:0] out_is_hold,
+    output [1:0] out_hold,
+    output [$clog2(OBSTACLE_NUM+5):0] out_ob_detect
 );
 
 
 // FSM variables
-localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, FALL_TO_GROUND = 6;
+localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, FALL_TO_GROUND = 6, HOLD = 7;
 reg [2:0] state, next_state;
 
 // physics simulation
@@ -74,10 +78,6 @@ localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_POS_X = 3;
 localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_POS_X = -3;
 localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 2 <<< SMOOTH_FACTOR;
 localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 5 <<< SMOOTH_FACTOR;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_ACC_5 = $signed(MAX_VEL) >>> 5;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_ACC_4 = $signed(MAX_VEL) >>> 4;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_ACC_3 = $signed(MAX_VEL) >>> 3;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_ACC_2 = $signed(MAX_VEL) >>> 2;
 localparam signed [SIGNED_PHY_WIDTH-1:0] FALLING_VEL_THRESHOLD = -MAX_VEL / 3;
 
 reg signed [SIGNED_PHY_WIDTH-1:0] acc_x_reg, acc_y_reg; // SIGNED_PHY_WIDTH-bit signed integer
@@ -95,8 +95,8 @@ reg signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg_d, pos_y_reg_d;
 reg signed [1:0] face;
 
 // jump cnt
-localparam MAX_CHARGE = 100;
-localparam JUMP_INCREMENT = 10;
+localparam [6:0]MAX_CHARGE = 100;
+localparam [6:0] JUMP_INCREMENT = 5;
 reg [6:0] jump_cnt;
 reg signed [SIGNED_PHY_WIDTH-1:0] jump_factor;
 wire max_charge;
@@ -114,6 +114,16 @@ wire left_btn_posedge, right_btn_posedge, jump_btn_posedge;
 reg left_btn_d, right_btn_d, jump_btn_d;
 reg jump_btn_posedge_flag;
 
+// collision detect
+wire [1:0] wall_detect;
+reg [MAX_DISPLACEMENT+1:0] ob_detect_row;
+reg [$clog2(OBSTACLE_NUM+5)-1:0] ob_id; // default value == OBSTACLE_NUM
+reg [$clog2(OBSTACLE_NUM+5)-1:0] collision_id; // default value == OBSTACLE_NUM
+reg ob_detect_below;
+
+// hold signal to wait for the object until being out of the obstacle
+reg [$clog2(OBSTACLE_NUM+5)-1:0] hold;
+wire is_hold;
 
 // output wire
 assign out_pos_x = pos_x_reg;
@@ -131,6 +141,8 @@ assign out_on_ground = {1'b0, on_ground};
 assign out_left_btn_posedge = left_btn_posedge;
 assign out_right_btn_posedge = right_btn_posedge;
 assign out_jump_btn_posedge = jump_btn_posedge;
+assign out_is_hold = {1'b0, is_hold};
+assign out_hold = {1'b0, hold};
 
 reg character_clk_d;
 
@@ -159,8 +171,19 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         on_ground <= on_ground_next;
     end
 end
+assign wall_detect = detect_wall(pos_x_reg, pos_y_reg);
 //--------------------------------------Collision detection-----------------------------------------
 
+//---------------------------------------Hold signal-----------------------------------------
+always @(posedge sys_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n) begin
+        hold <= OBSTACLE_NUM;
+    end else if (character_clk_d) begin
+        hold <= collision_id;
+    end
+end
+assign is_hold = (hold == collision_id) && (hold != OBSTACLE_NUM);
+//---------------------------------------Hold signal-----------------------------------------
 
 
 //--------------------------------------Button signals-----------------------------------------
@@ -200,7 +223,9 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    if (fall_to_ground) begin
+    if (is_hold) begin
+        next_state = HOLD;
+    end else if (fall_to_ground) begin
         next_state = FALL_TO_GROUND;
     end else if (collision_type > 0) begin
         next_state = COLLISION;
@@ -256,15 +281,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    if (jump_cnt <= MAX_CHARGE / 4) begin
-        jump_factor = JUMP_VEL_ACC_4;
-    end else if (jump_cnt <= MAX_CHARGE * 2 / 4) begin
-        jump_factor = JUMP_VEL_ACC_4 + JUMP_VEL_ACC_5;
-    end else if (jump_cnt <= MAX_CHARGE * 3 / 4) begin
-        jump_factor = JUMP_VEL_ACC_3 + JUMP_VEL_ACC_4;
-    end else begin
-        jump_factor = JUMP_VEL_ACC_2 + JUMP_VEL_ACC_4;
-    end
+    jump_factor = {3'b0, jump_cnt[6:4], 1'b1, 8'b0} + {6'b0, jump_cnt[3:2], 7'b0} + {7'b0, jump_cnt[1:0],6'b0};
 end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -282,7 +299,10 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    if (on_ground || fall_to_ground) begin
+    if (is_hold) begin
+        acc_x = 0;
+        acc_y = GRAVITY;
+    end else if (on_ground || fall_to_ground) begin
         acc_x = 0;
         acc_y = 0;
     end else begin
@@ -292,7 +312,10 @@ always @(*) begin
 end
 
 always @(*) begin
-    if (fall_to_ground) begin
+    if (is_hold) begin
+        vel_x = 0;
+        vel_y = 0;
+    end else if (fall_to_ground) begin
         vel_x = -vel_x_reg;
         vel_y = -vel_y_reg;
     end else if (collision_type == 1) begin
@@ -311,7 +334,10 @@ always @(*) begin
 end
 
 always @(*) begin
-    if (fall_to_ground) begin
+    if (is_hold) begin
+        pos_x = 0;
+        pos_y = 0;
+    end else if (fall_to_ground) begin
         {pos_x, pos_y} = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
     end else if (state == LEFT) begin
         pos_x = LEFT_POS_X;
@@ -375,8 +401,8 @@ end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
     if (!sys_rst_n) begin
-        vel_x_reg <= 0;
-        vel_y_reg <= 0;
+        vel_x_reg <= INITIAL_VEL_X;
+        vel_y_reg <= INITIAL_VEL_Y;
     end else if (character_clk_d) begin
         vel_x_reg <= vel_x_next;
         vel_y_reg <= vel_y_next;
@@ -406,6 +432,24 @@ end
 
 //-----------------------------------------Character Movement-----------------------------------------
 
+//-----------------------------------------detect wall-----------------------------------------
+function automatic [1:0] detect_wall; // 0 for no wall, 1 for left wall, 2 for right wall, 3 for bottom wall
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
+    input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg;
+    begin
+        if(pos_x_reg + CHAR_WIDTH_X - 1 >= LEFT_WALL) begin
+            detect_wall = 1;
+        end else if (pos_x_reg < RIGHT_WALL + WALL_WIDTH) begin
+            detect_wall = 2;
+        end else if (pos_y_reg < BOTTOM_WALL + WALL_WIDTH) begin
+            detect_wall = 3;
+        end else begin
+            detect_wall = 0;
+        end
+    end
+endfunction
+//-----------------------------------------detect wall-----------------------------------------
+
 //-----------------------------------------detect obstacle-----------------------------------------
 wire [OBSTACLE_NUM*SIGNED_PHY_WIDTH-1:0] obstacle_signed_abs_pos_x;
 wire [OBSTACLE_NUM*SIGNED_PHY_WIDTH-1:0] obstacle_signed_abs_pos_y;
@@ -432,20 +476,18 @@ function automatic in_obstacle;
     end
 endfunction
 
-reg [MAX_DISPLACEMENT+1:0] ob_detect_row;
-reg [$clog2(OBSTACLE_NUM+2)-1:0] ob_detect; // default value == OBSTACLE_NUM
-reg ob_detect_below;
 integer a, b;
-
 always @(*) begin
-    ob_detect = OBSTACLE_NUM;
+    ob_id = OBSTACLE_NUM;
     for (a = 0; a <= MAX_DISPLACEMENT + 1; a = a + 1) begin
         ob_detect_row[a] = 1'b1;
         for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
             if (in_obstacle(pos_x_reg, pos_y_reg + a, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]) ||
                 in_obstacle(pos_x_reg + CHAR_WIDTH_X - 1, pos_y_reg + a, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
                 ob_detect_row[a] = 1'b0;
-                ob_detect = b;
+                if(a < CHAR_WIDTH_Y) begin
+                    ob_id = b;
+                end
             end
         end
     end
@@ -463,7 +505,10 @@ end
 
 //-----------------------------------------detect obstacle-----------------------------------------
 
-
+//-----------------------------------------detect obstacle and wall------------------------------------
+always @(*) begin
+    collision_id = ob_id + wall_detect;
+end
 //-----------------------------------------detect boundary-----------------------------------------
 // character outer frame
 // -----------------------
@@ -509,7 +554,7 @@ wire signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] impact_pos_result;
 assign impact_pos_result = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
 assign out_dis_to_ob = impact_pos_result[SIGNED_PHY_WIDTH-1:0];
 assign out_row_detect = {1'b0, |row_detect};
-assign out_ob_detect = {1'b0, ob_detect};
+assign out_ob_detect = {1'b0, collision_id};
 
 function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
@@ -567,29 +612,19 @@ function automatic [1:0] detect_collision;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg_d;
     integer i;
 
-    reg detection; // 0: no detect, 1: detect once, 2: detect twice
     begin
-        detection = (pos_x_reg < RIGHT_WALL + WALL_WIDTH) || (pos_x_reg + CHAR_WIDTH_X - 1 >= LEFT_WALL);
-        for (i = 0; i < CHAR_WIDTH_Y; i = i + 1) begin
-            if (!row_detect[i]) begin
-                detection = 1;
+        if (collision_id > OBSTACLE_NUM) begin // collide with wall
+            if (wall_detect == 3) begin
+                detect_collision = 1;
+            end else begin
+                 detect_collision = 2;
             end
-        end
-
-        if (detection == 1) begin
-            if (ob_detect == OBSTACLE_NUM) begin // collide with wall
-                if (pos_y_reg < BOTTOM_WALL + WALL_WIDTH) begin
-                    detect_collision = 1;
-                end else begin
-                    detect_collision = 2;
-                end
-            end else begin // collide with obstacle
-                if (pos_x_reg_d >= obstacle_signed_abs_pos_x[ob_detect*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] + obstacle_block_width[ob_detect*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH ||
-                    pos_x_reg_d + CHAR_WIDTH_X - 1 < obstacle_signed_abs_pos_x[ob_detect*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH]) begin
-                    detect_collision = 2; // horizontal collision
-                end else begin
-                    detect_collision = 1; // vertical collision
-                end
+        end else if (collision_id < OBSTACLE_NUM) begin // collide with obstacle
+            if (pos_x_reg_d >= obstacle_signed_abs_pos_x[collision_id*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH] + obstacle_block_width[collision_id*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH ||
+                    pos_x_reg_d + CHAR_WIDTH_X - 1 < obstacle_signed_abs_pos_x[collision_id*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH]) begin
+                detect_collision = 2; // horizontal collision
+            end else begin
+                detect_collision = 1; // vertical collision
             end
         end else begin
             detect_collision = 0;
