@@ -22,10 +22,10 @@ module tb_character #(
     //-----------Character Parameters-----
     parameter CHAR_WIDTH_X = 32,
     parameter CHAR_WIDTH_Y = 32,
-    parameter signed INITIAL_POS_X = 286,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
-    parameter signed INITIAL_POS_Y = 682,//MAP_Y_OFFSET + WALL_WIDTH,
-    parameter signed INITIAL_VEL_X = -1984,
-    parameter signed INITIAL_VEL_Y = -256,
+    parameter signed INITIAL_POS_X = 554,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
+    parameter signed INITIAL_POS_Y = 409,//MAP_Y_OFFSET + WALL_WIDTH,
+    parameter signed INITIAL_VEL_X = 1984,
+    parameter signed INITIAL_VEL_Y = -2944,
     //-----------Obstacle Parameters-----
     parameter OBSTACLE_NUM = 7,
     parameter OBSTACLE_WIDTH = 10,
@@ -507,7 +507,7 @@ end
 
 //-----------------------------------------detect obstacle and wall------------------------------------
 always @(*) begin
-    collision_id = ob_id + wall_detect;
+    collision_id = (wall_detect == 0) ? ob_id : wall_detect + OBSTACLE_NUM;
 end
 //-----------------------------------------detect boundary-----------------------------------------
 // character outer frame

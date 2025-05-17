@@ -33,8 +33,13 @@ tb_character #(
     .obstacle_block_width(obstacle_block_width)
 );
 
-assign obstacle_abs_pos_x = obstacle_relative_pos_x + 120;
-assign obstacle_abs_pos_y = obstacle_relative_pos_y + camera_y * 480 + 0;
+   genvar k;
+    generate
+        for (k = 0; k < 7; k = k + 1) begin : obstacle_abs_pos
+            assign obstacle_abs_pos_x[k*14 +: 14] = obstacle_relative_pos_x[k*14 +: 14] + 120;
+            assign obstacle_abs_pos_y[k*14 +: 14] = obstacle_relative_pos_y[k*14 +: 14] + camera_y * 480 + 0;
+        end
+    endgenerate
 
 
 block_gen  #() uut2
@@ -80,6 +85,8 @@ initial begin
     #1000000000;
     $finish;
 end
+
+
 
 
 endmodule
