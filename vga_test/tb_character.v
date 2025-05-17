@@ -29,6 +29,7 @@ module tb_character #(
     //-----------Obstacle Parameters-----
     parameter OBSTACLE_NUM = 7,
     parameter OBSTACLE_WIDTH = 10,
+    parameter OBSTACLE_HEIGHT = 20,
     parameter BLOCK_LEN_WIDTH = 4 // max 15
     ) (
     input sys_clk,
@@ -472,7 +473,7 @@ function automatic in_obstacle;
         in_obstacle = (pos_x >= obstacle_x &&
             pos_x < obstacle_x + obstacle_len * OBSTACLE_WIDTH &&
             pos_y >= obstacle_y && 
-            pos_y < obstacle_y + OBSTACLE_WIDTH);
+            pos_y < obstacle_y + OBSTACLE_HEIGHT);
     end
 endfunction
 

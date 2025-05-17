@@ -21,6 +21,7 @@ module pixel_gen #(
     //-----------Obstacle parameters-----------
     parameter OBSTACLE_NUM = 10,
     parameter OBSTACLE_WIDTH = 10,
+    parameter OBSTACLE_HEIGHT = 20,
     parameter BLOCK_LEN_WIDTH = 4, // max 15
     //-----------Screen parameters-----------
     parameter SCREEN_WIDTH = 10,
@@ -145,7 +146,7 @@ module pixel_gen #(
     genvar m;
     generate
         for(m = 0; m < OBSTACLE_NUM; m = m + 1) begin: ob_on
-            assign obstacle_on[m] = ((x >= obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH]) && (x < obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH] + obstacle_block_width[m*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH) && (y >= obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] - camera_offset) && (y < obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] + OBSTACLE_WIDTH - camera_offset));
+            assign obstacle_on[m] = ((x >= obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH]) && (x < obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH] + obstacle_block_width[m*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH) && (y >= obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] - camera_offset) && (y < obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] + OBSTACLE_HEIGHT - camera_offset));
         end
     endgenerate
     //----------------------------------------------------------------------------------------
@@ -244,6 +245,7 @@ module pixel_gen #(
     /*OBSTACLE #(
         .OBSTACLE_NUM(OBSTACLE_NUM),
         .OBSTACLE_WIDTH(OBSTACLE_WIDTH),
+        .OBSTACLE_HEIGHT(OBSTACLE_HEIGHT),
         .SCREEN_WIDTH(SCREEN_WIDTH),
     ) obstacle_inst(
         .obstacle_abs_pos_x(obstacle_abs_pos_x),

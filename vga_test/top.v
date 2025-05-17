@@ -42,7 +42,7 @@ module top(
     //-----------Screen parameters-----------
     localparam SCREEN_WIDTH = 10;
     localparam SMOOTH_FACTOR = 7; // Max = 7
-    localparam SCREEN_N = 25600000 >>> (SMOOTH_FACTOR >>> 1);
+    localparam SCREEN_N = 25600000 >>> (SMOOTH_FACTOR >>> 1); // 31.25 Hz
     //-----------Screen parameters-----------
 
     //-----------Physical parameters-----------
@@ -53,6 +53,7 @@ module top(
     //-----------Obstacle parameters-----------
     localparam OBSTACLE_NUM = 7;
     localparam OBSTACLE_WIDTH = 10;
+    localparam OBSTACLE_HEIGHT = 20;
     localparam BLOCK_WIDTH = 480;
     localparam BLOCK_LEN_WIDTH = 4; // max 15
     //-----------Obstacle parameters-----------
@@ -244,6 +245,7 @@ module top(
         //-----------Obstacle parameters-----------
         .OBSTACLE_NUM(OBSTACLE_NUM),
         .OBSTACLE_WIDTH(OBSTACLE_WIDTH),
+        .OBSTACLE_HEIGHT(OBSTACLE_HEIGHT),
         .BLOCK_LEN_WIDTH(BLOCK_LEN_WIDTH)
         ) char (
         .sys_clk(sys_clk),
@@ -312,6 +314,7 @@ module top(
                 //-----------Obstacle parameters-----------
                 .OBSTACLE_NUM(OBSTACLE_NUM),
                 .OBSTACLE_WIDTH(OBSTACLE_WIDTH),
+                .OBSTACLE_HEIGHT(OBSTACLE_HEIGHT),
                 .BLOCK_LEN_WIDTH(BLOCK_LEN_WIDTH),
                  //-----------Screen parameters-----------
                 .SCREEN_WIDTH(SCREEN_WIDTH),
