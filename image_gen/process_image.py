@@ -23,13 +23,13 @@ def rgb18_to_rgb12(r18, g18, b18):
     return (r18 >> 2, g18 >> 2, b18 >> 2)
 
 def rgb12_to_hexstr(r12, g12, b12):
-    return f"{r12:X}{g12:X}{b12:X}"
+    return f"{b12:X}{g12:X}{r12:X}"
 
 def color_distance(c1, c2):
     return sum((a - b) ** 2 for a, b in zip(c1, c2))
 
 # 圖片分析主函數
-def process_image(image_path, grid_cols, grid_rows, max_colors=32):
+def process_image(image_path, grid_cols, grid_rows, max_colors=16):
     img = Image.open(image_path).convert('RGB')
     pixels = img.load()
     img_width, img_height = img.size
@@ -106,15 +106,16 @@ def export_verilog(color_map, color_list, id_to_rgb12, grid_cols, grid_rows, out
 
 # 主程式入口
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python process_image.py <image_path> <grid_cols> <grid_rows>")
+    if len(sys.argv) != 5:
+        print("Usage: python process_image.py <image_path> <grid_cols> <grid_rows> <max_colors>")
         sys.exit(1)
 
     image_path = sys.argv[1]
     grid_cols = int(sys.argv[2])
     grid_rows = int(sys.argv[3])
+    max_colors = int(sys.argv[4])
 
-    color_map, color_list, id_to_rgb12 = process_image(image_path, grid_cols, grid_rows)
+    color_map, color_list, id_to_rgb12 = process_image(image_path, grid_cols, grid_rows, max_colors)
 
     base_name = os.path.splitext(os.path.basename(image_path))[0]
     module_name = base_name.upper() + "_CHAR"

@@ -17,7 +17,7 @@ module top(
     //-----------Sequence debug parameters-----------
     localparam SEQ_LEN = 16;
     localparam SEQ_DIGITS = SEQ_LEN / 4 + 1; // 1 for sign digit
-    localparam SEQ_NUM = 22;
+    localparam SEQ_NUM = 23;
     localparam FONT_WIDTH = 8;
     localparam UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH;
     //-----------Sequence debug parameters-----------
@@ -32,6 +32,7 @@ module top(
     localparam MAP_X_OFFSET = 120; // (640 - 480) / 2
     localparam MAP_Y_OFFSET = 0;
     localparam WALL_WIDTH = 10;
+    localparam WALL_HEIGHT = 20;
     //-----------Map parameters-----------
 
     //-----------Character parameters-----------
@@ -90,6 +91,7 @@ module top(
     wire [3:0] out_print_state; // TODO: print character state
     wire [1:0] out_is_hold;
     wire [1:0] out_hold;
+    wire [2:0] char_display_id;
 //---------------Character signals----------------
 
 //--------------Obstacle signals----------------
@@ -239,6 +241,7 @@ module top(
         .MAP_X_OFFSET(MAP_X_OFFSET),
         .MAP_Y_OFFSET(MAP_Y_OFFSET),
         .WALL_WIDTH(WALL_WIDTH),
+        .WALL_HEIGHT(WALL_HEIGHT),
         //-----------Character parameters-----------
         .CHAR_WIDTH_X(CHAR_WIDTH_X),
         .CHAR_WIDTH_Y(CHAR_WIDTH_Y),
@@ -257,6 +260,7 @@ module top(
         .obstacle_abs_pos_x(obstacle_abs_pos_x),
         .obstacle_abs_pos_y(obstacle_abs_pos_y),
         .obstacle_block_width(obstacle_block_width),
+        .char_display_id(char_display_id),
         .out_pos_x(out_pos_x),
         .out_pos_y(out_pos_y),
         .out_vel_x(out_vel_x),
@@ -272,6 +276,8 @@ module top(
         .out_dis_to_ob(out_dis_to_ob),
         .out_row_detect(out_row_detect),
         .out_ob_detect(out_ob_detect),
+        .out_is_hold(out_is_hold),
+        .out_hold(out_hold),
         .out_left_btn_posedge(out_left_btn_posedge),
         .out_right_btn_posedge(out_right_btn_posedge),
         .out_jump_btn_posedge(out_jump_btn_posedge)
@@ -332,6 +338,8 @@ module top(
                 .obstacle_abs_pos_x(obstacle_abs_pos_x),
                 .obstacle_abs_pos_y(obstacle_abs_pos_y),
                 .obstacle_block_width(obstacle_block_width),
+                .char_display_id(char_display_id),
+                .char_face(out_face),
                 .debug_seq(debug_sig),
                 .rgb(rgb_next));
 //-----------------------------------Pixel generator-----------------------------------
@@ -364,6 +372,7 @@ module top(
     pad_sign #(.seq_len(5 + 1), .SEQ_LEN(SEQ_LEN)) pad_20( .seq({1'b0, camera_y}), .padded_seq(debug_padded_sig[19]) );
     pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_21( .seq(out_is_hold), .padded_seq(debug_padded_sig[20]) );
     pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_22( .seq(out_hold), .padded_seq(debug_padded_sig[21]) );
+    pad_sign #(.seq_len(3 + 1), .SEQ_LEN(SEQ_LEN)) pad_23( .seq({1'b0, char_display_id}), .padded_seq(debug_padded_sig[22]) );
     
     
     // state : IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, FALL_TO_GROUND = 6;

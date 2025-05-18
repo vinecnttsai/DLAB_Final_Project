@@ -64,7 +64,7 @@ module block_gen #(
         case (cur_block_type)
             // Block 0: 基礎練習 (寬平台)
             0: begin
-                plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 250; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 50;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 10;
+                plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 250; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 60;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 10;
                 plat_relative_x[1*PHY_WIDTH +: PHY_WIDTH] = 100; plat_relative_y[1*PHY_WIDTH +: PHY_WIDTH] = 80;  plat_len[1*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
                 plat_relative_x[2*PHY_WIDTH +: PHY_WIDTH] = 350; plat_relative_y[2*PHY_WIDTH +: PHY_WIDTH] = 140; plat_len[2*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
                 plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 50;  plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 200; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;

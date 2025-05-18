@@ -10,7 +10,8 @@ module tb_character #(
     parameter SIGNED_PHY_WIDTH = PHY_WIDTH + 1,
     parameter SMOOTH_FACTOR = 7, // represent the power of 2, Max = 7
     //-----------Map Parameters-----------
-    parameter WALL_WIDTH = 10,
+    parameter WALL_WIDTH = 40,
+    parameter WALL_HEIGHT = 20,
     parameter MAP_WIDTH_X = 480,
     //parameter MAP_WIDTH_Y = 100,
     parameter MAP_X_OFFSET = 120, // (640 - 480) / 2
@@ -22,10 +23,10 @@ module tb_character #(
     //-----------Character Parameters-----
     parameter CHAR_WIDTH_X = 32,
     parameter CHAR_WIDTH_Y = 32,
-    parameter signed INITIAL_POS_X = 554,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
-    parameter signed INITIAL_POS_Y = 409,//MAP_Y_OFFSET + WALL_WIDTH,
-    parameter signed INITIAL_VEL_X = 1984,
-    parameter signed INITIAL_VEL_Y = -2944,
+    parameter signed INITIAL_POS_X = 430,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
+    parameter signed INITIAL_POS_Y = 151,//MAP_Y_OFFSET + WALL_HEIGHT,
+    parameter signed INITIAL_VEL_X = 1472,
+    parameter signed INITIAL_VEL_Y = -3072,
     //-----------Obstacle Parameters-----
     parameter OBSTACLE_NUM = 7,
     parameter OBSTACLE_WIDTH = 10,
@@ -41,13 +42,15 @@ module tb_character #(
     input [OBSTACLE_NUM * PHY_WIDTH-1:0] obstacle_abs_pos_x, // obstacle absolute x position
     input [OBSTACLE_NUM * PHY_WIDTH-1:0] obstacle_abs_pos_y, // obstacle absolute y position
     input [OBSTACLE_NUM * BLOCK_LEN_WIDTH-1:0] obstacle_block_width, // obstacle block width
+    output [3:0] char_display_id,
+    output [1:0] out_face,
+    //------------------------debug--------------------------------
     output [SIGNED_PHY_WIDTH-1:0] out_pos_x, // character absolute x position
     output [SIGNED_PHY_WIDTH-1:0] out_pos_y, // character absolute y position
     output [SIGNED_PHY_WIDTH-1:0] out_vel_x,
     output [SIGNED_PHY_WIDTH-1:0] out_vel_y,
     output [SIGNED_PHY_WIDTH-1:0] out_acc_x,
     output [SIGNED_PHY_WIDTH-1:0] out_acc_y,
-    output [1:0] out_face,
     output [7:0] out_jump_cnt,
     output [3:0] out_state,
     output [2:0] out_collision_type,
@@ -56,7 +59,6 @@ module tb_character #(
     output out_left_btn_posedge,
     output out_right_btn_posedge,
     output out_jump_btn_posedge,
-    //debug
     output [SIGNED_PHY_WIDTH-1:0] out_dis_to_ob,
     output [1:0] out_row_detect,
     output [1:0] out_is_hold,
@@ -71,8 +73,8 @@ reg [2:0] state, next_state;
 
 // physics simulation
 // SMOOTH_FACTOR Maximum is 7
-localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_VEL = $signed((WALL_WIDTH + CHAR_WIDTH_Y - 2) <<< SMOOTH_FACTOR); // assure that the character can not pass the wall without being detected
-localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_DISPLACEMENT = (WALL_WIDTH + CHAR_WIDTH_Y - 2);
+localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_VEL = $signed((OBSTACLE_WIDTH + CHAR_WIDTH_Y - 2) <<< SMOOTH_FACTOR); // assure that the character can not pass the wall without being detected
+localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_DISPLACEMENT = (OBSTACLE_WIDTH + CHAR_WIDTH_Y - 2);
 localparam signed [SIGNED_PHY_WIDTH-1:0] GRAVITY = -(1 <<< SMOOTH_FACTOR);
 localparam signed [SIGNED_PHY_WIDTH-1:0] POSITIVE = 1 <<< SMOOTH_FACTOR;
 localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_POS_X = 3;
@@ -383,8 +385,8 @@ always @(*) begin
 
     /*if (pos_y_reg + pos_y + CHAR_WIDTH_Y - 1 >= TOP_WALL) begin
         pos_y_next = TOP_WALL - CHAR_WIDTH_Y;*/
-    if (pos_y_reg + pos_y < BOTTOM_WALL + WALL_WIDTH) begin
-        pos_y_next = BOTTOM_WALL + WALL_WIDTH;
+    if (pos_y_reg + pos_y < BOTTOM_WALL + WALL_HEIGHT) begin
+        pos_y_next = BOTTOM_WALL + WALL_HEIGHT;
     end else begin
         pos_y_next = pos_y_reg + pos_y;
     end
@@ -438,12 +440,12 @@ function automatic [1:0] detect_wall; // 0 for no wall, 1 for left wall, 2 for r
     input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg;
     begin
-        if(pos_x_reg + CHAR_WIDTH_X - 1 >= LEFT_WALL) begin
-            detect_wall = 1;
+        if (pos_y_reg < BOTTOM_WALL + WALL_HEIGHT) begin
+            detect_wall = 3;
         end else if (pos_x_reg < RIGHT_WALL + WALL_WIDTH) begin
             detect_wall = 2;
-        end else if (pos_y_reg < BOTTOM_WALL + WALL_WIDTH) begin
-            detect_wall = 3;
+        end else if(pos_x_reg + CHAR_WIDTH_X - 1 >= LEFT_WALL) begin
+            detect_wall = 1;
         end else begin
             detect_wall = 0;
         end
@@ -526,11 +528,11 @@ wire row_detect_below; // for a block below the character
 genvar i;
 generate
     for (i = 0; i <= MAX_DISPLACEMENT+1; i = i + 1) begin
-        assign row_detect[i] = (i + pos_y_reg >= BOTTOM_WALL + WALL_WIDTH) && ob_detect_row[i];
+        assign row_detect[i] = (i + pos_y_reg >= BOTTOM_WALL + WALL_HEIGHT) && ob_detect_row[i];
     end
 endgenerate
 
-assign row_detect_below = (pos_y_reg - 1 >= BOTTOM_WALL + WALL_WIDTH) && ob_detect_below;
+assign row_detect_below = (pos_y_reg - 1 >= BOTTOM_WALL + WALL_HEIGHT) && ob_detect_below;
 //-----------------------------------------detect boundary-----------------------------------------
 
 //-----------------------------------------Push Character to the Ground-----------------------------------------
@@ -571,7 +573,7 @@ function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos
         if (row_detect[0]) begin // if the bottom of the character is not fully in the wall
             for (i = 1; i <= MAX_DISPLACEMENT+1; i = i + 1) begin
                 if (!row_detect[i] && distance_to_nearest_ob == 0) begin
-                    distance_to_nearest_ob = i + WALL_WIDTH;
+                    distance_to_nearest_ob = (wall_detect == 3) ? i + WALL_HEIGHT : i + OBSTACLE_HEIGHT;
                 end
             end
         end else begin // if the bottom of the character is fully in the wall
@@ -655,7 +657,16 @@ endfunction
 
 
 //-----------------------------------------Character Display-----------------------------------------
-
+character_display #(
+    .SIGNED_PHY_WIDTH(SIGNED_PHY_WIDTH)
+) character_display_inst(
+    .sys_clk(sys_clk),
+    .sys_rst_n(sys_rst_n),
+    .character_clk(character_clk),
+    .char_state(state),
+    .vel_y(vel_y_reg),
+    .char_display_id(char_display_id)
+);
 //-----------------------------------------Character Display-----------------------------------------
 
 endmodule

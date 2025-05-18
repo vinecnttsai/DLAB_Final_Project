@@ -4,7 +4,7 @@
 module pixel_gen #(
     //-----------Sequence debug parameters-----------
     parameter SEQ_DIGITS = 4,
-    parameter SEQ_NUM = 19,
+    parameter SEQ_NUM = 23,
     parameter PIXEL_WIDTH = 12,
     parameter FONT_WIDTH = 8,
     parameter UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH,
@@ -39,6 +39,8 @@ module pixel_gen #(
     input [OBSTACLE_NUM * PHY_WIDTH - 1:0] obstacle_abs_pos_x, // Absolute position
     input [OBSTACLE_NUM * PHY_WIDTH - 1:0] obstacle_abs_pos_y, // Absolute position
     input [OBSTACLE_NUM * BLOCK_LEN_WIDTH - 1:0] obstacle_block_width,
+    input [2:0] char_display_id,
+    input [1:0] char_face,
     output reg [PIXEL_WIDTH - 1:0] rgb,   // to VGA port
     //------------------------------data signals------------------------------
     input [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_seq
@@ -76,7 +78,7 @@ module pixel_gen #(
     //----------------------------------------------------------------------------
     
     //------------------------------RGB Signals------------------------------
-    wire [PIXEL_WIDTH - 1:0] char_rgb;
+    reg [PIXEL_WIDTH - 1:0] char_rgb;
     wire [PIXEL_WIDTH - 1:0] map_rgb;
     wire [PIXEL_WIDTH - 1:0] obstacle_rgb;
     //----------------------------------------------------------------------------
@@ -201,8 +203,10 @@ module pixel_gen #(
                 rgb = debug_seq[20 * UNIT_SEQ_WIDTH + (debug_seq_y[20] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(debug_seq_on[21]) begin
                 rgb = debug_seq[21 * UNIT_SEQ_WIDTH + (debug_seq_y[21] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            end else if(debug_seq_on[22]) begin
+                rgb = debug_seq[22 * UNIT_SEQ_WIDTH + (debug_seq_y[22] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(char_on) begin
-                rgb = 12'h000; //char_rgb, remember to change back
+                rgb = char_rgb; //char_rgb, remember to change back
             end else if(|obstacle_on) begin // not all blank
                 rgb = 12'h000;
             end else if(map_on) begin
@@ -226,6 +230,26 @@ module pixel_gen #(
     );
     //-----------------------------------------------------------------
 
+    //------------------------------Test Character--------------------------------
+    // IDLE_DIS_1 = 0, IDLE_DIS_2 = 1, CHARGE_DIS = 2, JUMP_UP_DIS = 3, JUMP_DOWN_DIS = 4, FALL_TO_GROUND_DIS = 5;
+    (* rom_style = "block" *)
+    always @(*) begin
+        case({char_face, char_display_id})
+            6'b01_000: char_rgb = BLACK;
+            6'b11_000: char_rgb = TEAL;
+            6'b01_001: char_rgb = GRAY;
+            6'b11_001: char_rgb = LIME;
+            6'b01_010: char_rgb = RED;
+            6'b11_010: char_rgb = AQUA;
+            6'b01_011: char_rgb = YELLOW;
+            6'b11_011: char_rgb = ORANGE;
+            6'b01_100: char_rgb = BLUE;
+            6'b11_100: char_rgb = PURPLE;
+            6'b01_101: char_rgb = BROWN;
+            6'b11_101: char_rgb = PINK;
+            default: char_rgb = WHITE;
+        endcase
+    end
     //------------------------------Character--------------------------------
     /* // TODO: disable first, fill character in all black first
     IDLE_CHAR #(

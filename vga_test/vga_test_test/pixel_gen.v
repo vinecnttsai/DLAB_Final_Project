@@ -165,7 +165,7 @@ module pixel_gen #(
             end else if(map_on) begin
                 rgb = map_rgb;
             end else begin
-                rgb = WHITE;
+                rgb = YELLOW;
             end
         end
     end
