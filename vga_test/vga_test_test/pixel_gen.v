@@ -16,8 +16,8 @@ module pixel_gen #(
     parameter MAP_X_OFFSET = 120, // start position of map (640 - 480) / 2
     parameter MAP_Y_OFFSET = 0,
     //-----------Character parameters-----------
-    parameter CHAR_WIDTH_X = 40, // width of character
-    parameter CHAR_WIDTH_Y = 40, // height of character
+    parameter CHAR_WIDTH_X = 42, // width of character
+    parameter CHAR_WIDTH_Y = 52, // height of character
     //-----------Obstacle parameters-----------
     parameter OBSTACLE_NUM = 10,
     parameter OBSTACLE_WIDTH = 10,
@@ -27,6 +27,10 @@ module pixel_gen #(
     //-----------Physical parameters-----------
     parameter PHY_WIDTH = 14
     )(
+    // remember to delete
+    input sw,
+    //--------------------------------
+    //--------------------------------
     input sys_clk,
     input sys_rst_n,
     input video_on,     // from VGA controller
@@ -183,9 +187,26 @@ module pixel_gen #(
     );
     //-----------------------------------------------------------------
 
+    //------------------------------tb for chatacter display controller--------------------------------
+    reg [2:0] cnt;
+    always @(posedge sys_clk or negedge sys_rst_n) begin
+        if(!sys_rst_n) begin
+            cnt <= 0;
+        end else if (tb_clk) begin
+            cnt <= cnt == 3'b101 ? 3'b000 : cnt + 1;
+        end
+    end
+    
+    fq_div #( .N(200000000) ) fq_div_inst(
+        .org_clk(sys_clk),
+        .sys_rst_n(sys_rst_n),
+        .div_n_clk(tb_clk)
+    );
+
     //------------------------------Character--------------------------------
-     // TODO: disable first, fill character in all black first
-    IDLE_CHAR #(
+    // TODO: disable first, fill character in all black first
+    /*
+    IDLE_1_CHAR #(
         .PIXEL_WIDTH(PIXEL_WIDTH),
         .SCREEN_WIDTH(SCREEN_WIDTH),
         .CHAR_WIDTH_X(CHAR_WIDTH_X),
@@ -193,9 +214,28 @@ module pixel_gen #(
     ) char_inst(
         .char_x_rom(char_x_rom[SCREEN_WIDTH - 1:0]),
         .char_y_rom(char_y_rom[SCREEN_WIDTH - 1:0]),
-        .char_on(char_on),
         .rgb(char_rgb)
     );
+    */
+    wire [1:0] face;
+    assign face = sw ? 2'b10 : 2'b01;
+    
+    character_display_controller #(
+        .PIXEL_WIDTH(PIXEL_WIDTH),
+        .SCREEN_WIDTH(SCREEN_WIDTH),
+        .CHAR_WIDTH_X(CHAR_WIDTH_X),
+        .CHAR_WIDTH_Y(CHAR_WIDTH_Y)
+    ) char_inst(
+        .sys_clk(sys_clk),
+        .sys_rst_n(sys_rst_n),
+        .char_x_rom(char_x_rom[SCREEN_WIDTH - 1:0]),
+        .char_y_rom(char_y_rom[SCREEN_WIDTH - 1:0]),
+        .char_on(char_on),
+        .char_face(face),
+        .char_id(cnt),
+        .rgb(char_rgb)
+    );
+    
     //-----------------------------------------------------------------
 
     //------------------------------Obstacle-------------------------------- // TODO: write module for obstacle print

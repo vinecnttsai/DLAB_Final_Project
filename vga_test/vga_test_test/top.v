@@ -1,6 +1,7 @@
 `timescale 1ns / 1ps
 
 module top(
+    input sw,
     input sys_clk,
     input sys_rst_n,
     input left_btn,
@@ -41,8 +42,8 @@ module top(
     //-----------Map parameters-----------
 
     //-----------Character parameters-----------
-    localparam CHAR_WIDTH_X = 40;
-    localparam CHAR_WIDTH_Y = 40;
+    localparam CHAR_WIDTH_X = 42;
+    localparam CHAR_WIDTH_Y = 52;
     //-----------Character parameters-----------
 
     //-----------Screen parameters-----------
@@ -158,6 +159,7 @@ module top(
                 //-----------Physical parameters-----------
                 .PHY_WIDTH(PHY_WIDTH)
                 ) pg (
+                .sw(sw),
                 .sys_clk(sys_clk),
                 .sys_rst_n(sys_rst_n),
                 .video_on(w_video_on),

@@ -1,0 +1,12 @@
+255 200 168 // skin-light
+249 163 112 // skin-heavy
+0   0   0   // eye
+255 0   0   // cap-light
+139 8   3   // cap-heavy
+0   146 255 // cloth-light
+0   88  162 // cloth-medium
+9   36  69  // cloth-heavy
+255 192 0   // belt
+162 59  17  // hair-light
+122 41  9   // hair-heavy
+255 255 255 // white
