@@ -19,7 +19,7 @@ module pixel_gen #(
     parameter CHAR_WIDTH_X = 42, // width of character
     parameter CHAR_WIDTH_Y = 52, // height of character
     //-----------Obstacle parameters-----------
-    parameter OBSTACLE_NUM = 10,
+    parameter OBSTACLE_NUM = 7,
     parameter OBSTACLE_WIDTH = 10,
     parameter OBSTACLE_HEIGHT = 20,
     parameter BLOCK_LEN_WIDTH = 4, // max 15
@@ -129,8 +129,8 @@ module pixel_gen #(
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Obstacle Relative Position Signals-----------------------------
-    wire [PHY_WIDTH - 1:0] obstacle_y_rom [OBSTACLE_NUM - 1:0];
-    wire [PHY_WIDTH - 1:0] obstacle_x_rom [OBSTACLE_NUM - 1:0];
+    wire [PHY_WIDTH-1 :0] obstacle_y_rom [OBSTACLE_NUM-1:0];
+    wire [PHY_WIDTH-1 :0] obstacle_x_rom [OBSTACLE_NUM-1:0];
     genvar l;
     generate
         for(l = 0; l < OBSTACLE_NUM; l = l + 1) begin : obstacle_pos
@@ -159,17 +159,14 @@ module pixel_gen #(
 
     always @(*) begin
         case(obstacle_on)
-            10'b0000000001: obstacle_on_id = 4'h0;
-            10'b0000000010: obstacle_on_id = 4'h1;
-            10'b0000000100: obstacle_on_id = 4'h2;
-            10'b0000001000: obstacle_on_id = 4'h3;
-            10'b0000010000: obstacle_on_id = 4'h4;
-            10'b0000100000: obstacle_on_id = 4'h5;
-            10'b0001000000: obstacle_on_id = 4'h6;
-            10'b0010000000: obstacle_on_id = 4'h7;
-            10'b0100000000: obstacle_on_id = 4'h8;
-            10'b1000000000: obstacle_on_id = 4'h9;
-            default: obstacle_on_id = 4'hf;
+            7'b0000001: obstacle_on_id = 3'b000;
+            7'b0000010: obstacle_on_id = 3'b001;
+            7'b0000100: obstacle_on_id = 3'b010;
+            7'b0001000: obstacle_on_id = 3'b011;
+            7'b0010000: obstacle_on_id = 3'b100;
+            7'b0100000: obstacle_on_id = 3'b101;
+            7'b1000000: obstacle_on_id = 3'b110;
+            default: obstacle_on_id = 3'b000;
         endcase
     end
     //----------------------------------------------------------------------------------------
@@ -249,19 +246,17 @@ module pixel_gen #(
     obstacle_display_controller #(
         .OBSTACLE_NUM(OBSTACLE_NUM),
         .OBSTACLE_WIDTH(OBSTACLE_WIDTH),
-        .OBSTACLE_HEIGHT(OBSTACLE_HEIGHT),
         .BLOCK_LEN_WIDTH(BLOCK_LEN_WIDTH),
         .PHY_WIDTH(PHY_WIDTH),
         .PIXEL_WIDTH(PIXEL_WIDTH),
-        .SCREEN_WIDTH(SCREEN_WIDTH),
+        .SCREEN_WIDTH(SCREEN_WIDTH)
     ) obstacle_inst(
         .sys_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
-        .obstacle_x_rom(obstacle_x_rom[SCREEN_WIDTH - 1:0]),
-        .obstacle_y_rom(obstacle_y_rom[SCREEN_WIDTH - 1:0]),
-        .obstacle_abs_pos_x(obstacle_abs_pos_x[obstacle_on_id*PHY_WIDTH +: PHY_WIDTH]),
+        .obstacle_x_rom(obstacle_x_rom[obstacle_on_id]),
+        .obstacle_y_rom(obstacle_y_rom[obstacle_on_id]),
         .obstacle_abs_pos_y(obstacle_abs_pos_y[obstacle_on_id*PHY_WIDTH +: PHY_WIDTH]),
-        .obstacle_block_width(obstacle_block_width[obstacle_on_id*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]),
+        .obstacle_abs_pos_x(obstacle_abs_pos_x[obstacle_on_id*PHY_WIDTH +: PHY_WIDTH]),
         .obstacle_on(obstacle_on_for_all),
         .obstacle_on_id(obstacle_on_id),
         .rgb(obstacle_rgb)

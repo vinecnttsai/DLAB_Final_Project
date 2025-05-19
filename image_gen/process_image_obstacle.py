@@ -103,11 +103,11 @@ def export_verilog(color_indices, palette_rgb12, grid_cols, grid_rows, output_fi
 
         f.write("always @(posedge sys_clk or negedge sys_rst_n) begin\n")
         f.write("    if (!sys_rst_n) begin\n")
-        f.write("        rgb_id <= 4'h2; // default color : black \n")
+        f.write("        rgb_id <= 2'b10; // default color : black \n")
         f.write("    end else if (obstacle_on) begin\n")
         f.write("        rgb_id <= pixel_map[(obstacle_y_rom * OBSTACLE_WIDTH_X + obstacle_x_rom) * COLOR_WIDTH +: COLOR_WIDTH];\n")
         f.write("    end else begin\n")
-        f.write("        rgb_id <= 4'h2; // default color : black \n")
+        f.write("        rgb_id <= 2'b10; // default color : black \n")
         f.write("    end\n")
         f.write("end\n")
         f.write("endmodule\n")
