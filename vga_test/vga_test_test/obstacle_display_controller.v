@@ -1,9 +1,8 @@
 module obstacle_display_controller #(
-    parameter OBSTACLE_NUM = 7,
     parameter OBSTACLE_WIDTH = 10,
     parameter BLOCK_LEN_WIDTH = 4, // max 15
     parameter SCREEN_WIDTH = 10,
-    parameter PHY_WIDTH = 15,
+    parameter PHY_WIDTH = 14,
     parameter PIXEL_WIDTH = 12,
     parameter COLOR_NUM = 4
 )(
@@ -13,7 +12,6 @@ module obstacle_display_controller #(
     input [SCREEN_WIDTH - 1:0] obstacle_y_rom,
     input [PHY_WIDTH - 1:0] obstacle_abs_pos_y,
     input [PHY_WIDTH - 1:0] obstacle_abs_pos_x,
-    input [$clog2(OBSTACLE_NUM + 1) - 1:0] obstacle_on_id,
     input obstacle_on,
     output reg [PIXEL_WIDTH - 1:0] rgb
 );
@@ -42,13 +40,11 @@ always @(*) begin
 end
 
 obstacle_id_selector #(
-    .OBSTACLE_NUM(OBSTACLE_NUM),
     .PHY_WIDTH(PHY_WIDTH),
     .COLOR_WIDTH(COLOR_WIDTH)
 ) obstacle_id_selector_inst(
     .obstacle_abs_pos_y(obstacle_abs_pos_y),
     .obstacle_abs_pos_x(obstacle_abs_pos_x),
-    .obstacle_on_id(obstacle_on_id),
     .obstacle_display_id(obstacle_display_id),
     .obstacle_face(obstacle_face)
 );
@@ -118,13 +114,11 @@ endmodule
 
 
 module obstacle_id_selector #(
-    parameter OBSTACLE_NUM = 10,
     parameter PHY_WIDTH = 15,
     parameter COLOR_WIDTH = 2 // max 4 wall style
 )(
     input [PHY_WIDTH - 1:0] obstacle_abs_pos_y, // padding to 15-bit
     input [PHY_WIDTH - 1:0] obstacle_abs_pos_x,
-    input [$clog2(OBSTACLE_NUM + 1) - 1:0] obstacle_on_id,
     output reg [COLOR_WIDTH - 1:0] obstacle_display_id,
     output reg [1:0] obstacle_face
 );

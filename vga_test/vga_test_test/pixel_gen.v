@@ -15,6 +15,7 @@ module pixel_gen #(
     //parameter MAP_WIDTH_Y = 100,
     parameter MAP_X_OFFSET = 120, // start position of map (640 - 480) / 2
     parameter MAP_Y_OFFSET = 0,
+    parameter WALL_WIDTH = 10,
     //-----------Character parameters-----------
     parameter CHAR_WIDTH_X = 42, // width of character
     parameter CHAR_WIDTH_Y = 52, // height of character
@@ -83,6 +84,7 @@ module pixel_gen #(
     wire [PIXEL_WIDTH - 1:0] char_rgb;
     wire [PIXEL_WIDTH - 1:0] map_rgb;
     wire [PIXEL_WIDTH - 1:0] obstacle_rgb;
+    wire [PIXEL_WIDTH - 1:0] background_rgb;
     //----------------------------------------------------------------------------
     
     //------------------------------Pixel Location Status Signals------------------------------
@@ -92,6 +94,7 @@ module pixel_gen #(
     wire [OBSTACLE_NUM - 1:0] obstacle_on;
     wire obstacle_on_for_all;
     reg [$clog2(OBSTACLE_NUM + 1) - 1:0] obstacle_on_id;
+    wire background_on;
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Debug Sequence Absolute Position Signals-----------------------------
@@ -117,12 +120,12 @@ module pixel_gen #(
     //-----------------------------Map Relative Position Signals-----------------------------
     wire [PHY_WIDTH-1:0] map_y;
     wire [PHY_WIDTH-1:0] map_x;
-    assign map_y = y + camera_offset - MAP_Y_OFFSET;
-    assign map_x = x - MAP_X_OFFSET;
+    assign map_y = y + camera_offset - MAP_Y_OFFSET - WALL_WIDTH;   // boundary does not count
+    assign map_x = x - MAP_X_OFFSET - WALL_WIDTH;                   // boundary does not count
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Character Relative Position Signals-----------------------------
-    wire [PHY_WIDTH - 1:0] char_y_rom;
+    wire [PHY_WIDTH - 1:0] char_y_rom; // 要改成screen_width
     wire [PHY_WIDTH - 1:0] char_x_rom;
     assign char_y_rom = y + camera_offset - char_abs_y;
     assign char_x_rom = x - char_abs_x;
@@ -139,6 +142,20 @@ module pixel_gen #(
         end
     endgenerate
     //----------------------------------------------------------------------------------------
+
+    //-----------------------------Background Relative Position Signals-----------------------------
+    wire [SCREEN_WIDTH-1:0] background_y_rom;
+    wire [SCREEN_WIDTH-1:0] background_x_rom;
+    assign background_y_rom = y % OBSTACLE_HEIGHT;
+    assign background_x_rom = x % OBSTACLE_WIDTH;
+    //----------------------------------------------------------------------------------------
+
+    //-----------------------------Background Absolute Position Signals-----------------------------
+    wire [PHY_WIDTH-1:0] background_abs_pos_y;
+    wire [PHY_WIDTH-1:0] background_abs_pos_x;
+    assign background_abs_pos_y = 478 + camera_offset;
+    assign background_abs_pos_x = x;
+    //----------------------------------------------------------------------------------------
     
     //------------------------------Drivers for Status Signals------------------------------
     genvar k;
@@ -147,7 +164,7 @@ module pixel_gen #(
             assign debug_seq_on[k] = ((x >= 0) && (x < SEQ_DIGITS * FONT_WIDTH) && (y >= debug_seq_pos_y[k]) && (y < debug_seq_pos_y[k] + FONT_WIDTH));
         end
     endgenerate
-    assign map_on = ((x >= MAP_X_OFFSET) && (x < MAP_X_OFFSET + MAP_WIDTH_X) && (y >= MAP_Y_OFFSET)); // && (y < MAP_Y_OFFSET + MAP_WIDTH_Y));
+    assign map_on = ((x >= MAP_X_OFFSET + WALL_WIDTH) && (x < MAP_X_OFFSET + MAP_WIDTH_X - WALL_WIDTH) && (y >= MAP_Y_OFFSET + WALL_WIDTH));
     assign char_on = ((x >= char_abs_x) && (x < char_abs_x + CHAR_WIDTH_X) && (y >= char_abs_y - camera_offset) && (y < char_abs_y + CHAR_WIDTH_Y - camera_offset));
     genvar m;
     generate
@@ -169,6 +186,8 @@ module pixel_gen #(
             default: obstacle_on_id = 3'b000;
         endcase
     end
+
+    assign background_on = ~{obstacle_on_for_all | map_on | char_on};
     //----------------------------------------------------------------------------------------
     
     // Set RGB output value based on status signals
@@ -186,17 +205,17 @@ module pixel_gen #(
             end else if(map_on) begin
                 rgb = map_rgb;
             end else begin
-                rgb = YELLOW;
+                rgb = background_rgb;
             end
         end
     end
 
     //------------------------------Map--------------------------------
     Map #(
-        .PHY_WIDTH(PHY_WIDTH),
-        .MAP_WIDTH_X(MAP_WIDTH_X)
-        //.MAP_WIDTH_Y(MAP_WIDTH_Y)
+        .PIXEL_WIDTH(PIXEL_WIDTH),
+        .PHY_WIDTH(PHY_WIDTH)
     ) map_inst(
+        .camera_y(camera_y),
         .map_x(map_x),
         .map_y(map_y),
         .map_on(map_on),
@@ -244,7 +263,6 @@ module pixel_gen #(
 
     //------------------------------Obstacle-------------------------------- // TODO: write module for obstacle print
     obstacle_display_controller #(
-        .OBSTACLE_NUM(OBSTACLE_NUM),
         .OBSTACLE_WIDTH(OBSTACLE_WIDTH),
         .BLOCK_LEN_WIDTH(BLOCK_LEN_WIDTH),
         .PHY_WIDTH(PHY_WIDTH),
@@ -258,8 +276,26 @@ module pixel_gen #(
         .obstacle_abs_pos_y(obstacle_abs_pos_y[obstacle_on_id*PHY_WIDTH +: PHY_WIDTH]),
         .obstacle_abs_pos_x(obstacle_abs_pos_x[obstacle_on_id*PHY_WIDTH +: PHY_WIDTH]),
         .obstacle_on(obstacle_on_for_all),
-        .obstacle_on_id(obstacle_on_id),
         .rgb(obstacle_rgb)
+    );
+    //-----------------------------------------------------------------
+
+    //------------------------------Background--------------------------------
+    obstacle_display_controller #(
+        .OBSTACLE_WIDTH(OBSTACLE_WIDTH),
+        .BLOCK_LEN_WIDTH(BLOCK_LEN_WIDTH),
+        .PHY_WIDTH(PHY_WIDTH),
+        .PIXEL_WIDTH(PIXEL_WIDTH),
+        .SCREEN_WIDTH(SCREEN_WIDTH)
+    ) background_inst(
+        .sys_clk(sys_clk),
+        .sys_rst_n(sys_rst_n),
+        .obstacle_x_rom(background_x_rom),
+        .obstacle_y_rom(background_y_rom),
+        .obstacle_abs_pos_y(background_abs_pos_y),
+        .obstacle_abs_pos_x(background_abs_pos_x),
+        .obstacle_on(background_on),
+        .rgb(background_rgb)
     );
     //-----------------------------------------------------------------
 

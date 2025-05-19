@@ -147,6 +147,7 @@ module top(
                 //.MAP_WIDTH_Y(MAP_WIDTH_Y),
                 .MAP_X_OFFSET(MAP_X_OFFSET),
                 .MAP_Y_OFFSET(MAP_Y_OFFSET),
+                .WALL_WIDTH(WALL_WIDTH),
                 //-----------Character parameters-----------
                 .CHAR_WIDTH_X(CHAR_WIDTH_X),
                 .CHAR_WIDTH_Y(CHAR_WIDTH_Y),
