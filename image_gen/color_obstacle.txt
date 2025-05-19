@@ -1,0 +1,4 @@
+67.8 67.8 67.8  // gray-light
+45.5 45.5 45.5  // gray-medium
+0 0 0           // gray-heavy
+0 69.0 31.4     // green

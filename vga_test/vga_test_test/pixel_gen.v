@@ -21,6 +21,7 @@ module pixel_gen #(
     //-----------Obstacle parameters-----------
     parameter OBSTACLE_NUM = 10,
     parameter OBSTACLE_WIDTH = 10,
+    parameter OBSTACLE_HEIGHT = 20,
     parameter BLOCK_LEN_WIDTH = 4, // max 15
     //-----------Screen parameters-----------
     parameter SCREEN_WIDTH = 10,
@@ -89,6 +90,8 @@ module pixel_gen #(
     wire map_on;
     wire char_on;
     wire [OBSTACLE_NUM - 1:0] obstacle_on;
+    wire obstacle_on_for_all;
+    reg [$clog2(OBSTACLE_NUM + 1) - 1:0] obstacle_on_id;
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Debug Sequence Absolute Position Signals-----------------------------
@@ -149,9 +152,26 @@ module pixel_gen #(
     genvar m;
     generate
         for(m = 0; m < OBSTACLE_NUM; m = m + 1) begin: ob_on
-            assign obstacle_on[m] = ((x >= obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH]) && (x < obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH] + obstacle_block_width[m*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH) && (y >= obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH]) && (y < obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] + OBSTACLE_WIDTH));
+            assign obstacle_on[m] = ((x >= obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH]) && (x < obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH] + obstacle_block_width[m*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH) && (y >= obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH]) && (y < obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] + OBSTACLE_HEIGHT));
         end
     endgenerate
+    assign obstacle_on_for_all = |obstacle_on;
+
+    always @(*) begin
+        case(obstacle_on)
+            10'b0000000001: obstacle_on_id = 4'h0;
+            10'b0000000010: obstacle_on_id = 4'h1;
+            10'b0000000100: obstacle_on_id = 4'h2;
+            10'b0000001000: obstacle_on_id = 4'h3;
+            10'b0000010000: obstacle_on_id = 4'h4;
+            10'b0000100000: obstacle_on_id = 4'h5;
+            10'b0001000000: obstacle_on_id = 4'h6;
+            10'b0010000000: obstacle_on_id = 4'h7;
+            10'b0100000000: obstacle_on_id = 4'h8;
+            10'b1000000000: obstacle_on_id = 4'h9;
+            default: obstacle_on_id = 4'hf;
+        endcase
+    end
     //----------------------------------------------------------------------------------------
     
     // Set RGB output value based on status signals
@@ -164,8 +184,8 @@ module pixel_gen #(
                 rgb = debug_seq[0 * UNIT_SEQ_WIDTH + (debug_seq_y[0] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(char_on) begin
                 rgb = char_rgb; //char_rgb, remember to change back
-            end else if(|obstacle_on) begin // not all blank
-                rgb = BLACK;
+            end else if(obstacle_on_for_all) begin // not all blank
+                rgb = obstacle_rgb;
             end else if(map_on) begin
                 rgb = map_rgb;
             end else begin
@@ -204,19 +224,6 @@ module pixel_gen #(
     );
 
     //------------------------------Character--------------------------------
-    // TODO: disable first, fill character in all black first
-    /*
-    IDLE_1_CHAR #(
-        .PIXEL_WIDTH(PIXEL_WIDTH),
-        .SCREEN_WIDTH(SCREEN_WIDTH),
-        .CHAR_WIDTH_X(CHAR_WIDTH_X),
-        .CHAR_WIDTH_Y(CHAR_WIDTH_Y)
-    ) char_inst(
-        .char_x_rom(char_x_rom[SCREEN_WIDTH - 1:0]),
-        .char_y_rom(char_y_rom[SCREEN_WIDTH - 1:0]),
-        .rgb(char_rgb)
-    );
-    */
     wire [1:0] face;
     assign face = sw ? 2'b10 : 2'b01;
     
@@ -239,16 +246,26 @@ module pixel_gen #(
     //-----------------------------------------------------------------
 
     //------------------------------Obstacle-------------------------------- // TODO: write module for obstacle print
-    /*OBSTACLE #(
+    obstacle_display_controller #(
         .OBSTACLE_NUM(OBSTACLE_NUM),
         .OBSTACLE_WIDTH(OBSTACLE_WIDTH),
+        .OBSTACLE_HEIGHT(OBSTACLE_HEIGHT),
+        .BLOCK_LEN_WIDTH(BLOCK_LEN_WIDTH),
+        .PHY_WIDTH(PHY_WIDTH),
+        .PIXEL_WIDTH(PIXEL_WIDTH),
         .SCREEN_WIDTH(SCREEN_WIDTH),
     ) obstacle_inst(
-        .obstacle_abs_pos_x(obstacle_abs_pos_x),
-        .obstacle_abs_pos_y(obstacle_abs_pos_y),
-        .obstacle_block_width(obstacle_block_width),
+        .sys_clk(sys_clk),
+        .sys_rst_n(sys_rst_n),
+        .obstacle_x_rom(obstacle_x_rom[SCREEN_WIDTH - 1:0]),
+        .obstacle_y_rom(obstacle_y_rom[SCREEN_WIDTH - 1:0]),
+        .obstacle_abs_pos_x(obstacle_abs_pos_x[obstacle_on_id*PHY_WIDTH +: PHY_WIDTH]),
+        .obstacle_abs_pos_y(obstacle_abs_pos_y[obstacle_on_id*PHY_WIDTH +: PHY_WIDTH]),
+        .obstacle_block_width(obstacle_block_width[obstacle_on_id*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]),
+        .obstacle_on(obstacle_on_for_all),
+        .obstacle_on_id(obstacle_on_id),
         .rgb(obstacle_rgb)
-    );*/
+    );
     //-----------------------------------------------------------------
 
 endmodule

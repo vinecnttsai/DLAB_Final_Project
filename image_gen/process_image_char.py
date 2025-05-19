@@ -121,7 +121,7 @@ if __name__ == "__main__":
     image_path = sys.argv[1]
     grid_cols = int(sys.argv[2])
     grid_rows = int(sys.argv[3])
-    palette_path = r"C:\Users\user\Desktop\DLAB\Final_Project_source_code\image_gen\color.txt"
+    palette_path = r"C:\Users\user\Desktop\DLAB\Final_Project_source_code\image_gen\color_char.txt"
 
     color_indices, palette_rgb12 = process_image(image_path, grid_cols, grid_rows, palette_path)
 
