@@ -247,6 +247,8 @@ module pixel_gen #(
             6'b11_100: char_rgb = PURPLE;
             6'b01_101: char_rgb = BROWN;
             6'b11_101: char_rgb = PINK;
+            6'b01_110: char_rgb = MAROON;
+            6'b11_110: char_rgb = OLIVE;
             default: char_rgb = WHITE;
         endcase
     end

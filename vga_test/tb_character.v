@@ -42,7 +42,7 @@ module tb_character #(
     input [OBSTACLE_NUM * PHY_WIDTH-1:0] obstacle_abs_pos_x, // obstacle absolute x position
     input [OBSTACLE_NUM * PHY_WIDTH-1:0] obstacle_abs_pos_y, // obstacle absolute y position
     input [OBSTACLE_NUM * BLOCK_LEN_WIDTH-1:0] obstacle_block_width, // obstacle block width
-    output [3:0] char_display_id,
+    output [2:0] char_display_id,
     output [1:0] out_face,
     //------------------------debug--------------------------------
     output [SIGNED_PHY_WIDTH-1:0] out_pos_x, // character absolute x position
@@ -79,9 +79,8 @@ localparam signed [SIGNED_PHY_WIDTH-1:0] GRAVITY = -(1 <<< SMOOTH_FACTOR);
 localparam signed [SIGNED_PHY_WIDTH-1:0] POSITIVE = 1 <<< SMOOTH_FACTOR;
 localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_POS_X = 3;
 localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_POS_X = -3;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 2 <<< SMOOTH_FACTOR;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 5 <<< SMOOTH_FACTOR;
-localparam signed [SIGNED_PHY_WIDTH-1:0] FALLING_VEL_THRESHOLD = -MAX_VEL / 3;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 1 <<< SMOOTH_FACTOR;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 3 <<< SMOOTH_FACTOR;
 
 reg signed [SIGNED_PHY_WIDTH-1:0] acc_x_reg, acc_y_reg; // SIGNED_PHY_WIDTH-bit signed integer
 reg signed [SIGNED_PHY_WIDTH-1:0] vel_x_reg, vel_y_reg;
@@ -284,7 +283,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    jump_factor = {3'b0, jump_cnt[6:4], 1'b1, 8'b0} + {6'b0, jump_cnt[3:2], 7'b0} + {7'b0, jump_cnt[1:0],6'b0};
+    jump_factor = {4'b0, jump_cnt[6:4], 1'b1, 7'b0} + {5'b0, jump_cnt[3:2], 6'b0} + {8'b0, jump_cnt[1:0],5'b0};
 end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -323,9 +322,9 @@ always @(*) begin
         vel_y = -vel_y_reg;
     end else if (collision_type == 1) begin
         vel_x = 0;
-        vel_y = -2 * vel_y_reg;
+        vel_y = -vel_y_reg - (vel_y_reg >>> 1); // -1.5 damped
     end else if (collision_type == 2) begin
-        vel_x = -2 * vel_x_reg;
+        vel_x = -vel_x_reg - (vel_x_reg >>> 1); // -1.5 damped
         vel_y = 0;
     end else if (state == JUMP) begin
         vel_x = (JUMP_VEL_X + $signed(jump_factor) >>> 1) * face;
@@ -658,7 +657,8 @@ endfunction
 
 //-----------------------------------------Character Display-----------------------------------------
 character_display #(
-    .SIGNED_PHY_WIDTH(SIGNED_PHY_WIDTH)
+    .SIGNED_PHY_WIDTH(SIGNED_PHY_WIDTH),
+    .MAX_VEL_Y(MAX_VEL)
 ) character_display_inst(
     .sys_clk(sys_clk),
     .sys_rst_n(sys_rst_n),

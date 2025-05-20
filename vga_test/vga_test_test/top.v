@@ -21,6 +21,10 @@ module top(
 
 //-----------------------------------localparam-----------------------------------
 
+    //-----------Pixel generator parameters-----------
+    localparam PIXEL_WIDTH = 12;
+    //-----------Pixel generator parameters-----------
+
     //-----------Sequence debug parameters-----------
     localparam SEQ_LEN = 16;
     localparam SEQ_DIGITS = SEQ_LEN / 4 + 1; // 1 for sign digit
@@ -28,10 +32,6 @@ module top(
     localparam FONT_WIDTH = 8;
     localparam UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH;
     //-----------Sequence debug parameters-----------
-
-    //-----------Pixel generator parameters-----------
-    localparam PIXEL_WIDTH = 12;
-    //-----------Pixel generator parameters-----------
 
     //-----------Map parameters-----------
     localparam MAP_WIDTH_X = 480;
@@ -167,8 +167,8 @@ module top(
                 .camera_y(camera_y),
                 .x(w_x),
                 .y(w_y),
-                .char_abs_x(320),
-                .char_abs_y(MAP_Y_OFFSET),
+                .char_abs_x(560),
+                .char_abs_y(380),
                 .obstacle_abs_pos_x(obstacle_abs_pos_x),
                 .obstacle_abs_pos_y(obstacle_abs_pos_y),
                 .obstacle_block_width(obstacle_block_width),

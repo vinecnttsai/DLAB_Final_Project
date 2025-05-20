@@ -85,6 +85,7 @@ module pixel_gen #(
     wire [PIXEL_WIDTH - 1:0] map_rgb;
     wire [PIXEL_WIDTH - 1:0] obstacle_rgb;
     wire [PIXEL_WIDTH - 1:0] background_rgb;
+    reg [PIXEL_WIDTH - 1:0] others_rgb;
     //----------------------------------------------------------------------------
     
     //------------------------------Pixel Location Status Signals------------------------------
@@ -120,8 +121,8 @@ module pixel_gen #(
     //-----------------------------Map Relative Position Signals-----------------------------
     wire [PHY_WIDTH-1:0] map_y;
     wire [PHY_WIDTH-1:0] map_x;
-    assign map_y = y + camera_offset - MAP_Y_OFFSET;   // boundary does not count
-    assign map_x = x - MAP_X_OFFSET;                   // boundary does not count
+    assign map_y = y + camera_offset - MAP_Y_OFFSET - WALL_WIDTH;   // boundary does not count
+    assign map_x = x - MAP_X_OFFSET - WALL_WIDTH;                   // boundary does not count
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Character Relative Position Signals-----------------------------
@@ -164,7 +165,7 @@ module pixel_gen #(
             assign debug_seq_on[k] = ((x >= 0) && (x < SEQ_DIGITS * FONT_WIDTH) && (y >= debug_seq_pos_y[k]) && (y < debug_seq_pos_y[k] + FONT_WIDTH));
         end
     endgenerate
-    assign map_on = ((x >= MAP_X_OFFSET) && (x < MAP_X_OFFSET + MAP_WIDTH_X) && (y >= MAP_Y_OFFSET));
+    assign map_on = ((x >= MAP_X_OFFSET + WALL_WIDTH) && (x < MAP_X_OFFSET + MAP_WIDTH_X - WALL_WIDTH) && (y >= MAP_Y_OFFSET + WALL_WIDTH));
     assign char_on = ((x >= char_abs_x) && (x < char_abs_x + CHAR_WIDTH_X) && (y >= char_abs_y - camera_offset) && (y < char_abs_y + CHAR_WIDTH_Y - camera_offset));
     genvar m;
     generate
@@ -200,16 +201,23 @@ module pixel_gen #(
                 rgb = debug_seq[0 * UNIT_SEQ_WIDTH + (debug_seq_y[0] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(char_on) begin
                 rgb = char_rgb; //char_rgb, remember to change back
-            end else if(obstacle_on_for_all) begin // not all blank
-                rgb = obstacle_rgb;
-            end else if(map_on) begin
-                rgb = map_rgb;
             end else begin
-                rgb = background_rgb;
+                rgb = others_rgb;
             end
         end
     end
 
+    always @(*) begin
+        if(~video_on) begin
+            others_rgb = BLACK;
+        end else if(obstacle_on_for_all) begin
+            others_rgb = obstacle_rgb;
+        end else if(map_on) begin
+            others_rgb = map_rgb;
+        end else begin
+            others_rgb = background_rgb;
+        end
+    end
     //------------------------------Map--------------------------------
     Map #(
         .PIXEL_WIDTH(PIXEL_WIDTH),
@@ -220,7 +228,6 @@ module pixel_gen #(
         .map_x(map_x),
         .map_y(map_y),
         .map_on(map_on),
-        .background_rgb(background_rgb),
         .rgb(map_rgb)
     );
     //-----------------------------------------------------------------
@@ -231,7 +238,7 @@ module pixel_gen #(
         if(!sys_rst_n) begin
             cnt <= 0;
         end else if (tb_clk) begin
-            cnt <= cnt == 3'b101 ? 3'b000 : cnt + 1;
+            cnt <= cnt == 3'b110 ? 3'b000 : cnt + 1;
         end
     end
     
@@ -258,8 +265,7 @@ module pixel_gen #(
         .char_on(char_on),
         .char_face(face),
         .char_id(cnt),
-        .background_on(map_on),
-        .background_rgb(map_rgb),
+        .background_rgb(others_rgb),
         .rgb(char_rgb)
     );
     

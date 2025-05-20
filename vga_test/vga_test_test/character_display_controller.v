@@ -13,14 +13,13 @@ module character_display_controller #(
     input [SCREEN_WIDTH - 1:0] char_y_rom,
     input char_on,
     input [2:0] char_id,
-    input background_on,
     input [PIXEL_WIDTH - 1:0] background_rgb,
     output reg [PIXEL_WIDTH - 1:0] rgb
 );
 
-localparam [2:0] CHAR_DIS_NUM = 6;
+localparam [2:0] CHAR_DIS_NUM = 7;
 localparam [2:0] COLOR_WIDTH = 4; // max 16 colors
-localparam [2:0] IDLE_DIS_1 = 0, IDLE_DIS_2 = 1, CHARGE_DIS = 2, JUMP_UP_DIS = 3, JUMP_DOWN_DIS = 4, FALL_TO_GROUND_DIS = 5;
+localparam [2:0] IDLE_DIS_1 = 0, IDLE_DIS_2 = 1, CHARGE_DIS = 2, JUMP_UP_DIS = 3, JUMP_DOWN_DIS = 4, FALL_TO_GROUND_DIS = 5, SAFE_GROUND_DIS = 6;
 
 wire [COLOR_WIDTH - 1:0] color_table [CHAR_DIS_NUM - 1:0];
 reg [COLOR_WIDTH - 1:0] color_id;
@@ -62,6 +61,7 @@ always @(*) begin
         JUMP_UP_DIS: color_id = color_table[JUMP_UP_DIS];
         JUMP_DOWN_DIS: color_id = color_table[JUMP_DOWN_DIS];
         FALL_TO_GROUND_DIS: color_id = color_table[FALL_TO_GROUND_DIS];
+        SAFE_GROUND_DIS: color_id = color_table[SAFE_GROUND_DIS];
         default: color_id = 4'hB; // IDLE_DIS_1
     endcase
 end
@@ -146,6 +146,18 @@ FALL_TO_GROUND_CHAR #(
     .char_y_rom(char_y_rom_safe),
     .char_on(char_on),
     .rgb_id(color_table[FALL_TO_GROUND_DIS])
+);
+
+SAFE_GROUND_CHAR #(
+    .COLOR_WIDTH(COLOR_WIDTH),
+    .SCREEN_WIDTH(SCREEN_WIDTH)
+) SAFE_GROUND_CHAR_inst (
+    .sys_clk(sys_clk),
+    .sys_rst_n(sys_rst_n),
+    .char_x_rom(char_x_rom_safe),
+    .char_y_rom(char_y_rom_safe),
+    .char_on(char_on),
+    .rgb_id(color_table[SAFE_GROUND_DIS])
 );
 //-------------------------------module connection-------------------------------------
 
