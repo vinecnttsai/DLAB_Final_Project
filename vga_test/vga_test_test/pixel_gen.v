@@ -120,8 +120,8 @@ module pixel_gen #(
     //-----------------------------Map Relative Position Signals-----------------------------
     wire [PHY_WIDTH-1:0] map_y;
     wire [PHY_WIDTH-1:0] map_x;
-    assign map_y = y + camera_offset - MAP_Y_OFFSET - WALL_WIDTH;   // boundary does not count
-    assign map_x = x - MAP_X_OFFSET - WALL_WIDTH;                   // boundary does not count
+    assign map_y = y + camera_offset - MAP_Y_OFFSET;   // boundary does not count
+    assign map_x = x - MAP_X_OFFSET;                   // boundary does not count
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Character Relative Position Signals-----------------------------
@@ -164,7 +164,7 @@ module pixel_gen #(
             assign debug_seq_on[k] = ((x >= 0) && (x < SEQ_DIGITS * FONT_WIDTH) && (y >= debug_seq_pos_y[k]) && (y < debug_seq_pos_y[k] + FONT_WIDTH));
         end
     endgenerate
-    assign map_on = ((x >= MAP_X_OFFSET + WALL_WIDTH) && (x < MAP_X_OFFSET + MAP_WIDTH_X - WALL_WIDTH) && (y >= MAP_Y_OFFSET + WALL_WIDTH));
+    assign map_on = ((x >= MAP_X_OFFSET) && (x < MAP_X_OFFSET + MAP_WIDTH_X) && (y >= MAP_Y_OFFSET));
     assign char_on = ((x >= char_abs_x) && (x < char_abs_x + CHAR_WIDTH_X) && (y >= char_abs_y - camera_offset) && (y < char_abs_y + CHAR_WIDTH_Y - camera_offset));
     genvar m;
     generate
@@ -187,7 +187,7 @@ module pixel_gen #(
         endcase
     end
 
-    assign background_on = ~{obstacle_on_for_all | map_on | char_on};
+    assign background_on = video_on;
     //----------------------------------------------------------------------------------------
     
     // Set RGB output value based on status signals
@@ -213,12 +213,14 @@ module pixel_gen #(
     //------------------------------Map--------------------------------
     Map #(
         .PIXEL_WIDTH(PIXEL_WIDTH),
-        .PHY_WIDTH(PHY_WIDTH)
+        .PHY_WIDTH(PHY_WIDTH),
+        .MAP_WIDTH_X(MAP_WIDTH_X)
     ) map_inst(
         .camera_y(camera_y),
         .map_x(map_x),
         .map_y(map_y),
         .map_on(map_on),
+        .background_rgb(background_rgb),
         .rgb(map_rgb)
     );
     //-----------------------------------------------------------------
@@ -256,6 +258,8 @@ module pixel_gen #(
         .char_on(char_on),
         .char_face(face),
         .char_id(cnt),
+        .background_on(map_on),
+        .background_rgb(map_rgb),
         .rgb(char_rgb)
     );
     

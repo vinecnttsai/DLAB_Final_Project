@@ -13,6 +13,8 @@ module character_display_controller #(
     input [SCREEN_WIDTH - 1:0] char_y_rom,
     input char_on,
     input [2:0] char_id,
+    input background_on,
+    input [PIXEL_WIDTH - 1:0] background_rgb,
     output reg [PIXEL_WIDTH - 1:0] rgb
 );
 
@@ -25,6 +27,16 @@ reg [COLOR_WIDTH - 1:0] color_id;
 
 reg [SCREEN_WIDTH - 1:0] char_x_rom_safe, char_y_rom_safe;
 
+reg [PIXEL_WIDTH - 1:0] background_rgb_reg;
+
+always @(posedge sys_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n) begin
+        background_rgb_reg <= 12'hFFF;
+    end
+    else begin
+        background_rgb_reg <= background_rgb;
+    end 
+end
 
 //-------------------------------rgb_table-------------------------------------
 (* rom_style = "block" *) reg [COLOR_NUM * PIXEL_WIDTH - 1:0] rgb_table = {
@@ -39,7 +51,7 @@ reg [SCREEN_WIDTH - 1:0] char_x_rom_safe, char_y_rom_safe;
     12'h00F,
     12'h000,
     12'h7AF,
-    12'hACF     // also be the default color
+    12'hACF
 };
 
 always @(*) begin
@@ -50,11 +62,11 @@ always @(*) begin
         JUMP_UP_DIS: color_id = color_table[JUMP_UP_DIS];
         JUMP_DOWN_DIS: color_id = color_table[JUMP_DOWN_DIS];
         FALL_TO_GROUND_DIS: color_id = color_table[FALL_TO_GROUND_DIS];
-        default: color_id = 4'h0; // IDLE_DIS_1
+        default: color_id = 4'hB; // IDLE_DIS_1
     endcase
 end
 always @(*) begin
-    rgb = rgb_table[color_id * PIXEL_WIDTH +: PIXEL_WIDTH]; // default color is WHITE
+    rgb = (color_id == 4'hB) ? background_rgb_reg : rgb_table[color_id * PIXEL_WIDTH +: PIXEL_WIDTH]; // default color is WHITE
 end
 //-------------------------------rgb_table-------------------------------------
 

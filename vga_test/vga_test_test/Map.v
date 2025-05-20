@@ -1,18 +1,20 @@
 module Map #(
     parameter PIXEL_WIDTH = 12,
-    parameter PHY_WIDTH = 14
+    parameter PHY_WIDTH = 14,
+    parameter MAP_WIDTH_X = 480
 ) (
     input [4:0] camera_y,
     input [PHY_WIDTH-1:0] map_x,
     input [PHY_WIDTH-1:0] map_y,
     input map_on,
+    input [PIXEL_WIDTH-1:0] background_rgb,
     output reg [PIXEL_WIDTH-1:0] rgb
 );
-// 80 * 80 for digit, 470 * 460 for map size
+// 80 * 80 for digit, 480 * 480 for map size
 localparam MAP_COLOR = 12'hA21;
 localparam DIGIT_COLOR = 12'hFFF; // white
-localparam FIRST_DIGIT_X = 130; // 240 - 220 = 20
-localparam SECOND_DIGIT_X = 250; // 240 + 100
+localparam FIRST_DIGIT_X = 140; // 240 - 220 = 20
+localparam SECOND_DIGIT_X = 260; // 240 + 100
 localparam DIGIT_Y = 160;
 localparam DIGIT_WIDTH = 80;
 
@@ -23,6 +25,12 @@ bin_to_bcd_converter #(
     .in({3'b000, camera_y}),
     .out(digits)
 );
+
+localparam WALL_WIDTH = 10;
+localparam LEFT_WALL = MAP_WIDTH_X - WALL_WIDTH;
+localparam BOTTOM_WALL = 0;
+localparam RIGHT_WALL = 0;
+assign is_boundary = (map_x >= LEFT_WALL && map_x < LEFT_WALL + WALL_WIDTH) || (map_x >= RIGHT_WALL && map_x < RIGHT_WALL + WALL_WIDTH) || (map_y >= BOTTOM_WALL && map_y < BOTTOM_WALL + WALL_WIDTH);
 
 reg [3:0] row;
 wire [9:0] first_digit_bitmap_row;
@@ -61,9 +69,10 @@ end
 
 always @(*) begin
     if (map_on) begin
-        case ({second_digit_on, first_digit_on})
-            2'b01: rgb = (first_digit_bitmap_row[map_first_digit_x_safe]) ? DIGIT_COLOR : MAP_COLOR;
-            2'b10: rgb = (second_digit_bitmap_row[map_second_digit_x_safe]) ? DIGIT_COLOR : MAP_COLOR;
+        case ({second_digit_on, first_digit_on, is_boundary})
+            3'b010: rgb = (first_digit_bitmap_row[map_first_digit_x_safe]) ? DIGIT_COLOR : MAP_COLOR;
+            3'b100: rgb = (second_digit_bitmap_row[map_second_digit_x_safe]) ? DIGIT_COLOR : MAP_COLOR;
+            3'b001: rgb = background_rgb;
             default: rgb = MAP_COLOR;
         endcase
     end
