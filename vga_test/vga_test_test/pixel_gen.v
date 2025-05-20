@@ -2,12 +2,13 @@
 // camera_y is the y coordinate of the camera, is TODO
 // obstacle_print_module
 module pixel_gen #(
-    //-----------Sequence debug parameters-----------
-    parameter SEQ_DIGITS = 4,
-    parameter SEQ_NUM = 1,
     parameter PIXEL_WIDTH = 12,
+    //-----------BCD Sequence parameters-----------
+    parameter SEQ_LEN = 20,
+    parameter SEQ_DIGITS = (SEQ_LEN >>> 2) + 1,
+    parameter SEQ_NUM = 3,
     parameter FONT_WIDTH = 8,
-    parameter UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH,
+    parameter SEQ_X_WIDTH = SEQ_DIGITS * FONT_WIDTH,
     //-----------Block parameters-----------
     parameter BLOCK_WIDTH = 480,
     //-----------Map parameters-----------
@@ -46,7 +47,7 @@ module pixel_gen #(
     input [OBSTACLE_NUM * BLOCK_LEN_WIDTH - 1:0] obstacle_block_width,
     output reg [PIXEL_WIDTH - 1:0] rgb,   // to VGA port
     //------------------------------data signals------------------------------
-    input [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_seq
+    input [SEQ_NUM * SEQ_LEN - 1:0] bcd_seq
     );
     
     //------------------------------RGB Color Values------------------------------
@@ -72,7 +73,7 @@ module pixel_gen #(
     //----------------------------------------------------------------------------
 
     //------------------------------Utility variables------------------------------
-    localparam SEQ_INTERVAL = 3;
+    localparam SEQ_INTERVAL = 5;
     //----------------------------------------------------------------------------
 
     //------------------------------Camera offset--------------------------------
@@ -81,6 +82,7 @@ module pixel_gen #(
     //----------------------------------------------------------------------------
     
     //------------------------------RGB Signals------------------------------
+    wire [PIXEL_WIDTH - 1:0] bcd_seq_rgb;
     wire [PIXEL_WIDTH - 1:0] char_rgb;
     wire [PIXEL_WIDTH - 1:0] map_rgb;
     wire [PIXEL_WIDTH - 1:0] obstacle_rgb;
@@ -89,33 +91,40 @@ module pixel_gen #(
     //----------------------------------------------------------------------------
     
     //------------------------------Pixel Location Status Signals------------------------------
-    wire [SEQ_NUM - 1:0] debug_seq_on;
+    wire [SEQ_NUM - 1:0] bcd_seq_on;
+    wire bcd_seq_on_for_all;
+    wire [$clog2(SEQ_NUM + 1) - 1:0] bcd_seq_on_id;
+
     wire map_on;
     wire char_on;
+
     wire [OBSTACLE_NUM - 1:0] obstacle_on;
     wire obstacle_on_for_all;
-    reg [$clog2(OBSTACLE_NUM + 1) - 1:0] obstacle_on_id;
+    wire [$clog2(OBSTACLE_NUM + 1) - 1:0] obstacle_on_id;
+
     wire background_on;
     //----------------------------------------------------------------------------------------
 
-    //-----------------------------Debug Sequence Absolute Position Signals-----------------------------
-    wire [SCREEN_WIDTH-1:0] debug_seq_pos_y [SEQ_NUM - 1:0];
+    //-----------------------------bcd Sequence Absolute Position Signals-----------------------------
+    wire [SCREEN_WIDTH-1:0] bcd_seq_y [SEQ_NUM - 1:0];
     genvar i;
     generate
-        for(i = 0; i < SEQ_NUM; i = i + 1) begin : debug_seq_pos
-            assign debug_seq_pos_y[i] = i * (FONT_WIDTH + SEQ_INTERVAL);
+        for(i = 0; i < SEQ_NUM; i = i + 1) begin : bcd_seq_pos
+            assign bcd_seq_y[i] = i * (FONT_WIDTH + SEQ_INTERVAL);
         end
     endgenerate
     //----------------------------------------------------------------------------------------  
 
-    //-----------------------------Debug Sequence Relative Position Signals-----------------------------
-    wire [SCREEN_WIDTH-1:0] debug_seq_y [SEQ_NUM - 1:0];
+    //-----------------------------bcd Sequence Relative Position Signals-----------------------------
+    wire [SCREEN_WIDTH-1:0] bcd_seq_y_rom [SEQ_NUM - 1:0];
+    wire [SCREEN_WIDTH-1:0] bcd_seq_x_rom;
     genvar j;
     generate
-        for(j = 0; j < SEQ_NUM; j = j + 1) begin : debug_seq_y_pos
-            assign debug_seq_y[j] = y - debug_seq_pos_y[j];
+        for(j = 0; j < SEQ_NUM; j = j + 1) begin : bcd_seq_y_rom_pos
+            assign bcd_seq_y_rom[j] = y - bcd_seq_y[j];
         end
     endgenerate
+    assign bcd_seq_x_rom = x % SEQ_X_WIDTH;
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Map Relative Position Signals-----------------------------
@@ -161,12 +170,20 @@ module pixel_gen #(
     //------------------------------Drivers for Status Signals------------------------------
     genvar k;
     generate
-        for(k = 0; k < SEQ_NUM; k = k + 1) begin : debug_sequence_on
-            assign debug_seq_on[k] = ((x >= 0) && (x < SEQ_DIGITS * FONT_WIDTH) && (y >= debug_seq_pos_y[k]) && (y < debug_seq_pos_y[k] + FONT_WIDTH));
+        for(k = 0; k < SEQ_NUM; k = k + 1) begin : bcd_sequence_on
+            assign bcd_seq_on[k] = ((x >= 0) && (x < SEQ_X_WIDTH) && (y >= bcd_seq_y[k]) && (y < bcd_seq_y[k] + FONT_WIDTH));
         end
     endgenerate
+    assign bcd_seq_on_for_all = |bcd_seq_on;
+    N_decoder #(.N(SEQ_NUM)) n_decoder_inst_bcd(
+        .in(bcd_seq_on),
+        .out(bcd_seq_on_id)
+    );
+
     assign map_on = ((x >= MAP_X_OFFSET + WALL_WIDTH) && (x < MAP_X_OFFSET + MAP_WIDTH_X - WALL_WIDTH) && (y >= MAP_Y_OFFSET + WALL_WIDTH));
     assign char_on = ((x >= char_abs_x) && (x < char_abs_x + CHAR_WIDTH_X) && (y >= char_abs_y - camera_offset) && (y < char_abs_y + CHAR_WIDTH_Y - camera_offset));
+
+
     genvar m;
     generate
         for(m = 0; m < OBSTACLE_NUM; m = m + 1) begin: ob_on
@@ -174,19 +191,10 @@ module pixel_gen #(
         end
     endgenerate
     assign obstacle_on_for_all = |obstacle_on;
-
-    always @(*) begin
-        case(obstacle_on)
-            7'b0000001: obstacle_on_id = 3'b000;
-            7'b0000010: obstacle_on_id = 3'b001;
-            7'b0000100: obstacle_on_id = 3'b010;
-            7'b0001000: obstacle_on_id = 3'b011;
-            7'b0010000: obstacle_on_id = 3'b100;
-            7'b0100000: obstacle_on_id = 3'b101;
-            7'b1000000: obstacle_on_id = 3'b110;
-            default: obstacle_on_id = 3'b000;
-        endcase
-    end
+    N_decoder #(.N(OBSTACLE_NUM)) n_decoder_inst_obstacle(
+        .in(obstacle_on),
+        .out(obstacle_on_id)
+    );
 
     assign background_on = video_on;
     //----------------------------------------------------------------------------------------
@@ -197,8 +205,8 @@ module pixel_gen #(
             rgb = BLACK;
         end else begin
 
-            if(debug_seq_on[0]) begin
-                rgb = debug_seq[0 * UNIT_SEQ_WIDTH + (debug_seq_y[0] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
+            if(bcd_seq_on_for_all) begin
+                rgb = bcd_seq_rgb;
             end else if(char_on) begin
                 rgb = char_rgb; //char_rgb, remember to change back
             end else begin
@@ -218,6 +226,24 @@ module pixel_gen #(
             others_rgb = background_rgb;
         end
     end
+
+
+    //-----------------------------bcd Sequence--------------------------------
+    bcd_seq_display_controller #(
+        .SCREEN_WIDTH(SCREEN_WIDTH),
+        .SEQ_LEN(SEQ_LEN),
+        .SEQ_DIGITS(SEQ_DIGITS),
+        .PIXEL_WIDTH(PIXEL_WIDTH),
+        .FONT_WIDTH(FONT_WIDTH)
+    ) sequence_inst(
+        .seq(bcd_seq[bcd_seq_on_id*SEQ_LEN +: SEQ_LEN]),
+        .seq_x_rom(bcd_seq_x_rom),
+        .seq_y_rom(bcd_seq_y_rom[bcd_seq_on_id]),
+        .background_rgb(others_rgb),
+        .rgb(bcd_seq_rgb)
+    );
+    //-----------------------------bcd Sequence--------------------------------
+
     //------------------------------Map--------------------------------
     Map #(
         .PIXEL_WIDTH(PIXEL_WIDTH),

@@ -26,11 +26,10 @@ module top(
     //-----------Pixel generator parameters-----------
 
     //-----------Sequence debug parameters-----------
-    localparam SEQ_LEN = 16;
-    localparam SEQ_DIGITS = SEQ_LEN / 4 + 1; // 1 for sign digit
-    localparam SEQ_NUM = 1;
+    localparam SEQ_LEN = 20;
+    localparam SEQ_DIGITS = (SEQ_LEN >>> 2) + 1; // 1 for sign digit
+    localparam SEQ_NUM = 3;
     localparam FONT_WIDTH = 8;
-    localparam UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH;
     //-----------Sequence debug parameters-----------
 
     //-----------Map parameters-----------
@@ -67,7 +66,9 @@ module top(
 
 //-----------------------------------Sequence debug-----------------------------------
     reg signed [SEQ_LEN - 1:0] cnt;
+    reg signed [SEQ_LEN - 1:0] cnt_2;
     wire debug_char_clk;
+    wire debug_char_clk_2;
 
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if(!sys_rst_n) begin
@@ -77,10 +78,24 @@ module top(
         end
     end
 
+    always @(posedge sys_clk or negedge sys_rst_n) begin
+        if(!sys_rst_n) begin
+            cnt_2 <= 0;
+        end else if (debug_char_clk_2) begin
+            cnt_2 <= cnt_2 + 1;
+        end
+    end
+
     fq_div #(.N(10000000)) fq_div1( // slowest clock : 100000000
         .org_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .div_n_clk(debug_char_clk)
+    );
+
+    fq_div #(.N(100000)) fq_div2( // slowest clock : 100000000
+        .org_clk(sys_clk),
+        .sys_rst_n(sys_rst_n),
+        .div_n_clk(debug_char_clk_2)
     );
 //-----------------------------------Sequence debug-----------------------------------
 
@@ -136,7 +151,9 @@ module top(
 
 
 //-----------------------------------Pixel generator-----------------------------------
-    pixel_gen #(.SEQ_DIGITS(SEQ_DIGITS),
+    pixel_gen #(
+                .SEQ_LEN(SEQ_LEN),
+                .SEQ_DIGITS(SEQ_DIGITS),
                 .SEQ_NUM(SEQ_NUM),
                 .PIXEL_WIDTH(PIXEL_WIDTH),
                 .FONT_WIDTH(FONT_WIDTH),
@@ -172,25 +189,18 @@ module top(
                 .obstacle_abs_pos_x(obstacle_abs_pos_x),
                 .obstacle_abs_pos_y(obstacle_abs_pos_y),
                 .obstacle_block_width(obstacle_block_width),
-                .debug_seq(debug_sig),
+                .bcd_seq(debug_sig),
                 .rgb(rgb_next));
 //-----------------------------------Pixel generator-----------------------------------
 
 
 //-----------------------------------Debug variables-----------------------------------
-wire [SEQ_LEN - 1:0] debug_padded_sig [SEQ_NUM - 1:0];
-wire [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_sig;
+wire [SEQ_LEN * SEQ_NUM - 1:0] debug_sig;
 
-    pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_1 ( .seq(cnt), .padded_seq(debug_padded_sig[0]) );
+    pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_1 ( .seq(cnt), .padded_seq(debug_sig[SEQ_LEN * 0 +: SEQ_LEN]) );
+    pad_sign #(.seq_len(5), .SEQ_LEN(SEQ_LEN)) pad_2 ( .seq(camera_y), .padded_seq(debug_sig[SEQ_LEN * 1 +: SEQ_LEN]) );
+    pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_3 ( .seq(cnt_2), .padded_seq(debug_sig[SEQ_LEN * 2 +: SEQ_LEN]) );
 
-    genvar i;
-    generate
-        for (i = 0; i < SEQ_NUM; i = i + 1) begin : debug_var
-            debug_var #(.SEQ_LEN(SEQ_LEN), .PIXEL_WIDTH(PIXEL_WIDTH), .FONT_WIDTH(FONT_WIDTH)) debug_var_inst (
-                .seq(debug_padded_sig[i]), .debug_seq(debug_sig[i * UNIT_SEQ_WIDTH +: UNIT_SEQ_WIDTH])
-            );
-        end
-    endgenerate
 //-----------------------------------Debug variables-----------------------------------
 
     // rgb buffer
@@ -202,7 +212,7 @@ wire [SEQ_NUM * UNIT_SEQ_WIDTH - 1:0] debug_sig;
     
 endmodule
 
-module pad_sign #(parameter seq_len = 12, parameter SEQ_LEN = 16)(
+module pad_sign #(parameter seq_len = 12, parameter SEQ_LEN = 20)(
     input [seq_len - 1:0] seq,
     output [SEQ_LEN - 1:0] padded_seq
 );
