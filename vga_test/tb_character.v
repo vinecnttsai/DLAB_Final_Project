@@ -80,7 +80,7 @@ localparam signed [SIGNED_PHY_WIDTH-1:0] POSITIVE = 1 <<< SMOOTH_FACTOR;
 localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_POS_X = 3;
 localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_POS_X = -3;
 localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 1 <<< SMOOTH_FACTOR;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 3 <<< SMOOTH_FACTOR;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 4 <<< SMOOTH_FACTOR;
 
 reg signed [SIGNED_PHY_WIDTH-1:0] acc_x_reg, acc_y_reg; // SIGNED_PHY_WIDTH-bit signed integer
 reg signed [SIGNED_PHY_WIDTH-1:0] vel_x_reg, vel_y_reg;
@@ -322,12 +322,12 @@ always @(*) begin
         vel_y = -vel_y_reg;
     end else if (collision_type == 1) begin
         vel_x = 0;
-        vel_y = -vel_y_reg - (vel_y_reg >>> 1); // -1.5 damped
+        vel_y = -vel_y_reg - (vel_y_reg >>> 1) - (vel_y_reg >>> 2); // -1.875 damped
     end else if (collision_type == 2) begin
-        vel_x = -vel_x_reg - (vel_x_reg >>> 1); // -1.5 damped
+        vel_x = -vel_x_reg - (vel_x_reg >>> 1) - (vel_x_reg >>> 2); // -1.875 damped
         vel_y = 0;
     end else if (state == JUMP) begin
-        vel_x = (JUMP_VEL_X + $signed(jump_factor) >>> 1) * face;
+        vel_x = (JUMP_VEL_X + $signed(jump_factor) >>> 2) * face;
         vel_y = (JUMP_VEL_Y + jump_factor);
     end else begin
         vel_x = 0;
