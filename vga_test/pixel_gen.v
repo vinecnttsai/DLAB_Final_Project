@@ -3,8 +3,8 @@
 // obstacle_print_module
 module pixel_gen #(
     //-----------Sequence debug parameters-----------
-    parameter SEQ_DIGITS = 4,
-    parameter SEQ_NUM = 23,
+    parameter SEQ_DIGITS = 6,
+    parameter SEQ_NUM = 8,
     parameter PIXEL_WIDTH = 12,
     parameter FONT_WIDTH = 8,
     parameter UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH,
@@ -26,7 +26,7 @@ module pixel_gen #(
     //-----------Screen parameters-----------
     parameter SCREEN_WIDTH = 10,
     //-----------Physical parameters-----------
-    parameter PHY_WIDTH = 14
+    parameter PHY_WIDTH = 16
     )(
     input sys_clk,
     input sys_rst_n,
@@ -175,36 +175,6 @@ module pixel_gen #(
                 rgb = debug_seq[6 * UNIT_SEQ_WIDTH + (debug_seq_y[6] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(debug_seq_on[7]) begin
                 rgb = debug_seq[7 * UNIT_SEQ_WIDTH + (debug_seq_y[7] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[8]) begin
-                rgb = debug_seq[8 * UNIT_SEQ_WIDTH + (debug_seq_y[8] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[9]) begin
-                rgb = debug_seq[9 * UNIT_SEQ_WIDTH + (debug_seq_y[9] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[10]) begin
-                rgb = debug_seq[10 * UNIT_SEQ_WIDTH + (debug_seq_y[10] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[11]) begin
-                rgb = debug_seq[11 * UNIT_SEQ_WIDTH + (debug_seq_y[11] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[12]) begin
-                rgb = debug_seq[12 * UNIT_SEQ_WIDTH + (debug_seq_y[12] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[13]) begin
-                rgb = debug_seq[13 * UNIT_SEQ_WIDTH + (debug_seq_y[13] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[14]) begin
-                rgb = debug_seq[14 * UNIT_SEQ_WIDTH + (debug_seq_y[14] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[15]) begin
-                rgb = debug_seq[15 * UNIT_SEQ_WIDTH + (debug_seq_y[15] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[16]) begin
-                rgb = debug_seq[16 * UNIT_SEQ_WIDTH + (debug_seq_y[16] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[17]) begin
-                rgb = debug_seq[17 * UNIT_SEQ_WIDTH + (debug_seq_y[17] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[18]) begin
-                rgb = debug_seq[18 * UNIT_SEQ_WIDTH + (debug_seq_y[18] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[19]) begin
-                rgb = debug_seq[19 * UNIT_SEQ_WIDTH + (debug_seq_y[19] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[20]) begin
-                rgb = debug_seq[20 * UNIT_SEQ_WIDTH + (debug_seq_y[20] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[21]) begin
-                rgb = debug_seq[21 * UNIT_SEQ_WIDTH + (debug_seq_y[21] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
-            end else if(debug_seq_on[22]) begin
-                rgb = debug_seq[22 * UNIT_SEQ_WIDTH + (debug_seq_y[22] * SEQ_DIGITS * FONT_WIDTH + x) * PIXEL_WIDTH +: PIXEL_WIDTH];
             end else if(char_on) begin
                 rgb = char_rgb; //char_rgb, remember to change back
             end else if(|obstacle_on) begin // not all blank
@@ -221,7 +191,6 @@ module pixel_gen #(
     Map #(
         .PHY_WIDTH(PHY_WIDTH),
         .MAP_WIDTH_X(MAP_WIDTH_X)
-        //.MAP_WIDTH_Y(MAP_WIDTH_Y)
     ) map_inst(
         .map_x(map_x),
         .map_y(map_y),

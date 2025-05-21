@@ -1,16 +1,18 @@
 module tb_tb_char;
 
+localparam PHY_WIDTH = 16;
+localparam SIGNED_PHY_WIDTH = PHY_WIDTH + 1;
 reg sys_clk;
 reg sys_rst_n;
 reg left_btn;
 reg right_btn;
 reg jump_btn;
-wire [7*14-1:0] obstacle_abs_pos_x;
-wire [7*14-1:0] obstacle_abs_pos_y;
+wire [7*PHY_WIDTH-1:0] obstacle_abs_pos_x;
+wire [7*PHY_WIDTH-1:0] obstacle_abs_pos_y;
 wire [7*4-1:0] obstacle_block_width;
-wire [7*14-1:0] obstacle_relative_pos_x;
-wire [7*14-1:0] obstacle_relative_pos_y;
-wire [15-1:0] out_pos_y;
+wire [7*PHY_WIDTH-1:0] obstacle_relative_pos_x;
+wire [7*PHY_WIDTH-1:0] obstacle_relative_pos_y;
+wire [SIGNED_PHY_WIDTH-1:0] out_pos_y;
 wire character_clk;
 wire [4:0] camera_y;
 
@@ -18,7 +20,8 @@ tb_character #(
     .INIT_POS_X(286),
     .INIT_POS_Y(682),
     .INIT_VEL_X(-1984),
-    .INIT_VEL_Y(-256)
+    .INIT_VEL_Y(-256),
+    .PHY_WIDTH(PHY_WIDTH)
 ) uut1
 (
     .sys_clk(sys_clk),
@@ -36,13 +39,15 @@ tb_character #(
    genvar k;
     generate
         for (k = 0; k < 7; k = k + 1) begin : obstacle_abs_pos
-            assign obstacle_abs_pos_x[k*14 +: 14] = obstacle_relative_pos_x[k*14 +: 14] + 120;
-            assign obstacle_abs_pos_y[k*14 +: 14] = obstacle_relative_pos_y[k*14 +: 14] + camera_y * 480 + 0;
+            assign obstacle_abs_pos_x[k*PHY_WIDTH +: PHY_WIDTH] = obstacle_relative_pos_x[k*PHY_WIDTH +: PHY_WIDTH] + 120;
+            assign obstacle_abs_pos_y[k*PHY_WIDTH +: PHY_WIDTH] = obstacle_relative_pos_y[k*PHY_WIDTH +: PHY_WIDTH] + camera_y * 480 + 0;
         end
     endgenerate
 
 
-block_gen  #() uut2
+block_gen  #(
+    .PHY_WIDTH(PHY_WIDTH)
+) uut2
 (
     .sys_clk(sys_clk),
     .sys_rst_n(sys_rst_n),

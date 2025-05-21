@@ -1,4 +1,4 @@
-module debug_var #(parameter SEQ_LEN = 16,
+module debug_var #(parameter SEQ_LEN = 20,
                    parameter PIXEL_WIDTH = 12,
                    parameter FONT_WIDTH = 8, 
                    parameter SEQ_DIGIT = SEQ_LEN / 4 + 1 // 1 for sign digit

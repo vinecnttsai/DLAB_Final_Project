@@ -1,7 +1,7 @@
 module character_display #(
     parameter SIGNED_PHY_WIDTH = 15,
-    parameter [2:0] DISPLAY_RATE_WIDTH = 6,
-    parameter [DISPLAY_RATE_WIDTH-1:0] REFRESH_RATE = 32,
+    parameter REFRESH_RATE = 64,
+    parameter DISPLAY_RATE_WIDTH = $clog2(REFRESH_RATE + 1),
     parameter [SIGNED_PHY_WIDTH-1:0] MAX_VEL_Y = 10
 )(
     input sys_clk,

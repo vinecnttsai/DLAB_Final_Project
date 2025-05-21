@@ -41,7 +41,8 @@ end
 
 obstacle_id_selector #(
     .PHY_WIDTH(PHY_WIDTH),
-    .COLOR_WIDTH(COLOR_WIDTH)
+    .COLOR_WIDTH(COLOR_WIDTH),
+    .OBSTACLE_WIDTH(OBSTACLE_WIDTH)
 ) obstacle_id_selector_inst(
     .obstacle_abs_pos_y(obstacle_abs_pos_y),
     .obstacle_abs_pos_x(obstacle_abs_pos_x),
@@ -115,13 +116,29 @@ endmodule
 
 module obstacle_id_selector #(
     parameter PHY_WIDTH = 15,
-    parameter COLOR_WIDTH = 2 // max 4 wall style
+    parameter COLOR_WIDTH = 2, // max 4 wall style,
+    parameter OBSTACLE_WIDTH = 10
 )(
+    input [PHY_WIDTH - 1:0] obstacle_x_rom,
     input [PHY_WIDTH - 1:0] obstacle_abs_pos_y, // padding to 15-bit
     input [PHY_WIDTH - 1:0] obstacle_abs_pos_x,
     output reg [COLOR_WIDTH - 1:0] obstacle_display_id,
     output reg [1:0] obstacle_face
 );
+//-----------------------------random obstacle-------------------------------------
+localparam SELECT = 5;
+localparam SELECT_WIDTH = 3;
+wire [PHY_WIDTH - 1:0] which_obstacle;
+wire [PHY_WIDTH - 1:0] obstacle_block_x;
+assign which_obstacle = obstacle_x_rom / OBSTACLE_WIDTH;
+assign obstacle_block_x = obstacle_x_rom * which_obstacle + obstacle_abs_pos_x;
+reg random_obstacle;
+
+always @(*) begin
+    random_obstacle = |obstacle_block_x[SELECT:SELECT - SELECT_WIDTH + 1];
+end
+//----------------------------------------------------------------------------------
+
 //-------------------------------hash function-------------------------------------
 localparam [2:0] HASH_TABLE_WIDTH = 3;
 localparam [2:0] HASH_TABLE_NUM = 5;
@@ -146,7 +163,7 @@ end
 
 //-------------------------------color id selector-------------------------------------
 always @(*) begin
-    obstacle_display_id = hash[COLOR_WIDTH - 1:0]; // 0 ~ 4
+    obstacle_display_id = random_obstacle ? hash[COLOR_WIDTH - 1:0] : hash_table[2][COLOR_WIDTH - 1:0]; // 0 ~ 4
 end
 
 always @(*) begin

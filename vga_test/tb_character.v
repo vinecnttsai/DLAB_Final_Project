@@ -5,10 +5,10 @@
 // print character state
 // deal with coillide to long, add an velocity
 module tb_character #(
-    parameter PHY_WIDTH = 14,
+    parameter PHY_WIDTH = 16,
     parameter PIXEL_WIDTH = 12,
     parameter SIGNED_PHY_WIDTH = PHY_WIDTH + 1,
-    parameter SMOOTH_FACTOR = 7, // represent the power of 2, Max = 7
+    parameter SMOOTH_FACTOR = 9, // represent the power of 2, Max = 7
     //-----------Map Parameters-----------
     parameter WALL_WIDTH = 40,
     parameter WALL_HEIGHT = 20,
@@ -18,7 +18,6 @@ module tb_character #(
     parameter MAP_Y_OFFSET = 0,
     parameter LEFT_WALL = MAP_WIDTH_X - WALL_WIDTH + MAP_X_OFFSET,
     parameter RIGHT_WALL = MAP_X_OFFSET,
-    //parameter TOP_WALL = MAP_WIDTH_Y - WALL_WIDTH + MAP_Y_OFFSET,
     parameter BOTTOM_WALL = MAP_Y_OFFSET,
     //-----------Character Parameters-----
     parameter CHAR_WIDTH_X = 32,
@@ -79,8 +78,8 @@ localparam signed [SIGNED_PHY_WIDTH-1:0] GRAVITY = -(1 <<< SMOOTH_FACTOR);
 localparam signed [SIGNED_PHY_WIDTH-1:0] POSITIVE = 1 <<< SMOOTH_FACTOR;
 localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_POS_X = 3;
 localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_POS_X = -3;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 1 <<< SMOOTH_FACTOR;
-localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 4 <<< SMOOTH_FACTOR;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 2 <<< SMOOTH_FACTOR;
+localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 6 <<< SMOOTH_FACTOR;
 
 reg signed [SIGNED_PHY_WIDTH-1:0] acc_x_reg, acc_y_reg; // SIGNED_PHY_WIDTH-bit signed integer
 reg signed [SIGNED_PHY_WIDTH-1:0] vel_x_reg, vel_y_reg;
@@ -97,9 +96,9 @@ reg signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg_d, pos_y_reg_d;
 reg signed [1:0] face;
 
 // jump cnt
-localparam [6:0]MAX_CHARGE = 100;
-localparam [6:0] JUMP_INCREMENT = 5;
-reg [6:0] jump_cnt;
+localparam [PHY_WIDTH - 1:0] MAX_CHARGE = 500;
+localparam [PHY_WIDTH - 1:0] JUMP_INCREMENT = 10;
+reg [PHY_WIDTH - 1:0] jump_cnt;
 reg signed [SIGNED_PHY_WIDTH-1:0] jump_factor;
 wire max_charge;
 
@@ -283,7 +282,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    jump_factor = {4'b0, jump_cnt[6:4], 1'b1, 7'b0} + {5'b0, jump_cnt[3:2], 6'b0} + {8'b0, jump_cnt[1:0],5'b0};
+    jump_factor = {4'b0, jump_cnt[8:6], 1'b1, 9'b0} + {7'b0, jump_cnt[5:3], 1'b1, 6'b0} + {9'b0, jump_cnt[2:0],5'b0};
 end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -327,7 +326,7 @@ always @(*) begin
         vel_x = -vel_x_reg - (vel_x_reg >>> 1) - (vel_x_reg >>> 2); // -1.875 damped
         vel_y = 0;
     end else if (state == JUMP) begin
-        vel_x = (JUMP_VEL_X + $signed(jump_factor) >>> 2) * face;
+        vel_x = (JUMP_VEL_X + ($signed(jump_factor) >>> 2) + ($signed(jump_factor) >>> 3)) * face;
         vel_y = (JUMP_VEL_Y + jump_factor);
     end else begin
         vel_x = 0;
@@ -382,8 +381,6 @@ always @(*) begin
         pos_x_next = pos_x_reg + pos_x;
     end
 
-    /*if (pos_y_reg + pos_y + CHAR_WIDTH_Y - 1 >= TOP_WALL) begin
-        pos_y_next = TOP_WALL - CHAR_WIDTH_Y;*/
     if (pos_y_reg + pos_y < BOTTOM_WALL + WALL_HEIGHT) begin
         pos_y_next = BOTTOM_WALL + WALL_HEIGHT;
     end else begin

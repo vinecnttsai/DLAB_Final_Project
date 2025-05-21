@@ -5,7 +5,7 @@
 module block_gen #(
     parameter BLOCK_NUM = 7,
     parameter PLATFORM_NUM_PER_BLOCK = 7,
-    parameter PHY_WIDTH = 14,
+    parameter PHY_WIDTH = 16,
     parameter BLOCK_WIDTH = 480,
     parameter MAX_JUMP_HEIGHT = 40,
     parameter MAX_JUMP_WIDTH = 50,

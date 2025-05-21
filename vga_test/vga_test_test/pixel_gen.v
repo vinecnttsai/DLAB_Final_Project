@@ -110,7 +110,7 @@ module pixel_gen #(
     genvar i;
     generate
         for(i = 0; i < SEQ_NUM; i = i + 1) begin : bcd_seq_pos
-            assign bcd_seq_y[i] = i * (FONT_WIDTH + SEQ_INTERVAL);
+            assign bcd_seq_y[i] = i * (FONT_WIDTH + SEQ_INTERVAL) + SEQ_INTERVAL;
         end
     endgenerate
     //----------------------------------------------------------------------------------------  

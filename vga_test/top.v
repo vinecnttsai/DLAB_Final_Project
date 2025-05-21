@@ -15,9 +15,9 @@ module top(
 //-----------------------------------localparam-----------------------------------
 
     //-----------Sequence debug parameters-----------
-    localparam SEQ_LEN = 16;
+    localparam SEQ_LEN = 20;
     localparam SEQ_DIGITS = SEQ_LEN / 4 + 1; // 1 for sign digit
-    localparam SEQ_NUM = 23;
+    localparam SEQ_NUM = 8;
     localparam FONT_WIDTH = 8;
     localparam UNIT_SEQ_WIDTH = SEQ_DIGITS * (FONT_WIDTH * FONT_WIDTH) * PIXEL_WIDTH;
     //-----------Sequence debug parameters-----------
@@ -28,7 +28,6 @@ module top(
 
     //-----------Map parameters-----------
     localparam MAP_WIDTH_X = 480;
-    //localparam MAP_WIDTH_Y = 100;
     localparam MAP_X_OFFSET = 120; // (640 - 480) / 2
     localparam MAP_Y_OFFSET = 0;
     localparam WALL_WIDTH = 10;
@@ -42,12 +41,12 @@ module top(
 
     //-----------Screen parameters-----------
     localparam SCREEN_WIDTH = 10;
-    localparam SMOOTH_FACTOR = 7; // Max = 7
+    localparam SMOOTH_FACTOR = 9; // Max = 8
     localparam SCREEN_N = 25600000 >>> (SMOOTH_FACTOR >>> 1); // 31.25 Hz
     //-----------Screen parameters-----------
 
     //-----------Physical parameters-----------
-    localparam PHY_WIDTH = 14; // 2 ^ 14 = 16384
+    localparam PHY_WIDTH = 16; // 2 ^ 16 = 65536
     localparam SIGNED_PHY_WIDTH = PHY_WIDTH + 1;
     //-----------Physical parameters-----------
 
@@ -356,26 +355,6 @@ module top(
     pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_6 ( .seq(out_pos_y), .padded_seq(debug_padded_sig[5]) );
     pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_7 ( .seq(out_vel_x), .padded_seq(debug_padded_sig[6]) );
     pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_8 ( .seq(out_vel_y), .padded_seq(debug_padded_sig[7]) );
-    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_9 ( .seq(out_acc_x), .padded_seq(debug_padded_sig[8]) );
-    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_10( .seq(out_acc_y), .padded_seq(debug_padded_sig[9]) );
-    pad_sign #(.seq_len(2), .SEQ_LEN(SEQ_LEN)) pad_11( .seq(out_face), .padded_seq(debug_padded_sig[10]) );
-    //-----------------unsigned signal----------------- 1 for sign digit
-    pad_sign #(.seq_len(7 + 1), .SEQ_LEN(SEQ_LEN)) pad_12( .seq(out_jump_cnt), .padded_seq(debug_padded_sig[11]) );
-    pad_sign #(.seq_len(3 + 1), .SEQ_LEN(SEQ_LEN)) pad_13( .seq(out_state), .padded_seq(debug_padded_sig[12]) );
-    pad_sign #(.seq_len(2 + 1), .SEQ_LEN(SEQ_LEN)) pad_14( .seq(out_collision_type), .padded_seq(debug_padded_sig[13]) );
-    pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_15( .seq(out_fall_to_ground), .padded_seq(debug_padded_sig[14]) );
-    pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_16( .seq(out_on_ground), .padded_seq(debug_padded_sig[15]) );
-    //-----------------debug signal-----------------
-    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_17( .seq(out_dis_to_ob), .padded_seq(debug_padded_sig[16]) );
-    pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_18( .seq(out_row_detect), .padded_seq(debug_padded_sig[17]) );
-    pad_sign #(.seq_len($clog2(OBSTACLE_NUM+5) + 1), .SEQ_LEN(SEQ_LEN)) pad_19( .seq(out_ob_detect), .padded_seq(debug_padded_sig[18]) );
-    pad_sign #(.seq_len(5 + 1), .SEQ_LEN(SEQ_LEN)) pad_20( .seq({1'b0, camera_y}), .padded_seq(debug_padded_sig[19]) );
-    pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_21( .seq(out_is_hold), .padded_seq(debug_padded_sig[20]) );
-    pad_sign #(.seq_len(1 + 1), .SEQ_LEN(SEQ_LEN)) pad_22( .seq(out_hold), .padded_seq(debug_padded_sig[21]) );
-    pad_sign #(.seq_len(3 + 1), .SEQ_LEN(SEQ_LEN)) pad_23( .seq({1'b0, char_display_id}), .padded_seq(debug_padded_sig[22]) );
-    
-    
-    // state : IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, FALL_TO_GROUND = 6;
     
 
     genvar i;
@@ -397,7 +376,7 @@ module top(
     
 endmodule
 
-module pad_sign #(parameter seq_len = 12, parameter SEQ_LEN = 16)(
+module pad_sign #(parameter seq_len = 12, parameter SEQ_LEN = 20)(
     input [seq_len - 1:0] seq,
     output [SEQ_LEN - 1:0] padded_seq
 );
