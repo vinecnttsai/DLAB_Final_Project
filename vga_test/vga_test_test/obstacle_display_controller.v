@@ -10,6 +10,7 @@ module obstacle_display_controller #(
     input sys_rst_n,
     input [SCREEN_WIDTH - 1:0] obstacle_x_rom,
     input [SCREEN_WIDTH - 1:0] obstacle_y_rom,
+    input [PHY_WIDTH - 1:0] obstacle_block_abs_y,
     input [PHY_WIDTH - 1:0] obstacle_abs_pos_y,
     input [PHY_WIDTH - 1:0] obstacle_abs_pos_x,
     input obstacle_on,
@@ -44,6 +45,8 @@ obstacle_id_selector #(
     .COLOR_WIDTH(COLOR_WIDTH),
     .OBSTACLE_WIDTH(OBSTACLE_WIDTH)
 ) obstacle_id_selector_inst(
+    .obstacle_x_rom(obstacle_x_rom),
+    .obstacle_block_abs_y(obstacle_block_abs_y),
     .obstacle_abs_pos_y(obstacle_abs_pos_y),
     .obstacle_abs_pos_x(obstacle_abs_pos_x),
     .obstacle_display_id(obstacle_display_id),
@@ -115,27 +118,29 @@ endmodule
 
 
 module obstacle_id_selector #(
+    parameter SCREEN_WIDTH = 10,
     parameter PHY_WIDTH = 15,
     parameter COLOR_WIDTH = 2, // max 4 wall style,
     parameter OBSTACLE_WIDTH = 10
 )(
-    input [PHY_WIDTH - 1:0] obstacle_x_rom,
+    input [SCREEN_WIDTH - 1:0] obstacle_x_rom,
+    input [PHY_WIDTH - 1:0] obstacle_block_abs_y,
     input [PHY_WIDTH - 1:0] obstacle_abs_pos_y, // padding to 15-bit
     input [PHY_WIDTH - 1:0] obstacle_abs_pos_x,
     output reg [COLOR_WIDTH - 1:0] obstacle_display_id,
     output reg [1:0] obstacle_face
 );
 //-----------------------------random obstacle-------------------------------------
-localparam SELECT = 5;
-localparam SELECT_WIDTH = 3;
+localparam SELECT = 2;
+localparam SELECT_WIDTH = 5;
 wire [PHY_WIDTH - 1:0] which_obstacle;
 wire [PHY_WIDTH - 1:0] obstacle_block_x;
 assign which_obstacle = obstacle_x_rom / OBSTACLE_WIDTH;
-assign obstacle_block_x = obstacle_x_rom * which_obstacle + obstacle_abs_pos_x;
+assign obstacle_block_x = (obstacle_abs_pos_x <<< 2) + obstacle_block_abs_y + OBSTACLE_WIDTH * which_obstacle;
 reg random_obstacle;
 
 always @(*) begin
-    random_obstacle = |obstacle_block_x[SELECT:SELECT - SELECT_WIDTH + 1];
+    random_obstacle = &obstacle_block_x[4:3] && obstacle_block_x[1:0];
 end
 //----------------------------------------------------------------------------------
 
@@ -163,11 +168,11 @@ end
 
 //-------------------------------color id selector-------------------------------------
 always @(*) begin
-    obstacle_display_id = random_obstacle ? hash[COLOR_WIDTH - 1:0] : hash_table[2][COLOR_WIDTH - 1:0]; // 0 ~ 4
+    obstacle_display_id = random_obstacle ? obstacle_block_x[COLOR_WIDTH - 1:0] : hash[COLOR_WIDTH - 1:0]; // 0 ~ 4
 end
 
 always @(*) begin
-    obstacle_face = hash[1] ^ hash[0]; // 0 for right, 1 for left
+    obstacle_face = random_obstacle | hash[1] ^ hash[0]; // 0 for right, 1 for left
 end
 //----------------------------------------------------------------------------------
 endmodule

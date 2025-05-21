@@ -11,7 +11,7 @@ module bcd_seq_display_controller #(
     input [PIXEL_WIDTH - 1:0] background_rgb,
     output reg [PIXEL_WIDTH - 1:0] rgb
 );
-localparam BCD_COLOR = 12'h000;
+localparam BCD_COLOR = 12'hFFF;
 localparam BCD_WIDTH = 4;
 
 wire [SEQ_LEN - 1:0] bcd_seq;

@@ -154,23 +154,26 @@ module pixel_gen #(
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Background Relative Position Signals-----------------------------
+    localparam BACKGROUND_WIDTH = OBSTACLE_WIDTH <<< 2;
     wire [SCREEN_WIDTH-1:0] background_y_rom;
     wire [SCREEN_WIDTH-1:0] background_x_rom;
     assign background_y_rom = y % OBSTACLE_HEIGHT;
-    assign background_x_rom = x % OBSTACLE_WIDTH;
+    assign background_x_rom = x % BACKGROUND_WIDTH; // every 16 obstacle 
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Background Absolute Position Signals-----------------------------
     wire [PHY_WIDTH-1:0] background_abs_pos_y;
     wire [PHY_WIDTH-1:0] background_abs_pos_x;
+    wire [PHY_WIDTH-1:0] background_block_abs_y;
     assign background_abs_pos_y = 478 + camera_offset;
-    assign background_abs_pos_x = x;
+    assign background_abs_pos_x = x / BACKGROUND_WIDTH;
+    assign background_block_abs_y = y / OBSTACLE_HEIGHT + camera_offset;
     //----------------------------------------------------------------------------------------
     
     //------------------------------Drivers for Status Signals------------------------------
     genvar k;
     generate
-        for(k = 0; k < SEQ_NUM; k = k + 1) begin : bcd_sequence_on
+        for(k = 0; k < SEQ_NUM; k = k + 1) begin : bcd_sequence_
             assign bcd_seq_on[k] = ((x >= 0) && (x < SEQ_X_WIDTH) && (y >= bcd_seq_y[k]) && (y < bcd_seq_y[k] + FONT_WIDTH));
         end
     endgenerate
@@ -309,6 +312,7 @@ module pixel_gen #(
         .sys_rst_n(sys_rst_n),
         .obstacle_x_rom(obstacle_x_rom[obstacle_on_id]),
         .obstacle_y_rom(obstacle_y_rom[obstacle_on_id]),
+        .obstacle_block_abs_y(obstacle_abs_pos_y[obstacle_on_id*PHY_WIDTH +: PHY_WIDTH]),
         .obstacle_abs_pos_y(obstacle_abs_pos_y[obstacle_on_id*PHY_WIDTH +: PHY_WIDTH]),
         .obstacle_abs_pos_x(obstacle_abs_pos_x[obstacle_on_id*PHY_WIDTH +: PHY_WIDTH]),
         .obstacle_on(obstacle_on_for_all),
@@ -328,6 +332,7 @@ module pixel_gen #(
         .sys_rst_n(sys_rst_n),
         .obstacle_x_rom(background_x_rom),
         .obstacle_y_rom(background_y_rom),
+        .obstacle_block_abs_y(background_block_abs_y),
         .obstacle_abs_pos_y(background_abs_pos_y),
         .obstacle_abs_pos_x(background_abs_pos_x),
         .obstacle_on(background_on),
