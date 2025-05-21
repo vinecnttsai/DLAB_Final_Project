@@ -3,12 +3,17 @@
 // obstacle_print_module
 module pixel_gen #(
     parameter PIXEL_WIDTH = 12,
-    //-----------BCD Sequence parameters-----------
-    parameter SEQ_LEN = 20,
-    parameter SEQ_DIGITS = (SEQ_LEN >>> 2) + 1,
-    parameter SEQ_NUM = 3,
     parameter FONT_WIDTH = 8,
-    parameter SEQ_X_WIDTH = SEQ_DIGITS * FONT_WIDTH,
+    //-----------BCD Sequence parameters-----------
+    parameter BCD_SEQ_LEN = 20,
+    parameter BCD_SEQ_DIGITS = (BCD_SEQ_LEN >>> 2) + 1,
+    parameter BCD_SEQ_NUM = 3,
+    parameter BCD_SEQ_X_WIDTH = BCD_SEQ_DIGITS * FONT_WIDTH,
+    //-----------ASCII Sequence parameters-----------
+    parameter STRING_NUM = 7,
+    parameter MAX_CHAR_NUM = 11,
+    parameter CHAR_WIDTH = 5,
+    parameter ASCII_SEQ_X_WIDTH = MAX_CHAR_NUM * FONT_WIDTH,
     //-----------Block parameters-----------
     parameter BLOCK_WIDTH = 480,
     //-----------Map parameters-----------
@@ -47,7 +52,7 @@ module pixel_gen #(
     input [OBSTACLE_NUM * BLOCK_LEN_WIDTH - 1:0] obstacle_block_width,
     output reg [PIXEL_WIDTH - 1:0] rgb,   // to VGA port
     //------------------------------data signals------------------------------
-    input [SEQ_NUM * SEQ_LEN - 1:0] bcd_seq
+    input [BCD_SEQ_NUM * BCD_SEQ_LEN - 1:0] bcd_seq
     );
     
     //------------------------------RGB Color Values------------------------------
@@ -74,6 +79,7 @@ module pixel_gen #(
 
     //------------------------------Utility variables------------------------------
     localparam SEQ_INTERVAL = 5;
+    localparam ASCII_OFFSET = BCD_SEQ_X_WIDTH;
     //----------------------------------------------------------------------------
 
     //------------------------------Camera offset--------------------------------
@@ -83,6 +89,7 @@ module pixel_gen #(
     
     //------------------------------RGB Signals------------------------------
     wire [PIXEL_WIDTH - 1:0] bcd_seq_rgb;
+    wire [PIXEL_WIDTH - 1:0] ascii_seq_rgb;
     wire [PIXEL_WIDTH - 1:0] char_rgb;
     wire [PIXEL_WIDTH - 1:0] map_rgb;
     wire [PIXEL_WIDTH - 1:0] obstacle_rgb;
@@ -91,9 +98,13 @@ module pixel_gen #(
     //----------------------------------------------------------------------------
     
     //------------------------------Pixel Location Status Signals------------------------------
-    wire [SEQ_NUM - 1:0] bcd_seq_on;
+    wire [BCD_SEQ_NUM - 1:0] bcd_seq_on;
     wire bcd_seq_on_for_all;
-    wire [$clog2(SEQ_NUM + 1) - 1:0] bcd_seq_on_id;
+    wire [$clog2(BCD_SEQ_NUM + 1) - 1:0] bcd_seq_on_id;
+
+    wire [STRING_NUM - 1:0] ascii_seq_on;
+    wire ascii_seq_on_for_all;
+    wire [$clog2(STRING_NUM + 1) - 1:0] ascii_seq_on_id;
 
     wire map_on;
     wire char_on;
@@ -105,26 +116,42 @@ module pixel_gen #(
     wire background_on;
     //----------------------------------------------------------------------------------------
 
-    //-----------------------------bcd Sequence Absolute Position Signals-----------------------------
-    wire [SCREEN_WIDTH-1:0] bcd_seq_y [SEQ_NUM - 1:0];
+    //-----------------------------Sequence Absolute Position Signals-----------------------------
+    wire [SCREEN_WIDTH-1:0] bcd_seq_y [BCD_SEQ_NUM - 1:0];
+    wire [SCREEN_WIDTH-1:0] ascii_seq_y [STRING_NUM - 1:0];
     genvar i;
     generate
-        for(i = 0; i < SEQ_NUM; i = i + 1) begin : bcd_seq_pos
+        for(i = 0; i < BCD_SEQ_NUM; i = i + 1) begin : bcd_seq_pos
             assign bcd_seq_y[i] = i * (FONT_WIDTH + SEQ_INTERVAL) + SEQ_INTERVAL;
+        end
+    endgenerate
+    genvar j;
+    generate
+        for(j = 0; j < STRING_NUM; j = j + 1) begin : ascii_seq_pos
+            assign ascii_seq_y[j] = j * (FONT_WIDTH + SEQ_INTERVAL) + SEQ_INTERVAL;
         end
     endgenerate
     //----------------------------------------------------------------------------------------  
 
-    //-----------------------------bcd Sequence Relative Position Signals-----------------------------
-    wire [SCREEN_WIDTH-1:0] bcd_seq_y_rom [SEQ_NUM - 1:0];
+    //-----------------------------Sequence Relative Position Signals-----------------------------
+    wire [SCREEN_WIDTH-1:0] bcd_seq_y_rom [BCD_SEQ_NUM - 1:0];
+    wire [SCREEN_WIDTH-1:0] ascii_seq_y_rom [STRING_NUM - 1:0];
     wire [SCREEN_WIDTH-1:0] bcd_seq_x_rom;
-    genvar j;
+    wire [SCREEN_WIDTH-1:0] ascii_seq_x_rom;
+    genvar p;
     generate
-        for(j = 0; j < SEQ_NUM; j = j + 1) begin : bcd_seq_y_rom_pos
-            assign bcd_seq_y_rom[j] = y - bcd_seq_y[j];
+        for(p = 0; p < BCD_SEQ_NUM; p = p + 1) begin : bcd_seq_y_rom_pos
+            assign bcd_seq_y_rom[p] = y - bcd_seq_y[p];
         end
     endgenerate
-    assign bcd_seq_x_rom = x % SEQ_X_WIDTH;
+    genvar q;
+    generate
+        for(q = 0; q < STRING_NUM; q = q + 1) begin : ascii_seq_y_rom_pos
+            assign ascii_seq_y_rom[q] = y - ascii_seq_y[q];
+        end
+    endgenerate
+    assign bcd_seq_x_rom = x;
+    assign ascii_seq_x_rom = x - ASCII_OFFSET;
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Map Relative Position Signals-----------------------------
@@ -171,17 +198,30 @@ module pixel_gen #(
     //----------------------------------------------------------------------------------------
     
     //------------------------------Drivers for Status Signals------------------------------
-    genvar k;
+    genvar o;
     generate
-        for(k = 0; k < SEQ_NUM; k = k + 1) begin : bcd_sequence_
-            assign bcd_seq_on[k] = ((x >= 0) && (x < SEQ_X_WIDTH) && (y >= bcd_seq_y[k]) && (y < bcd_seq_y[k] + FONT_WIDTH));
+        for(o = 0; o < BCD_SEQ_NUM; o = o + 1) begin : bcd_sequence_
+            assign bcd_seq_on[o] = ((x >= 0) && (x < BCD_SEQ_X_WIDTH) && (y >= bcd_seq_y[o]) && (y < bcd_seq_y[o] + FONT_WIDTH));
         end
     endgenerate
     assign bcd_seq_on_for_all = |bcd_seq_on;
-    N_decoder #(.N(SEQ_NUM)) n_decoder_inst_bcd(
+    N_decoder #(.N(BCD_SEQ_NUM)) n_decoder_inst_bcd(
         .in(bcd_seq_on),
         .out(bcd_seq_on_id)
     );
+
+    genvar n;
+    generate
+        for(n = 0; n < STRING_NUM; n = n + 1) begin : ascii_sequence_
+            assign ascii_seq_on[n] = ((x >= ASCII_OFFSET) && (x < ASCII_OFFSET + ASCII_SEQ_X_WIDTH) && (y >= ascii_seq_y[n]) && (y < ascii_seq_y[n] + FONT_WIDTH));
+        end
+    endgenerate
+    assign ascii_seq_on_for_all = |ascii_seq_on;
+    N_decoder #(.N(STRING_NUM)) n_decoder_inst_ascii(
+        .in(ascii_seq_on),
+        .out(ascii_seq_on_id)
+    );
+    
 
     assign map_on = ((x >= MAP_X_OFFSET + WALL_WIDTH) && (x < MAP_X_OFFSET + MAP_WIDTH_X - WALL_WIDTH) && (y >= MAP_Y_OFFSET + WALL_WIDTH));
     assign char_on = ((x >= char_abs_x) && (x < char_abs_x + CHAR_WIDTH_X) && (y >= char_abs_y - camera_offset) && (y < char_abs_y + CHAR_WIDTH_Y - camera_offset));
@@ -210,6 +250,8 @@ module pixel_gen #(
 
             if(bcd_seq_on_for_all) begin
                 rgb = bcd_seq_rgb;
+            end else if(ascii_seq_on_for_all) begin
+                rgb = ascii_seq_rgb;
             end else if(char_on) begin
                 rgb = char_rgb; //char_rgb, remember to change back
             end else begin
@@ -234,18 +276,42 @@ module pixel_gen #(
     //-----------------------------bcd Sequence--------------------------------
     bcd_seq_display_controller #(
         .SCREEN_WIDTH(SCREEN_WIDTH),
-        .SEQ_LEN(SEQ_LEN),
-        .SEQ_DIGITS(SEQ_DIGITS),
+        .SEQ_LEN(BCD_SEQ_LEN),
+        .SEQ_DIGITS(BCD_SEQ_DIGITS),
         .PIXEL_WIDTH(PIXEL_WIDTH),
         .FONT_WIDTH(FONT_WIDTH)
     ) sequence_inst(
-        .seq(bcd_seq[bcd_seq_on_id*SEQ_LEN +: SEQ_LEN]),
+        .seq_on(bcd_seq_on_for_all),
+        .seq(bcd_seq[bcd_seq_on_id*BCD_SEQ_LEN +: BCD_SEQ_LEN]),
         .seq_x_rom(bcd_seq_x_rom),
         .seq_y_rom(bcd_seq_y_rom[bcd_seq_on_id]),
         .background_rgb(others_rgb),
         .rgb(bcd_seq_rgb)
     );
     //-----------------------------bcd Sequence--------------------------------
+
+    //-----------------------------ascii Sequence--------------------------------
+    wire [MAX_CHAR_NUM * CHAR_WIDTH - 1:0] ascii_seq;
+    string_rom string_rom_inst(
+        .addr(ascii_seq_on_id),
+        .string_out(ascii_seq)
+    );
+
+    ascii_seq_display_controller #(
+        .SCREEN_WIDTH(SCREEN_WIDTH),
+        .MAX_CHAR_NUM(MAX_CHAR_NUM),
+        .CHAR_WIDTH(CHAR_WIDTH),
+        .PIXEL_WIDTH(PIXEL_WIDTH),
+        .FONT_WIDTH(FONT_WIDTH)
+    ) ascii_sequence_inst(
+        .seq_on(ascii_seq_on_for_all),
+        .seq(ascii_seq),
+        .seq_x_rom(ascii_seq_x_rom),
+        .seq_y_rom(ascii_seq_y_rom[ascii_seq_on_id]),
+        .background_rgb(others_rgb),
+        .rgb(ascii_seq_rgb)
+    );
+    //-----------------------------ascii Sequence--------------------------------
 
     //------------------------------Map--------------------------------
     Map #(

@@ -136,7 +136,7 @@ localparam SELECT_WIDTH = 5;
 wire [PHY_WIDTH - 1:0] which_obstacle;
 wire [PHY_WIDTH - 1:0] obstacle_block_x;
 assign which_obstacle = obstacle_x_rom / OBSTACLE_WIDTH;
-assign obstacle_block_x = (obstacle_abs_pos_x <<< 2) + obstacle_block_abs_y + OBSTACLE_WIDTH * which_obstacle;
+assign obstacle_block_x = (obstacle_abs_pos_x <<< 1) + obstacle_block_abs_y + OBSTACLE_WIDTH * which_obstacle - 7;
 reg random_obstacle;
 
 always @(*) begin

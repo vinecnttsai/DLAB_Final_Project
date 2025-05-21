@@ -152,9 +152,9 @@ module top(
 
 //-----------------------------------Pixel generator-----------------------------------
     pixel_gen #(
-                .SEQ_LEN(SEQ_LEN),
-                .SEQ_DIGITS(SEQ_DIGITS),
-                .SEQ_NUM(SEQ_NUM),
+                .BCD_SEQ_LEN(SEQ_LEN),
+                .BCD_SEQ_DIGITS(SEQ_DIGITS),
+                .BCD_SEQ_NUM(SEQ_NUM),
                 .PIXEL_WIDTH(PIXEL_WIDTH),
                 .FONT_WIDTH(FONT_WIDTH),
                 //-----------Block parameters-----------

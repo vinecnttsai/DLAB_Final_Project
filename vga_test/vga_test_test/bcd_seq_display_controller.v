@@ -5,6 +5,7 @@ module bcd_seq_display_controller #(
     parameter PIXEL_WIDTH = 12,
     parameter FONT_WIDTH = 8
 )(
+    input seq_on,
     input [SEQ_LEN - 1:0] seq,
     input [SCREEN_WIDTH - 1:0] seq_x_rom,
     input [SCREEN_WIDTH - 1:0] seq_y_rom,
@@ -14,6 +15,8 @@ module bcd_seq_display_controller #(
 localparam BCD_COLOR = 12'hFFF;
 localparam BCD_WIDTH = 4;
 
+reg [SCREEN_WIDTH - 1:0] seq_x_rom_safe;
+reg [SCREEN_WIDTH - 1:0] seq_y_rom_safe;
 wire [SEQ_LEN - 1:0] bcd_seq;
 wire [FONT_WIDTH - 1:0] row_rgb_id;
 reg [$clog2(SEQ_DIGITS + 1) - 1:0] which_digit;
@@ -29,8 +32,13 @@ always @(*) begin
 end
 
 always @(*) begin
-    which_digit = seq_x_rom >>> 3; // seq_x_rom / 4
-    col = seq_x_rom % FONT_WIDTH;
+    seq_x_rom_safe = (seq_on) ? seq_x_rom : 0;
+    seq_y_rom_safe = (seq_on) ? seq_y_rom : 0;
+end
+
+always @(*) begin
+    which_digit = seq_x_rom_safe >>> 3; // seq_x_rom / 8
+    col = seq_x_rom_safe % FONT_WIDTH;
 end
 
 always @(*) begin
@@ -62,111 +70,111 @@ always @( * ) begin
     case (digit)
         4'd0: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
-            3'd6: bitmap_row = 8'b01000010; //  █    █ 
-            3'd5: bitmap_row = 8'b01000110; //  █   ██ 
-            3'd4: bitmap_row = 8'b01001010; //  █  █ █ 
-            3'd3: bitmap_row = 8'b01010010; //  █ █  █ 
+            3'd6: bitmap_row = 8'b01100110; //  ██  ██ 
+            3'd5: bitmap_row = 8'b01100010; //  ██   █ 
+            3'd4: bitmap_row = 8'b01100010; //  ██   █ 
+            3'd3: bitmap_row = 8'b01100010; //  ██   █ 
             3'd2: bitmap_row = 8'b01100010; //  ██   █ 
-            3'd1: bitmap_row = 8'b01000010; //  █    █ 
+            3'd1: bitmap_row = 8'b01100110; //  ██  ██ 
             3'd0: bitmap_row = 8'b00111100; //   ████  
             default: bitmap_row = 8'b00000000;
         endcase
         4'd1: case (row)
             3'd7: bitmap_row = 8'b00011000; //    ██   
-            3'd6: bitmap_row = 8'b00101000; //   █ █   
-            3'd5: bitmap_row = 8'b01001000; //  █  █   
-            3'd4: bitmap_row = 8'b00001000; //     █   
-            3'd3: bitmap_row = 8'b00001000; //     █   
-            3'd2: bitmap_row = 8'b00001000; //     █   
-            3'd1: bitmap_row = 8'b00001000; //     █   
-            3'd0: bitmap_row = 8'b01111110; //  ██████ 
+            3'd6: bitmap_row = 8'b00111000; //   ███   
+            3'd5: bitmap_row = 8'b00011000; //    ██   
+            3'd4: bitmap_row = 8'b00011000; //    ██   
+            3'd3: bitmap_row = 8'b00011000; //    ██   
+            3'd2: bitmap_row = 8'b00011000; //    ██   
+            3'd1: bitmap_row = 8'b00011000; //    ██   
+            3'd0: bitmap_row = 8'b01111110; //  ██████
             default: bitmap_row = 8'b00000000;
         endcase
         4'd2: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
-            3'd6: bitmap_row = 8'b01000010; //  █    █ 
-            3'd5: bitmap_row = 8'b00000010; //       █ 
-            3'd4: bitmap_row = 8'b00000100; //      █  
-            3'd3: bitmap_row = 8'b00001000; //     █   
-            3'd2: bitmap_row = 8'b00010000; //    █    
-            3'd1: bitmap_row = 8'b00100000; //   █     
-            3'd0: bitmap_row = 8'b01111110; //  ██████ 
+            3'd6: bitmap_row = 8'b01100011; //  ██   ██
+            3'd5: bitmap_row = 8'b00000011; //       ██
+            3'd4: bitmap_row = 8'b00000110; //      ██ 
+            3'd3: bitmap_row = 8'b00001100; //     ██  
+            3'd2: bitmap_row = 8'b00011000; //    ██   
+            3'd1: bitmap_row = 8'b00110000; //   ██    
+            3'd0: bitmap_row = 8'b01111111; //  ███████
             default: bitmap_row = 8'b00000000;
         endcase
         4'd3: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
-            3'd6: bitmap_row = 8'b01000010; //  █    █ 
-            3'd5: bitmap_row = 8'b00000010; //       █ 
-            3'd4: bitmap_row = 8'b00011100; //    ███  
-            3'd3: bitmap_row = 8'b00000010; //       █ 
-            3'd2: bitmap_row = 8'b00000010; //       █ 
-            3'd1: bitmap_row = 8'b01000010; //  █    █ 
+            3'd6: bitmap_row = 8'b01100011; //  ██   ██
+            3'd5: bitmap_row = 8'b00000011; //       ██
+            3'd4: bitmap_row = 8'b00011110; //    ████ 
+            3'd3: bitmap_row = 8'b00000011; //       ██
+            3'd2: bitmap_row = 8'b00000011; //       ██
+            3'd1: bitmap_row = 8'b01100011; //  ██   ██
             3'd0: bitmap_row = 8'b00111100; //   ████  
             default: bitmap_row = 8'b00000000;
         endcase
         4'd4: case (row)
-            3'd7: bitmap_row = 8'b00000100; //      █  
-            3'd6: bitmap_row = 8'b00001100; //     ██  
-            3'd5: bitmap_row = 8'b00010100; //    █ █  
-            3'd4: bitmap_row = 8'b00100100; //   █  █  
-            3'd3: bitmap_row = 8'b01000100; //  █   █  
-            3'd2: bitmap_row = 8'b01111110; //  ██████ 
-            3'd1: bitmap_row = 8'b00000100; //      █  
-            3'd0: bitmap_row = 8'b00000100; //      █  
+            3'd7: bitmap_row = 8'b00000110; //      ██ 
+            3'd6: bitmap_row = 8'b00001110; //     ███ 
+            3'd5: bitmap_row = 8'b00011110; //    ████ 
+            3'd4: bitmap_row = 8'b00111110; //   █████ 
+            3'd3: bitmap_row = 8'b01100110; //  ██  ██ 
+            3'd2: bitmap_row = 8'b01111111; //  ███████
+            3'd1: bitmap_row = 8'b00000110; //      ██ 
+            3'd0: bitmap_row = 8'b00000110; //      ██ 
             default: bitmap_row = 8'b00000000;
         endcase
         4'd5: case (row)
-            3'd7: bitmap_row = 8'b01111110; //  ██████ 
-            3'd6: bitmap_row = 8'b01000000; //  █      
-            3'd5: bitmap_row = 8'b01000000; //  █      
-            3'd4: bitmap_row = 8'b01111100; //  █████  
-            3'd3: bitmap_row = 8'b00000010; //       █ 
-            3'd2: bitmap_row = 8'b00000010; //       █ 
-            3'd1: bitmap_row = 8'b01000010; //  █    █ 
+            3'd7: bitmap_row = 8'b01111111; //  ███████
+            3'd6: bitmap_row = 8'b01100000; //  ██     
+            3'd5: bitmap_row = 8'b01100000; //  ██     
+            3'd4: bitmap_row = 8'b01111110; //  ██████ 
+            3'd3: bitmap_row = 8'b00000011; //       ██
+            3'd2: bitmap_row = 8'b00000011; //       ██
+            3'd1: bitmap_row = 8'b01100011; //  ██   ██
             3'd0: bitmap_row = 8'b00111100; //   ████  
             default: bitmap_row = 8'b00000000;
         endcase
         4'd6: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
-            3'd6: bitmap_row = 8'b01000000; //  █      
-            3'd5: bitmap_row = 8'b01000000; //  █      
-            3'd4: bitmap_row = 8'b01111100; //  █████  
-            3'd3: bitmap_row = 8'b01000010; //  █    █ 
-            3'd2: bitmap_row = 8'b01000010; //  █    █ 
-            3'd1: bitmap_row = 8'b01000010; //  █    █ 
+            3'd6: bitmap_row = 8'b01100000; //  ██     
+            3'd5: bitmap_row = 8'b01100000; //  ██     
+            3'd4: bitmap_row = 8'b01111110; //  ██████ 
+            3'd3: bitmap_row = 8'b01100011; //  ██   ██
+            3'd2: bitmap_row = 8'b01100011; //  ██   ██
+            3'd1: bitmap_row = 8'b01100011; //  ██   ██
             3'd0: bitmap_row = 8'b00111100; //   ████  
             default: bitmap_row = 8'b00000000;
         endcase
         4'd7: case (row)
-            3'd7: bitmap_row = 8'b01111110; //  ██████ 
-            3'd6: bitmap_row = 8'b00000010; //       █ 
-            3'd5: bitmap_row = 8'b00000100; //      █  
-            3'd4: bitmap_row = 8'b00001000; //     █   
-            3'd3: bitmap_row = 8'b00010000; //    █    
-            3'd2: bitmap_row = 8'b00010000; //    █    
-            3'd1: bitmap_row = 8'b00010000; //    █    
-            3'd0: bitmap_row = 8'b00010000; //    █    
+            3'd7: bitmap_row = 8'b01111111; //  ███████
+            3'd6: bitmap_row = 8'b00000011; //       ██
+            3'd5: bitmap_row = 8'b00000110; //      ██ 
+            3'd4: bitmap_row = 8'b00001100; //     ██  
+            3'd3: bitmap_row = 8'b00011000; //    ██   
+            3'd2: bitmap_row = 8'b00011000; //    ██   
+            3'd1: bitmap_row = 8'b00011000; //    ██   
+            3'd0: bitmap_row = 8'b00011000; //    ██   
             default: bitmap_row = 8'b00000000;
         endcase
         4'd8: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
-            3'd6: bitmap_row = 8'b01000010; //  █    █ 
-            3'd5: bitmap_row = 8'b01000010; //  █    █ 
+            3'd6: bitmap_row = 8'b01100011; //  ██   ██
+            3'd5: bitmap_row = 8'b01100011; //  ██   ██
             3'd4: bitmap_row = 8'b00111100; //   ████  
-            3'd3: bitmap_row = 8'b01000010; //  █    █ 
-            3'd2: bitmap_row = 8'b01000010; //  █    █ 
-            3'd1: bitmap_row = 8'b01000010; //  █    █ 
+            3'd3: bitmap_row = 8'b01100011; //  ██   ██
+            3'd2: bitmap_row = 8'b01100011; //  ██   ██
+            3'd1: bitmap_row = 8'b01100011; //  ██   ██
             3'd0: bitmap_row = 8'b00111100; //   ████  
             default: bitmap_row = 8'b00000000;
         endcase
         4'd9: case (row)
             3'd7: bitmap_row = 8'b00111100; //   ████  
-            3'd6: bitmap_row = 8'b01000010; //  █    █ 
-            3'd5: bitmap_row = 8'b01000010; //  █    █ 
-            3'd4: bitmap_row = 8'b00111110; //   █████ 
-            3'd3: bitmap_row = 8'b00000010; //       █ 
-            3'd2: bitmap_row = 8'b00000010; //       █ 
-            3'd1: bitmap_row = 8'b00000010; //       █ 
+            3'd6: bitmap_row = 8'b01100011; //  ██   ██
+            3'd5: bitmap_row = 8'b01100011; //  ██   ██
+            3'd4: bitmap_row = 8'b00111111; //   ██████
+            3'd3: bitmap_row = 8'b00000011; //       ██
+            3'd2: bitmap_row = 8'b00000011; //       ██
+            3'd1: bitmap_row = 8'b00000011; //       ██
             3'd0: bitmap_row = 8'b00111100; //   ████  
             default: bitmap_row = 8'b00000000;
         endcase
@@ -175,7 +183,7 @@ always @( * ) begin
             3'd6: bitmap_row = 8'b00000000; //
             3'd5: bitmap_row = 8'b00000000; // 
             3'd4: bitmap_row = 8'b00000000; //  
-            3'd3: bitmap_row = 8'b01111110; //  ██████      
+            3'd3: bitmap_row = 8'b01111111; //  ███████      
             3'd2: bitmap_row = 8'b00000000; //
             3'd1: bitmap_row = 8'b00000000; //
             3'd0: bitmap_row = 8'b00000000; //
