@@ -3,7 +3,7 @@ module character_display_controller #(
     parameter PIXEL_WIDTH = 12,
     parameter SCREEN_WIDTH = 10,
     parameter CHAR_WIDTH_X = 42,
-    parameter CHAR_WIDTH_Y = 52,
+    parameter CHAR_WIDTH_Y = 50,
     parameter COLOR_NUM = 12
 )(
     input sys_clk,

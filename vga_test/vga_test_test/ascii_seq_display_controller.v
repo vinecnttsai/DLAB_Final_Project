@@ -12,7 +12,7 @@ module ascii_seq_display_controller #(
     input [PIXEL_WIDTH - 1:0] background_rgb,
     output reg [PIXEL_WIDTH - 1:0] rgb
 );
-localparam CHAR_COLOR = 12'hFFF;
+localparam CHAR_COLOR = 12'h5FF;
 
 reg [SCREEN_WIDTH - 1:0] seq_x_rom_safe;
 reg [SCREEN_WIDTH - 1:0] seq_y_rom_safe;

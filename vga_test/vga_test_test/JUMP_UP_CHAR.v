@@ -25,9 +25,8 @@ module JUMP_UP_CHAR #(
 // 11 for 12'hFFF;
 
 localparam CHAR_WIDTH_X = 21;
-localparam CHAR_WIDTH_Y = 26;
+localparam CHAR_WIDTH_Y = 25;
 (* rom_style = "block" *) reg [CHAR_WIDTH_X * CHAR_WIDTH_Y * COLOR_WIDTH - 1:0] pixel_map = {
-    4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB, 
     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB, 
     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB, 
     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'h2,     4'h2,     4'h2,     4'h2,     4'h2,     4'h2,     4'h2,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB,     4'hB, 

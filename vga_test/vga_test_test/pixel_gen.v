@@ -7,7 +7,7 @@ module pixel_gen #(
     //-----------BCD Sequence parameters-----------
     parameter BCD_SEQ_LEN = 20,
     parameter BCD_SEQ_DIGITS = (BCD_SEQ_LEN >>> 2) + 1,
-    parameter BCD_SEQ_NUM = 3,
+    parameter BCD_SEQ_NUM = 5,
     parameter BCD_SEQ_X_WIDTH = BCD_SEQ_DIGITS * FONT_WIDTH,
     //-----------ASCII Sequence parameters-----------
     parameter STRING_NUM = 7,
@@ -18,13 +18,12 @@ module pixel_gen #(
     parameter BLOCK_WIDTH = 480,
     //-----------Map parameters-----------
     parameter MAP_WIDTH_X = 480,
-    //parameter MAP_WIDTH_Y = 100,
-    parameter MAP_X_OFFSET = 120, // start position of map (640 - 480) / 2
+    parameter MAP_X_OFFSET = 140, // start position of map (640 - 480) / 2
     parameter MAP_Y_OFFSET = 0,
     parameter WALL_WIDTH = 10,
     //-----------Character parameters-----------
     parameter CHAR_WIDTH_X = 42, // width of character
-    parameter CHAR_WIDTH_Y = 52, // height of character
+    parameter CHAR_WIDTH_Y = 50, // height of character
     //-----------Obstacle parameters-----------
     parameter OBSTACLE_NUM = 7,
     parameter OBSTACLE_WIDTH = 10,
@@ -32,8 +31,9 @@ module pixel_gen #(
     parameter BLOCK_LEN_WIDTH = 4, // max 15
     //-----------Screen parameters-----------
     parameter SCREEN_WIDTH = 10,
+    parameter CAMERA_WIDTH = 6,
     //-----------Physical parameters-----------
-    parameter PHY_WIDTH = 14
+    parameter PHY_WIDTH = 16
     )(
     // remember to delete
     input sw,
@@ -42,7 +42,7 @@ module pixel_gen #(
     input sys_clk,
     input sys_rst_n,
     input video_on,     // from VGA controller
-    input [4:0] camera_y,
+    input [CAMERA_WIDTH - 1:0] camera_y,
     input [SCREEN_WIDTH - 1:0] x,      // from VGA controller
     input [SCREEN_WIDTH - 1:0] y,
     input [PHY_WIDTH-1:0] char_abs_x, // Absolute position
@@ -157,8 +157,8 @@ module pixel_gen #(
     //-----------------------------Map Relative Position Signals-----------------------------
     wire [PHY_WIDTH-1:0] map_y;
     wire [PHY_WIDTH-1:0] map_x;
-    assign map_y = y + camera_offset - MAP_Y_OFFSET - WALL_WIDTH;   // boundary does not count
-    assign map_x = x - MAP_X_OFFSET - WALL_WIDTH;                   // boundary does not count
+    assign map_y = y - MAP_Y_OFFSET;   // boundary does not count
+    assign map_x = x - MAP_X_OFFSET;                   // boundary does not count
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Character Relative Position Signals-----------------------------
@@ -223,14 +223,14 @@ module pixel_gen #(
     );
     
 
-    assign map_on = ((x >= MAP_X_OFFSET + WALL_WIDTH) && (x < MAP_X_OFFSET + MAP_WIDTH_X - WALL_WIDTH) && (y >= MAP_Y_OFFSET + WALL_WIDTH));
+    assign map_on = ((x >= MAP_X_OFFSET) && (x < MAP_X_OFFSET + MAP_WIDTH_X) && (y >= MAP_Y_OFFSET));
     assign char_on = ((x >= char_abs_x) && (x < char_abs_x + CHAR_WIDTH_X) && (y >= char_abs_y - camera_offset) && (y < char_abs_y + CHAR_WIDTH_Y - camera_offset));
 
 
     genvar m;
     generate
         for(m = 0; m < OBSTACLE_NUM; m = m + 1) begin: ob_on
-            assign obstacle_on[m] = ((x >= obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH]) && (x < obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH] + obstacle_block_width[m*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH) && (y >= obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH]) && (y < obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] + OBSTACLE_HEIGHT));
+            assign obstacle_on[m] = ((x >= obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH]) && (x < obstacle_abs_pos_x[m*PHY_WIDTH +: PHY_WIDTH] + obstacle_block_width[m*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] * OBSTACLE_WIDTH) && (y >= obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] - camera_offset) && (y < obstacle_abs_pos_y[m*PHY_WIDTH +: PHY_WIDTH] + OBSTACLE_HEIGHT - camera_offset));
         end
     endgenerate
     assign obstacle_on_for_all = |obstacle_on;
@@ -317,12 +317,18 @@ module pixel_gen #(
     Map #(
         .PIXEL_WIDTH(PIXEL_WIDTH),
         .PHY_WIDTH(PHY_WIDTH),
-        .MAP_WIDTH_X(MAP_WIDTH_X)
+        .WALL_WIDTH(WALL_WIDTH),
+        .MAP_Y_OFFSET(MAP_Y_OFFSET),
+        .MAP_X_OFFSET(MAP_X_OFFSET),
+        .MAP_WIDTH_X(MAP_WIDTH_X),
+        .CAMERA_WIDTH(CAMERA_WIDTH)
     ) map_inst(
         .camera_y(camera_y),
+        .camera_offset(camera_offset),
         .map_x(map_x),
         .map_y(map_y),
         .map_on(map_on),
+        .background_rgb(background_rgb),
         .rgb(map_rgb)
     );
     //-----------------------------------------------------------------

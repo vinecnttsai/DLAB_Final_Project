@@ -2,7 +2,7 @@ module obstacle_display_controller #(
     parameter OBSTACLE_WIDTH = 10,
     parameter BLOCK_LEN_WIDTH = 4, // max 15
     parameter SCREEN_WIDTH = 10,
-    parameter PHY_WIDTH = 14,
+    parameter PHY_WIDTH = 16,
     parameter PIXEL_WIDTH = 12,
     parameter COLOR_NUM = 4
 )(

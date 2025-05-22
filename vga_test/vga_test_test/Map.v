@@ -1,19 +1,25 @@
 module Map #(
     parameter PIXEL_WIDTH = 12,
-    parameter PHY_WIDTH = 14,
-    parameter MAP_WIDTH_X = 480
+    parameter PHY_WIDTH = 16,
+    parameter WALL_WIDTH = 10,
+    parameter MAP_Y_OFFSET = 0,
+    parameter MAP_X_OFFSET = 140,
+    parameter MAP_WIDTH_X = 480,
+    parameter CAMERA_WIDTH = 6
 ) (
-    input [4:0] camera_y,
+    input [CAMERA_WIDTH - 1:0] camera_y,
+    input [CAMERA_WIDTH - 1:0] camera_offset,
     input [PHY_WIDTH-1:0] map_x,
     input [PHY_WIDTH-1:0] map_y,
     input map_on,
+    input [PIXEL_WIDTH-1:0] background_rgb,
     output reg [PIXEL_WIDTH-1:0] rgb
 );
 // 80 * 80 for digit, 460 * 470 for map size
 localparam MAP_COLOR = 12'hFD8;
-localparam DIGIT_COLOR = 12'hFFF; // white
-localparam FIRST_DIGIT_X = 130; // 240 - 220 = 20
-localparam SECOND_DIGIT_X = 250; // 240 + 100
+localparam DIGIT_COLOR = 12'h5FF; // white
+localparam FIRST_DIGIT_X = 140; // 240 - 220 = 20
+localparam SECOND_DIGIT_X = 260; // 240 + 100
 localparam DIGIT_Y = 160;
 localparam DIGIT_WIDTH = 80;
 
@@ -21,7 +27,7 @@ wire [7:0] digits;
 bin_to_bcd_converter #(
     .DIGITS(2)
 ) bin_to_bcd_converter_inst(
-    .in({3'b000, camera_y}),
+    .in({{8 - CAMERA_WIDTH{1'b0}}, camera_y + 1}),
     .out(digits)
 );
 
@@ -29,8 +35,10 @@ reg [3:0] row;
 wire [9:0] first_digit_bitmap_row;
 wire [9:0] second_digit_bitmap_row;
 
+wire wall_on;
 wire first_digit_on;
 wire second_digit_on;
+assign wall_on = map_x < WALL_WIDTH || map_x >= MAP_WIDTH_X - WALL_WIDTH || map_y + camera_offset < WALL_WIDTH;
 assign first_digit_on = map_x >= FIRST_DIGIT_X && map_x < FIRST_DIGIT_X + DIGIT_WIDTH && map_y >= DIGIT_Y && map_y < DIGIT_Y + DIGIT_WIDTH;
 assign second_digit_on = map_x >= SECOND_DIGIT_X && map_x < SECOND_DIGIT_X + DIGIT_WIDTH && map_y >= DIGIT_Y && map_y < DIGIT_Y + DIGIT_WIDTH;
 
@@ -62,9 +70,10 @@ end
 
 always @(*) begin
     if (map_on) begin
-        case ({second_digit_on, first_digit_on})
-            2'b01: rgb = (first_digit_bitmap_row[map_first_digit_x_safe]) ? DIGIT_COLOR : MAP_COLOR;
-            2'b10: rgb = (second_digit_bitmap_row[map_second_digit_x_safe]) ? DIGIT_COLOR : MAP_COLOR;
+        case ({wall_on, second_digit_on, first_digit_on})
+            3'b001: rgb = (first_digit_bitmap_row[map_first_digit_x_safe]) ? DIGIT_COLOR : MAP_COLOR;
+            3'b010: rgb = (second_digit_bitmap_row[map_second_digit_x_safe]) ? DIGIT_COLOR : MAP_COLOR;
+            3'b100: rgb = background_rgb;
             default: rgb = MAP_COLOR;
         endcase
     end

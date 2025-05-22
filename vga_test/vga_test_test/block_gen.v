@@ -5,7 +5,8 @@
 module block_gen #(
     parameter BLOCK_NUM = 7,
     parameter PLATFORM_NUM_PER_BLOCK = 7,
-    parameter PHY_WIDTH = 14,
+    parameter PHY_WIDTH = 16,
+    parameter CAMERA_WIDTH = 6,
     parameter BLOCK_WIDTH = 480,
     parameter MAX_JUMP_HEIGHT = 40,
     parameter MAX_JUMP_WIDTH = 50,
@@ -15,7 +16,7 @@ module block_gen #(
     input sys_rst_n,
     input signed [PHY_WIDTH:0] abs_char_y,
     
-    output reg [4:0] camera_y,
+    output reg [CAMERA_WIDTH - 1:0] camera_y,
     output reg [3:0] cur_block_type,
     output reg [PLATFORM_NUM_PER_BLOCK * PHY_WIDTH-1:0] plat_relative_x,
     output reg [PLATFORM_NUM_PER_BLOCK * PHY_WIDTH-1:0] plat_relative_y,
