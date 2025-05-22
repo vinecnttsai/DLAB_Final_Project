@@ -83,7 +83,6 @@ always @(*) begin
 end
 
 endmodule
-
 module digit_font_rom_10 (
     input [3:0] digit,       // 0~9, 10 for minus
     input [3:0] row,         // 0~9
@@ -95,132 +94,132 @@ module digit_font_rom_10 (
 always @(*) begin
     case (digit)
         4'd0: case (row)
-            4'd9: bitmap_row = 10'b0001111000;
-            4'd8: bitmap_row = 10'b0010000100;
-            4'd7: bitmap_row = 10'b0100000010;
-            4'd6: bitmap_row = 10'b0100001010;
-            4'd5: bitmap_row = 10'b0100010010;
-            4'd4: bitmap_row = 10'b0100100010;
-            4'd3: bitmap_row = 10'b0101000010;
-            4'd2: bitmap_row = 10'b0010000100;
-            4'd1: bitmap_row = 10'b0001111000;
+            4'd9: bitmap_row = 10'b0011111100;
+            4'd8: bitmap_row = 10'b0110000110;
+            4'd7: bitmap_row = 10'b1100000011;
+            4'd6: bitmap_row = 10'b1100000011;
+            4'd5: bitmap_row = 10'b1100000011;
+            4'd4: bitmap_row = 10'b1100000011;
+            4'd3: bitmap_row = 10'b1100000011;
+            4'd2: bitmap_row = 10'b0110000110;
+            4'd1: bitmap_row = 10'b0011111100;
             4'd0: bitmap_row = 10'b0000000000;
             default: bitmap_row = 10'b0000000000;
         endcase
         4'd1: case (row)
-            4'd9: bitmap_row = 10'b0000100000;
-            4'd8: bitmap_row = 10'b0001100000;
-            4'd7: bitmap_row = 10'b0010100000;
-            4'd6: bitmap_row = 10'b0000100000;
-            4'd5: bitmap_row = 10'b0000100000;
-            4'd4: bitmap_row = 10'b0000100000;
-            4'd3: bitmap_row = 10'b0000100000;
-            4'd2: bitmap_row = 10'b0000100000;
-            4'd1: bitmap_row = 10'b0011111110;
+            4'd9: bitmap_row = 10'b0001100000;
+            4'd8: bitmap_row = 10'b0011100000;
+            4'd7: bitmap_row = 10'b0111100000;
+            4'd6: bitmap_row = 10'b0001100000;
+            4'd5: bitmap_row = 10'b0001100000;
+            4'd4: bitmap_row = 10'b0001100000;
+            4'd3: bitmap_row = 10'b0001100000;
+            4'd2: bitmap_row = 10'b0001100000;
+            4'd1: bitmap_row = 10'b0111111110;
             4'd0: bitmap_row = 10'b0000000000;
             default: bitmap_row = 10'b0000000000;
         endcase
         4'd2: case (row)
-            4'd9: bitmap_row = 10'b0001111000;
-            4'd8: bitmap_row = 10'b0010000100;
-            4'd7: bitmap_row = 10'b0000000100;
-            4'd6: bitmap_row = 10'b0000001000;
-            4'd5: bitmap_row = 10'b0000010000;
-            4'd4: bitmap_row = 10'b0000100000;
-            4'd3: bitmap_row = 10'b0001000000;
-            4'd2: bitmap_row = 10'b0010000000;
-            4'd1: bitmap_row = 10'b0011111110;
+            4'd9: bitmap_row = 10'b0011111100;
+            4'd8: bitmap_row = 10'b0110000110;
+            4'd7: bitmap_row = 10'b1100000011;
+            4'd6: bitmap_row = 10'b0000000110;
+            4'd5: bitmap_row = 10'b0000001100;
+            4'd4: bitmap_row = 10'b0000110000;
+            4'd3: bitmap_row = 10'b0011000000;
+            4'd2: bitmap_row = 10'b0110000000;
+            4'd1: bitmap_row = 10'b1111111111;
             4'd0: bitmap_row = 10'b0000000000;
             default: bitmap_row = 10'b0000000000;
         endcase
         4'd3: case (row)
-            4'd9: bitmap_row = 10'b0001111000;
-            4'd8: bitmap_row = 10'b0010000100;
-            4'd7: bitmap_row = 10'b0000000100;
-            4'd6: bitmap_row = 10'b0001111000;
-            4'd5: bitmap_row = 10'b0000000100;
-            4'd4: bitmap_row = 10'b0000000100;
-            4'd3: bitmap_row = 10'b0010000100;
-            4'd2: bitmap_row = 10'b0001111000;
-            4'd1: bitmap_row = 10'b0000000000;
+            4'd9: bitmap_row = 10'b0011111100;
+            4'd8: bitmap_row = 10'b0110000110;
+            4'd7: bitmap_row = 10'b0000000110;
+            4'd6: bitmap_row = 10'b0000001100;
+            4'd5: bitmap_row = 10'b0001111000;
+            4'd4: bitmap_row = 10'b0000001100;
+            4'd3: bitmap_row = 10'b0000000110;
+            4'd2: bitmap_row = 10'b0110000110;
+            4'd1: bitmap_row = 10'b0011111100;
             4'd0: bitmap_row = 10'b0000000000;
             default: bitmap_row = 10'b0000000000;
         endcase
         4'd4: case (row)
-            4'd9: bitmap_row = 10'b0000010000;
-            4'd8: bitmap_row = 10'b0000110000;
-            4'd7: bitmap_row = 10'b0001010000;
-            4'd6: bitmap_row = 10'b0010010000;
-            4'd5: bitmap_row = 10'b0100010000;
-            4'd4: bitmap_row = 10'b0111111110;
-            4'd3: bitmap_row = 10'b0000010000;
-            4'd2: bitmap_row = 10'b0000010000;
-            4'd1: bitmap_row = 10'b0000010000;
+            4'd9: bitmap_row = 10'b0000011000;
+            4'd8: bitmap_row = 10'b0000111000;
+            4'd7: bitmap_row = 10'b0001111000;
+            4'd6: bitmap_row = 10'b0011011000;
+            4'd5: bitmap_row = 10'b0110011000;
+            4'd4: bitmap_row = 10'b1100011000;
+            4'd3: bitmap_row = 10'b1111111111;
+            4'd2: bitmap_row = 10'b0000011000;
+            4'd1: bitmap_row = 10'b0000011000;
             4'd0: bitmap_row = 10'b0000000000;
             default: bitmap_row = 10'b0000000000;
         endcase
         4'd5: case (row)
-            4'd9: bitmap_row = 10'b0011111110;
-            4'd8: bitmap_row = 10'b0010000000;
-            4'd7: bitmap_row = 10'b0010000000;
-            4'd6: bitmap_row = 10'b0011111000;
-            4'd5: bitmap_row = 10'b0000000100;
-            4'd4: bitmap_row = 10'b0000000100;
-            4'd3: bitmap_row = 10'b0010000100;
-            4'd2: bitmap_row = 10'b0001111000;
-            4'd1: bitmap_row = 10'b0000000000;
+            4'd9: bitmap_row = 10'b1111111111;
+            4'd8: bitmap_row = 10'b1100000000;
+            4'd7: bitmap_row = 10'b1100000000;
+            4'd6: bitmap_row = 10'b1111111100;
+            4'd5: bitmap_row = 10'b0000000110;
+            4'd4: bitmap_row = 10'b0000000011;
+            4'd3: bitmap_row = 10'b1100000011;
+            4'd2: bitmap_row = 10'b0110000110;
+            4'd1: bitmap_row = 10'b0011111100;
             4'd0: bitmap_row = 10'b0000000000;
             default: bitmap_row = 10'b0000000000;
         endcase
         4'd6: case (row)
-            4'd9: bitmap_row = 10'b0001111000;
-            4'd8: bitmap_row = 10'b0010000000;
-            4'd7: bitmap_row = 10'b0010000000;
-            4'd6: bitmap_row = 10'b0011111000;
-            4'd5: bitmap_row = 10'b0010000100;
-            4'd4: bitmap_row = 10'b0010000100;
-            4'd3: bitmap_row = 10'b0010000100;
-            4'd2: bitmap_row = 10'b0001111000;
-            4'd1: bitmap_row = 10'b0000000000;
+            4'd9: bitmap_row = 10'b0011111100;
+            4'd8: bitmap_row = 10'b0110000110;
+            4'd7: bitmap_row = 10'b1100000000;
+            4'd6: bitmap_row = 10'b1100000000;
+            4'd5: bitmap_row = 10'b1111111100;
+            4'd4: bitmap_row = 10'b1100000110;
+            4'd3: bitmap_row = 10'b1100000011;
+            4'd2: bitmap_row = 10'b0110000110;
+            4'd1: bitmap_row = 10'b0011111100;
             4'd0: bitmap_row = 10'b0000000000;
             default: bitmap_row = 10'b0000000000;
         endcase
         4'd7: case (row)
-            4'd9: bitmap_row = 10'b0011111110;
-            4'd8: bitmap_row = 10'b0000000100;
-            4'd7: bitmap_row = 10'b0000001000;
-            4'd6: bitmap_row = 10'b0000010000;
-            4'd5: bitmap_row = 10'b0000100000;
-            4'd4: bitmap_row = 10'b0000100000;
-            4'd3: bitmap_row = 10'b0000100000;
-            4'd2: bitmap_row = 10'b0000100000;
-            4'd1: bitmap_row = 10'b0000000000;
+            4'd9: bitmap_row = 10'b1111111111;
+            4'd8: bitmap_row = 10'b0000000011;
+            4'd7: bitmap_row = 10'b0000000110;
+            4'd6: bitmap_row = 10'b0000001100;
+            4'd5: bitmap_row = 10'b0000011000;
+            4'd4: bitmap_row = 10'b0000110000;
+            4'd3: bitmap_row = 10'b0001100000;
+            4'd2: bitmap_row = 10'b0011000000;
+            4'd1: bitmap_row = 10'b0110000000;
             4'd0: bitmap_row = 10'b0000000000;
             default: bitmap_row = 10'b0000000000;
         endcase
         4'd8: case (row)
-            4'd9: bitmap_row = 10'b0001111000;
-            4'd8: bitmap_row = 10'b0010000100;
-            4'd7: bitmap_row = 10'b0010000100;
-            4'd6: bitmap_row = 10'b0001111000;
-            4'd5: bitmap_row = 10'b0010000100;
-            4'd4: bitmap_row = 10'b0010000100;
-            4'd3: bitmap_row = 10'b0010000100;
-            4'd2: bitmap_row = 10'b0001111000;
-            4'd1: bitmap_row = 10'b0000000000;
+            4'd9: bitmap_row = 10'b0011111100;
+            4'd8: bitmap_row = 10'b0110000110;
+            4'd7: bitmap_row = 10'b1100000011;
+            4'd6: bitmap_row = 10'b0110000110;
+            4'd5: bitmap_row = 10'b0011111100;
+            4'd4: bitmap_row = 10'b0110000110;
+            4'd3: bitmap_row = 10'b1100000011;
+            4'd2: bitmap_row = 10'b0110000110;
+            4'd1: bitmap_row = 10'b0011111100;
             4'd0: bitmap_row = 10'b0000000000;
             default: bitmap_row = 10'b0000000000;
         endcase
         4'd9: case (row)
-            4'd9: bitmap_row = 10'b0001111000;
-            4'd8: bitmap_row = 10'b0010000100;
-            4'd7: bitmap_row = 10'b0010000100;
-            4'd6: bitmap_row = 10'b0001111100;
-            4'd5: bitmap_row = 10'b0000000100;
-            4'd4: bitmap_row = 10'b0000000100;
-            4'd3: bitmap_row = 10'b0010000100;
-            4'd2: bitmap_row = 10'b0001111000;
-            4'd1: bitmap_row = 10'b0000000000;
+            4'd9: bitmap_row = 10'b0011111100;
+            4'd8: bitmap_row = 10'b0110000110;
+            4'd7: bitmap_row = 10'b1100000011;
+            4'd6: bitmap_row = 10'b0110000011;
+            4'd5: bitmap_row = 10'b0011111111;
+            4'd4: bitmap_row = 10'b0000000011;
+            4'd3: bitmap_row = 10'b0000000011;
+            4'd2: bitmap_row = 10'b0110000110;
+            4'd1: bitmap_row = 10'b0011111100;
             4'd0: bitmap_row = 10'b0000000000;
             default: bitmap_row = 10'b0000000000;
         endcase
@@ -229,8 +228,8 @@ always @(*) begin
             4'd8: bitmap_row = 10'b0000000000;
             4'd7: bitmap_row = 10'b0000000000;
             4'd6: bitmap_row = 10'b0000000000;
-            4'd5: bitmap_row = 10'b0011111110;
-            4'd4: bitmap_row = 10'b0000000000;
+            4'd5: bitmap_row = 10'b0111111110;
+            4'd4: bitmap_row = 10'b0111111110;
             4'd3: bitmap_row = 10'b0000000000;
             4'd2: bitmap_row = 10'b0000000000;
             4'd1: bitmap_row = 10'b0000000000;
@@ -242,7 +241,6 @@ always @(*) begin
 end
 
 endmodule
-
 
 module bin_to_bcd_converter #(
     parameter DIGITS = 4
