@@ -41,7 +41,7 @@ module top(
 
     //-----------Screen parameters-----------
     localparam SCREEN_WIDTH = 10;
-    localparam SMOOTH_FACTOR = 9; // Max = 8
+    localparam SMOOTH_FACTOR = 8; // Max = 8
     localparam SCREEN_N = 25600000 >>> (SMOOTH_FACTOR >>> 1); // 31.25 Hz
     //-----------Screen parameters-----------
 
@@ -310,7 +310,6 @@ module top(
                 .BLOCK_WIDTH(BLOCK_WIDTH),
                 //-----------Map parameters-----------
                 .MAP_WIDTH_X(MAP_WIDTH_X),
-                //.MAP_WIDTH_Y(MAP_WIDTH_Y),
                 .MAP_X_OFFSET(MAP_X_OFFSET),
                 .MAP_Y_OFFSET(MAP_Y_OFFSET),
                 //-----------Character parameters-----------
