@@ -282,7 +282,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    jump_factor = {4'b0, jump_cnt[8:6], 1'b1, 9'b0} + {7'b0, jump_cnt[5:3], 1'b1, 6'b0} + {9'b0, jump_cnt[2:0],5'b0};
+    jump_factor = {5'b0, jump_cnt[8:6], 9'b0} + {8'b0, jump_cnt[5:3], 1'b1, 5'b0} + {10'b0, jump_cnt[2:0], 4'b0};
 end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin

@@ -7,7 +7,7 @@ module pixel_gen #(
     //-----------BCD Sequence parameters-----------
     parameter BCD_SEQ_LEN = 20,
     parameter BCD_SEQ_DIGITS = (BCD_SEQ_LEN >>> 2) + 1,
-    parameter BCD_SEQ_NUM = 5,
+    parameter BCD_SEQ_NUM = 6,
     parameter BCD_SEQ_X_WIDTH = BCD_SEQ_DIGITS * FONT_WIDTH,
     //-----------ASCII Sequence parameters-----------
     parameter STRING_NUM = 7,
@@ -21,6 +21,7 @@ module pixel_gen #(
     parameter MAP_X_OFFSET = 140, // start position of map (640 - 480) / 2
     parameter MAP_Y_OFFSET = 0,
     parameter WALL_WIDTH = 10,
+    parameter WALL_HEIGHT = 20,
     //-----------Character parameters-----------
     parameter CHAR_WIDTH_X = 42, // width of character
     parameter CHAR_WIDTH_Y = 50, // height of character
@@ -35,24 +36,25 @@ module pixel_gen #(
     //-----------Physical parameters-----------
     parameter PHY_WIDTH = 16
     )(
-    // remember to delete
-    input sw,
-    //--------------------------------
-    //--------------------------------
     input sys_clk,
     input sys_rst_n,
     input video_on,     // from VGA controller
     input [CAMERA_WIDTH - 1:0] camera_y,
     input [SCREEN_WIDTH - 1:0] x,      // from VGA controller
     input [SCREEN_WIDTH - 1:0] y,
+    //-----------Character signals-----------
     input [PHY_WIDTH-1:0] char_abs_x, // Absolute position
     input [PHY_WIDTH-1:0] char_abs_y, // Absolute position
+    input [2:0] char_display_id,
+    input [1:0] char_face,
+    //-----------Obstacle signals-----------
     input [OBSTACLE_NUM * PHY_WIDTH - 1:0] obstacle_abs_pos_x, // Absolute position
     input [OBSTACLE_NUM * PHY_WIDTH - 1:0] obstacle_abs_pos_y, // Absolute position
     input [OBSTACLE_NUM * BLOCK_LEN_WIDTH - 1:0] obstacle_block_width,
-    output reg [PIXEL_WIDTH - 1:0] rgb,   // to VGA port
     //------------------------------data signals------------------------------
-    input [BCD_SEQ_NUM * BCD_SEQ_LEN - 1:0] bcd_seq
+    input [BCD_SEQ_NUM * BCD_SEQ_LEN - 1:0] bcd_seq,
+        //-----------output signals-----------
+    output reg [PIXEL_WIDTH - 1:0] rgb   // to VGA port
     );
     
     //------------------------------RGB Color Values------------------------------
@@ -318,6 +320,7 @@ module pixel_gen #(
         .PIXEL_WIDTH(PIXEL_WIDTH),
         .PHY_WIDTH(PHY_WIDTH),
         .WALL_WIDTH(WALL_WIDTH),
+        .WALL_HEIGHT(WALL_HEIGHT),
         .MAP_Y_OFFSET(MAP_Y_OFFSET),
         .MAP_X_OFFSET(MAP_X_OFFSET),
         .MAP_WIDTH_X(MAP_WIDTH_X),
@@ -332,26 +335,6 @@ module pixel_gen #(
         .rgb(map_rgb)
     );
     //-----------------------------------------------------------------
-
-    //------------------------------tb for chatacter display controller--------------------------------
-    reg [2:0] cnt;
-    always @(posedge sys_clk or negedge sys_rst_n) begin
-        if(!sys_rst_n) begin
-            cnt <= 0;
-        end else if (tb_clk) begin
-            cnt <= cnt == 3'b110 ? 3'b000 : cnt + 1;
-        end
-    end
-    
-    fq_div #( .N(200000000) ) fq_div_inst(
-        .org_clk(sys_clk),
-        .sys_rst_n(sys_rst_n),
-        .div_n_clk(tb_clk)
-    );
-
-    //------------------------------Character--------------------------------
-    wire [1:0] face;
-    assign face = sw ? 2'b10 : 2'b01;
     
     character_display_controller #(
         .PIXEL_WIDTH(PIXEL_WIDTH),
@@ -364,8 +347,8 @@ module pixel_gen #(
         .char_x_rom(char_x_rom[SCREEN_WIDTH - 1:0]),
         .char_y_rom(char_y_rom[SCREEN_WIDTH - 1:0]),
         .char_on(char_on),
-        .char_face(face),
-        .char_id(cnt),
+        .char_face(char_face),
+        .char_id(char_display_id),
         .background_rgb(others_rgb),
         .rgb(char_rgb)
     );

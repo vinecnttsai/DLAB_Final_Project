@@ -6,9 +6,14 @@ module top(
     input down,
     input sys_clk,
     input sys_rst_n,
+    //---------vga-------------
     output hsync,
     output vsync,
-    output [11:0] rgb
+    output [11:0] rgb,
+    //---------7-segment display---------
+    output CA, CB, CC, CD, CE, CF, CG,
+    output DP,
+    output [7:0] AN
     );
     
 //-----------------------------------VGA signals-----------------------------------
@@ -27,7 +32,7 @@ module top(
     //-----------Sequence debug parameters-----------
     localparam SEQ_LEN = 20;
     localparam SEQ_DIGITS = (SEQ_LEN >>> 2) + 1; // 1 for sign digit
-    localparam SEQ_NUM = 5;
+    localparam SEQ_NUM = 6;
     localparam FONT_WIDTH = 8;
     //-----------Sequence debug parameters-----------
 
@@ -123,9 +128,9 @@ module top(
 
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if(!sys_rst_n) begin
-            cnt <= 0;
+            cnt <= 1;
         end else if (debug_char_clk) begin
-            cnt <= cnt - 1;
+            cnt <= (cnt == 500) ? 1 : cnt + 1;
         end
     end
 
@@ -133,23 +138,22 @@ module top(
         if(!sys_rst_n) begin
             cnt_2 <= 0;
         end else if (debug_char_clk_2) begin
-            cnt_2 <= cnt_2 + 1;
+            cnt_2 <= cnt_2 - 1;
         end
     end
 
-    fq_div #(.N(10000000)) fq_div1( // slowest clock : 100000000
+    fq_div #(.N(2)) fq_div1( // 10000000
         .org_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .div_n_clk(debug_char_clk)
     );
 
-    fq_div #(.N(100000)) fq_div2( // slowest clock : 100000000
+    fq_div #(.N(100000)) fq_div2( // 100000
         .org_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .div_n_clk(debug_char_clk_2)
     );
 //-----------------------------------Sequence debug-----------------------------------
-
 
 
 //-----------------------------------Obstacle-----------------------------------
@@ -197,6 +201,34 @@ module top(
                         .y(w_y));
 //-----------------------------------VGA controller-----------------------------------
 
+//----------------------------------Charge bar signals----------------------------------
+    wire [7:0] charge_bar_svn;
+    wire [PHY_WIDTH-1:0] charge_bar_vga;
+//----------------------------------Charge bar signals----------------------------------
+
+//-----------------------------------Charge bar-----------------------------------
+
+    charge_bar_controller #(
+        .PHY_WIDTH(PHY_WIDTH),
+        .SEQ_LEN(SEQ_LEN)
+    ) charge_bar_controller_inst(
+        .sys_clk(sys_clk),
+        .sys_rst_n(sys_rst_n),
+        .charge_bar(cnt[PHY_WIDTH-1:0]),
+        .charge_bar_vga(charge_bar_vga),
+        .CA(CA),
+        .CB(CB),
+        .CC(CC),
+        .CD(CD),
+        .CE(CE),
+        .CF(CF),
+        .CG(CG),
+        .DP(DP),
+        .AN(AN)
+    );
+
+//-----------------------------------Charge bar-----------------------------------
+
 //-----------------------------------Debug variables-----------------------------------
 wire [SEQ_LEN * SEQ_NUM - 1:0] debug_sig;
 
@@ -205,6 +237,7 @@ wire [SEQ_LEN * SEQ_NUM - 1:0] debug_sig;
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_3 ( .seq(cnt_2), .padded_seq(debug_sig[SEQ_LEN * 2 +: SEQ_LEN]) );
     pad_sign #(.seq_len(4 + 1), .SEQ_LEN(SEQ_LEN)) pad_4 ( .seq({1'b0, cur_block_type}), .padded_seq(debug_sig[SEQ_LEN * 3 +: SEQ_LEN]) );
     pad_sign #(.seq_len(CAMERA_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_5 ( .seq({1'b0, camera_y}), .padded_seq(debug_sig[SEQ_LEN * 4 +: SEQ_LEN]) );
+    assign debug_sig[SEQ_LEN * 5 +: SEQ_LEN] = {4'h0, charge_bar_vga};
 
 //-----------------------------------Debug variables-----------------------------------
 

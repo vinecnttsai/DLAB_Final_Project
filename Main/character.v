@@ -1,27 +1,20 @@
-// TODO:
-// debug mode, character can move up / down. up velocity is larger than gravity
-// jump factor change to addition-based
-// smooth velocity, divider by 100 to increase char_clk by 10 times
-// print character state
-// deal with coillide to long, add an velocity
-module tb_character #(
+module character #(
     parameter PHY_WIDTH = 16,
     parameter PIXEL_WIDTH = 12,
     parameter SIGNED_PHY_WIDTH = PHY_WIDTH + 1,
-    parameter SMOOTH_FACTOR = 9, // represent the power of 2, Max = 7
+    parameter SMOOTH_FACTOR = 8, // represent the power of 2, Max = 8
     //-----------Map Parameters-----------
     parameter WALL_WIDTH = 40,
     parameter WALL_HEIGHT = 20,
     parameter MAP_WIDTH_X = 480,
-    //parameter MAP_WIDTH_Y = 100,
     parameter MAP_X_OFFSET = 120, // (640 - 480) / 2
     parameter MAP_Y_OFFSET = 0,
     parameter LEFT_WALL = MAP_WIDTH_X - WALL_WIDTH + MAP_X_OFFSET,
     parameter RIGHT_WALL = MAP_X_OFFSET,
     parameter BOTTOM_WALL = MAP_Y_OFFSET,
     //-----------Character Parameters-----
-    parameter CHAR_WIDTH_X = 32,
-    parameter CHAR_WIDTH_Y = 32,
+    parameter CHAR_WIDTH_X = 42,
+    parameter CHAR_WIDTH_Y = 50,
     parameter signed INITIAL_POS_X = 430,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
     parameter signed INITIAL_POS_Y = 151,//MAP_Y_OFFSET + WALL_HEIGHT,
     parameter signed INITIAL_VEL_X = 1472,
@@ -48,7 +41,7 @@ module tb_character #(
     output [2:0] char_display_id,
     output [1:0] out_face,
     output [PHY_WIDTH-1:0] out_jump_cnt,
-    output [PHY_WIDTH-1:0] out_fall_cnt
+    output reg [PHY_WIDTH-1:0] out_fall_cnt
 );
 
 
@@ -57,7 +50,7 @@ localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION 
 reg [2:0] state, next_state;
 
 // physics simulation
-// SMOOTH_FACTOR Maximum is 7
+// SMOOTH_FACTOR Maximum is 8
 localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_VEL = $signed((OBSTACLE_WIDTH + CHAR_WIDTH_Y - 2) <<< SMOOTH_FACTOR); // assure that the character can not pass the wall without being detected
 localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_DISPLACEMENT = (OBSTACLE_WIDTH + CHAR_WIDTH_Y - 2);
 localparam signed [SIGNED_PHY_WIDTH-1:0] GRAVITY = -(1 <<< SMOOTH_FACTOR);
@@ -109,6 +102,10 @@ reg [$clog2(OBSTACLE_NUM+5)-1:0] ob_id; // default value == OBSTACLE_NUM
 reg [$clog2(OBSTACLE_NUM+5)-1:0] collision_id; // default value == OBSTACLE_NUM
 reg ob_detect_below;
 
+// fall count
+reg [2:0] char_display_id_d;
+wire fall_posedge;
+
 // hold signal to wait for the object until being out of the obstacle
 reg [$clog2(OBSTACLE_NUM+5)-1:0] hold;
 wire is_hold;
@@ -120,7 +117,6 @@ assign out_vel_x = $signed(vel_x_reg) >>> SMOOTH_FACTOR;
 assign out_vel_y = $signed(vel_y_reg) >>> SMOOTH_FACTOR;
 assign out_face = face;
 assign out_jump_cnt = jump_cnt;
-assign out_fall_cnt = fall_cnt;
 
 reg character_clk_d;
 
@@ -151,6 +147,25 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 assign wall_detect = detect_wall(pos_x_reg, pos_y_reg);
 //--------------------------------------Collision detection-----------------------------------------
+
+//---------------------------------------Fall count-----------------------------------------
+always @(posedge sys_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n) begin
+        char_display_id_d <= 0;
+    end else begin
+        char_display_id_d <= char_display_id;
+    end
+end
+assign fall_posedge = (char_display_id == 5) && (char_display_id_d != 5); // 5 for state of fall to ground display
+
+always @(posedge sys_clk or negedge sys_rst_n) begin
+    if (!sys_rst_n) begin
+        out_fall_cnt <= 0;
+    end else if (fall_posedge) begin
+        out_fall_cnt <= out_fall_cnt + 1;
+    end
+end
+//---------------------------------------Fall count-----------------------------------------
 
 //---------------------------------------Hold signal-----------------------------------------
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -259,7 +274,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    jump_factor = {4'b0, jump_cnt[8:6], 1'b1, 9'b0} + {7'b0, jump_cnt[5:3], 1'b1, 6'b0} + {9'b0, jump_cnt[2:0],5'b0};
+    jump_factor = {6'b0, jump_cnt[8:6], 8'b0} + {9'b0, jump_cnt[5:3], 1'b1, 4'b0} + {11'b0, jump_cnt[2:0], 3'b0};
 end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -348,7 +363,6 @@ always @(*) begin
     end
 end
 
-//注意這邊只有檢查到牆壁, 沒有障礙物
 always @(*) begin
     if (pos_x_reg + pos_x + CHAR_WIDTH_X - 1 >= LEFT_WALL) begin
         pos_x_next = LEFT_WALL - CHAR_WIDTH_X;
@@ -524,14 +538,6 @@ function automatic signed [SIGNED_PHY_WIDTH-1:0] multi_div;
     end
 endfunction
 
-// debug
-wire signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] impact_pos_result;
-
-assign impact_pos_result = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
-assign out_dis_to_ob = impact_pos_result[SIGNED_PHY_WIDTH-1:0];
-assign out_row_detect = {1'b0, |row_detect};
-assign out_ob_detect = {1'b0, collision_id};
-
 function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg;
@@ -627,13 +633,11 @@ endfunction
 //-----------------------------------------Character Detection-----------------------------------------
 
 
-
-
 //-----------------------------------------Character Display-----------------------------------------
-character_display #(
+character_display_state_controller #(
     .SIGNED_PHY_WIDTH(SIGNED_PHY_WIDTH),
     .MAX_VEL_Y(MAX_VEL)
-) character_display_inst(
+) character_display_state_controller_inst(
     .sys_clk(sys_clk),
     .sys_rst_n(sys_rst_n),
     .character_clk(character_clk),

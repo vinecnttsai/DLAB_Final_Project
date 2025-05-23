@@ -16,7 +16,6 @@ localparam CHAR_COLOR = 12'h5FF;
 
 reg [SCREEN_WIDTH - 1:0] seq_x_rom_safe;
 reg [SCREEN_WIDTH - 1:0] seq_y_rom_safe;
-wire [MAX_CHAR_NUM * CHAR_WIDTH - 1:0] seq;
 wire [FONT_WIDTH - 1:0] row_rgb_id;
 reg [$clog2(MAX_CHAR_NUM + 1) - 1:0] which_char;
 reg [$clog2(FONT_WIDTH + 1) - 1:0] col;

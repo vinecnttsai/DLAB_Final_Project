@@ -1,11 +1,12 @@
-module string_rom (
+module string_rom #(
+    parameter STRING_NUM = 7,
+    parameter MAX_CHAR = 11,
+    parameter CHAR_WIDTH = 5
+)
+(
     input wire [$clog2(STRING_NUM + 1) - 1:0] addr,
     output reg [CHAR_WIDTH*MAX_CHAR-1:0] string_out
 );
-
-parameter CHAR_WIDTH = 5;
-parameter STRING_NUM = 7;
-localparam MAX_CHAR = 11;
 
 // Number of strings: 7
 // Each string is MAX_CHAR characters

@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module top(
+module top_debug(
     input up,
     input down,
     input left,
@@ -118,7 +118,7 @@ module top(
 //--------------Obstacle signals----------------
 
 //--------------Debug Sequence signals----------------
-    wire [SEQ_LEN * SEQ_NUM - 1:0] bcd_seq;
+    wire [SEQ_LEN * SEQ_NUM - 1:0] debug_sig;
 //--------------Debug Sequence signals----------------
 
 
@@ -155,6 +155,12 @@ module top(
         end
     end
 
+    // for debug
+    assign debounced_btn[UP_BTN] = btn[UP_BTN];
+    assign debounced_btn[DOWN_BTN] = btn[DOWN_BTN];
+    assign debounced_btn[LEFT_BTN] = btn[LEFT_BTN];
+    assign debounced_btn[RIGHT_BTN] = btn[RIGHT_BTN];
+    assign debounced_btn[JUMP_BTN] = btn[JUMP_BTN];
     genvar j;
     generate
         for (j = 0; j < BTN_NUM; j = j + 1) begin
@@ -162,7 +168,7 @@ module top(
                 .sys_clk(sys_clk),
                 .sys_rst_n(sys_rst_n),
                 .org(btn[j]),
-                .debounced(debounced_btn[j])
+                .debounced()
             );
         end
     endgenerate
@@ -179,7 +185,7 @@ module top(
         end
     end
 
-    fq_div #(.N(SCREEN_N)) fq_div1(
+    fq_div #(.N(2)) fq_div1( // SCREEN_N
         .org_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .div_n_clk(char_clk)
@@ -275,12 +281,12 @@ character #(
 //-----------------------------------VGA controller-----------------------------------
 
 //-----------------------------------Debug variables-----------------------------------
-    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_1 ( .seq({1'b0, game_time}), .padded_seq(bcd_seq[SEQ_LEN * 0 +: SEQ_LEN]) );
-    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_2 ( .seq(out_pos_x), .padded_seq(bcd_seq[SEQ_LEN * 1 +: SEQ_LEN]) );
-    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_3 ( .seq(out_pos_y), .padded_seq(bcd_seq[SEQ_LEN * 2 +: SEQ_LEN]) );
-    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_4 ( .seq(out_vel_x), .padded_seq(bcd_seq[SEQ_LEN * 3 +: SEQ_LEN]) );
-    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_5 ( .seq(out_vel_y), .padded_seq(bcd_seq[SEQ_LEN * 4 +: SEQ_LEN]) );
-    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_6 ( .seq({1'b0, out_fall_cnt}), .padded_seq(bcd_seq[SEQ_LEN * 5 +: SEQ_LEN]) );
+    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_1 ( .seq({1'b0, game_time}), .padded_seq(debug_sig[SEQ_LEN * 0 +: SEQ_LEN]) );
+    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_2 ( .seq(out_pos_x), .padded_seq(debug_sig[SEQ_LEN * 1 +: SEQ_LEN]) );
+    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_3 ( .seq(out_pos_y), .padded_seq(debug_sig[SEQ_LEN * 2 +: SEQ_LEN]) );
+    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_4 ( .seq(out_vel_x), .padded_seq(debug_sig[SEQ_LEN * 3 +: SEQ_LEN]) );
+    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_5 ( .seq(out_vel_y), .padded_seq(debug_sig[SEQ_LEN * 4 +: SEQ_LEN]) );
+    pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_6 ( .seq({1'b0, out_fall_cnt}), .padded_seq(debug_sig[SEQ_LEN * 5 +: SEQ_LEN]) );
 
 //-----------------------------------Debug variables-----------------------------------
 
@@ -328,7 +334,7 @@ character #(
                 .obstacle_abs_pos_x(obstacle_abs_pos_x),
                 .obstacle_abs_pos_y(obstacle_abs_pos_y),
                 .obstacle_block_width(obstacle_block_width),
-                .bcd_seq(bcd_seq),
+                .bcd_seq(debug_sig),
                 .rgb(rgb_next)
     );
 //-----------------------------------Pixel generator-----------------------------------

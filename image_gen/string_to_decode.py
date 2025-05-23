@@ -29,14 +29,15 @@ def convert_strings_to_verilog_module(input_file, output_file):
 
     num_strings = len(input_strings)
 
-    verilog_code = f"""module string_rom (
+    verilog_code = f"""module string_rom #(
+    parameter STRING_NUM = {num_strings},
+    parameter MAX_CHAR = {MAX_CHAR},
+    parameter CHAR_WIDTH = 5
+)
+(
     input wire [$clog2(STRING_NUM + 1) - 1:0] addr,
     output reg [CHAR_WIDTH*MAX_CHAR-1:0] string_out
 );
-
-parameter CHAR_WIDTH = 5;
-parameter STRING_NUM = {num_strings};
-localparam MAX_CHAR = {MAX_CHAR};
 
 // Number of strings: {num_strings}
 // Each string is MAX_CHAR characters

@@ -2,6 +2,7 @@ module Map #(
     parameter PIXEL_WIDTH = 12,
     parameter PHY_WIDTH = 16,
     parameter WALL_WIDTH = 10,
+    parameter WALL_HEIGHT = 20,
     parameter MAP_Y_OFFSET = 0,
     parameter MAP_X_OFFSET = 140,
     parameter MAP_WIDTH_X = 480,
@@ -17,7 +18,7 @@ module Map #(
 );
 // 80 * 80 for digit, 460 * 470 for map size
 localparam MAP_COLOR = 12'hFD8;
-localparam DIGIT_COLOR = 12'h5FF; // white
+localparam DIGIT_COLOR = 12'h5FF; // Yellow
 localparam FIRST_DIGIT_X = 140; // 240 - 220 = 20
 localparam SECOND_DIGIT_X = 260; // 240 + 100
 localparam DIGIT_Y = 160;
@@ -38,7 +39,7 @@ wire [9:0] second_digit_bitmap_row;
 wire wall_on;
 wire first_digit_on;
 wire second_digit_on;
-assign wall_on = map_x < WALL_WIDTH || map_x >= MAP_WIDTH_X - WALL_WIDTH || map_y + camera_offset < WALL_WIDTH;
+assign wall_on = map_x < WALL_WIDTH || map_x >= MAP_WIDTH_X - WALL_WIDTH || map_y + camera_offset < WALL_HEIGHT;
 assign first_digit_on = map_x >= FIRST_DIGIT_X && map_x < FIRST_DIGIT_X + DIGIT_WIDTH && map_y >= DIGIT_Y && map_y < DIGIT_Y + DIGIT_WIDTH;
 assign second_digit_on = map_x >= SECOND_DIGIT_X && map_x < SECOND_DIGIT_X + DIGIT_WIDTH && map_y >= DIGIT_Y && map_y < DIGIT_Y + DIGIT_WIDTH;
 
