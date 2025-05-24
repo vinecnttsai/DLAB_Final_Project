@@ -15,10 +15,10 @@ module character #(
     //-----------Character Parameters-----
     parameter CHAR_WIDTH_X = 42,
     parameter CHAR_WIDTH_Y = 50,
-    parameter signed INITIAL_POS_X = 430,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
-    parameter signed INITIAL_POS_Y = 151,//MAP_Y_OFFSET + WALL_HEIGHT,
-    parameter signed INITIAL_VEL_X = 1472,
-    parameter signed INITIAL_VEL_Y = -3072,
+    parameter signed INITIAL_POS_X = 517,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
+    parameter signed INITIAL_POS_Y = 770,//MAP_Y_OFFSET + WALL_HEIGHT,
+    parameter signed INITIAL_VEL_X = 0,
+    parameter signed INITIAL_VEL_Y = 0,
     //-----------Obstacle Parameters-----
     parameter OBSTACLE_NUM = 7,
     parameter OBSTACLE_WIDTH = 10,

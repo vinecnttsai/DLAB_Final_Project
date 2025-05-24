@@ -184,7 +184,7 @@ module top_debug(
         .div_n_clk(game_clk)
     );
 
-    fq_div #(.N(2)) fq_div2(
+    fq_div #(.N(10)) fq_div2(
         .org_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .div_n_clk(char_clk)

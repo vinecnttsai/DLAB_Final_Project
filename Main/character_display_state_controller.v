@@ -15,7 +15,7 @@ localparam IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, F
 localparam IDLE_DIS_1 = 0, IDLE_DIS_2 = 1, CHARGE_DIS = 2, JUMP_UP_DIS = 3, JUMP_DOWN_DIS = 4, FALL_TO_GROUND_DIS = 5, SAFE_GROUND_DIS = 6;
 localparam IDLE_BREATHE_TIME = REFRESH_RATE >>> 1;  // hold for 0.5 second
 localparam FALL_TO_GROUND_TIME = REFRESH_RATE;      // hold for 1 second
-localparam FALLING_VEL_THRESHOLD = -(MAX_VEL_Y >>> 2);
+localparam FALLING_VEL_THRESHOLD = -(MAX_VEL_Y >>> 2 + MAX_VEL_Y >>> 3);
 
 reg character_clk_d;
 reg [2:0] char_state_d;

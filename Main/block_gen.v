@@ -72,8 +72,8 @@ module block_gen #(
                 plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 300; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 30;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 10;
                 plat_relative_x[1*PHY_WIDTH +: PHY_WIDTH] = 50;  plat_relative_y[1*PHY_WIDTH +: PHY_WIDTH] = 120;  plat_len[1*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 13;
                 plat_relative_x[2*PHY_WIDTH +: PHY_WIDTH] = 380; plat_relative_y[2*PHY_WIDTH +: PHY_WIDTH] = 130; plat_len[2*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
-                plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 90; plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 280; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
-                plat_relative_x[4*PHY_WIDTH +: PHY_WIDTH] = 320; plat_relative_y[4*PHY_WIDTH +: PHY_WIDTH] = 300; plat_len[4*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
+                plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 90; plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 260; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
+                plat_relative_x[4*PHY_WIDTH +: PHY_WIDTH] = 320; plat_relative_y[4*PHY_WIDTH +: PHY_WIDTH] = 260; plat_len[4*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
                 plat_relative_x[5*PHY_WIDTH +: PHY_WIDTH] = 150; plat_relative_y[5*PHY_WIDTH +: PHY_WIDTH] = 400; plat_len[5*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 13;
                 plat_relative_x[6*PHY_WIDTH +: PHY_WIDTH] = 10;   plat_relative_y[6*PHY_WIDTH +: PHY_WIDTH] = 370; plat_len[6*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
             end
@@ -84,7 +84,7 @@ module block_gen #(
                 plat_relative_x[2*PHY_WIDTH +: PHY_WIDTH] = 10; plat_relative_y[2*PHY_WIDTH +: PHY_WIDTH] = 135; plat_len[2*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
                 plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 200; plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 195; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 6;
                 plat_relative_x[4*PHY_WIDTH +: PHY_WIDTH] = 100; plat_relative_y[4*PHY_WIDTH +: PHY_WIDTH] = 255; plat_len[4*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 6;
-                plat_relative_x[5*PHY_WIDTH +: PHY_WIDTH] = 10; plat_relative_y[5*PHY_WIDTH +: PHY_WIDTH] = 315; plat_len[5*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
+                plat_relative_x[5*PHY_WIDTH +: PHY_WIDTH] = 10; plat_relative_y[5*PHY_WIDTH +: PHY_WIDTH] = 350; plat_len[5*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
                 plat_relative_x[6*PHY_WIDTH +: PHY_WIDTH] = 180; plat_relative_y[6*PHY_WIDTH +: PHY_WIDTH] = 375; plat_len[6*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 13;
             end
             
@@ -101,8 +101,8 @@ module block_gen #(
             4: begin
                 plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 240; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 20;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 10;
                 plat_relative_x[1*PHY_WIDTH +: PHY_WIDTH] = 70;  plat_relative_y[1*PHY_WIDTH +: PHY_WIDTH] = 130; plat_len[1*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
-                plat_relative_x[2*PHY_WIDTH +: PHY_WIDTH] = 360; plat_relative_y[2*PHY_WIDTH +: PHY_WIDTH] = 170; plat_len[2*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
-                plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 0;   plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 250; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 3;
+                plat_relative_x[2*PHY_WIDTH +: PHY_WIDTH] = 340; plat_relative_y[2*PHY_WIDTH +: PHY_WIDTH] = 170; plat_len[2*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
+                plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 10;   plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 250; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 4;
                 plat_relative_x[4*PHY_WIDTH +: PHY_WIDTH] = 400; plat_relative_y[4*PHY_WIDTH +: PHY_WIDTH] = 270; plat_len[4*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 3;
                 plat_relative_x[5*PHY_WIDTH +: PHY_WIDTH] = 440; plat_relative_y[5*PHY_WIDTH +: PHY_WIDTH] = 360; plat_len[5*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 4;
                 plat_relative_x[6*PHY_WIDTH +: PHY_WIDTH] = 160; plat_relative_y[6*PHY_WIDTH +: PHY_WIDTH] = 370; plat_len[6*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 13;

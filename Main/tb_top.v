@@ -44,11 +44,14 @@ initial begin
     #3 sys_rst_n = 0;
     #3 sys_rst_n = 1;
 
-    //#100 left = 1;
-    //#10000 left = 0;
+    #100 left = 1;
+    #10000 left = 0;
     //#10000;
+    //#1000 jump = 1;
+    //#2000 jump = 0;
+
     #1000 jump = 1;
-    #20000 jump = 0;
+    #2000 jump = 0;
 
     #2000 right = 1;
     #10 right = 0;

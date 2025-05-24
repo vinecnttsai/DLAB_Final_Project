@@ -10,7 +10,7 @@ module charge_bar_controller #(
     output [7:0] AN
 );
     localparam THRESHOLD_SHIFT = 55;
-    localparam MAX_THRESHOLD = THRESHOLD_SHIFT * SEQ_LEN;
+    localparam MAX_THRESHOLD = THRESHOLD_SHIFT * 9;
     wire svn_shift_posedge;
     reg [PHY_WIDTH-1:0] charge_bar_d;
     reg [PHY_WIDTH-1:0] threshold_reg;
@@ -27,10 +27,10 @@ module charge_bar_controller #(
     assign svn_shift_posedge = (charge_bar_d != charge_bar) && (charge_bar > threshold_reg);
 
     always @(posedge sys_clk or negedge sys_rst_n) begin
-        if(!sys_rst_n) begin
+        if(!sys_rst_n || charge_bar == 1) begin
             threshold_reg <= THRESHOLD_SHIFT;
         end else if (svn_shift_posedge) begin
-            threshold_reg <= (threshold_reg >= MAX_THRESHOLD) ? THRESHOLD_SHIFT : threshold_reg + THRESHOLD_SHIFT;
+            threshold_reg <= threshold_reg + THRESHOLD_SHIFT;
         end
     end
 
