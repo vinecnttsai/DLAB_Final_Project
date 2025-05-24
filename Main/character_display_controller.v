@@ -73,7 +73,7 @@ end
 
 //-------------------------------module connection-------------------------------------
 always @(*) begin
-    char_x_rom_safe = (char_face == 2'b01) ? (char_x_rom >> 1) : ((CHAR_WIDTH_X - char_x_rom - 1) >> 1);
+    char_x_rom_safe = (char_face == 2'b11) ? (char_x_rom >> 1) : ((CHAR_WIDTH_X - char_x_rom - 1) >> 1);
     char_y_rom_safe = char_y_rom >> 1;
 end
 IDLE_1_CHAR #(

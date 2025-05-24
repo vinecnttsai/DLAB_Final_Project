@@ -274,7 +274,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    jump_factor = {6'b0, jump_cnt[8:6], 8'b0} + {7'b0, jump_cnt[5:3], 1'b1, 6'b0} + {9'b0, jump_cnt[2:0], 5'b0};
+    jump_factor = {6'b0, jump_cnt[8:6], 8'b0} + {8'b0, jump_cnt[5:3], 1'b1, 5'b0} + {9'b0, jump_cnt[2:0], 5'b0};
 end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -284,9 +284,9 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         if (collision_type == 2) begin
             face <= -face;
         end else if (state == LEFT) begin
-            face <= -1;
-        end else if (state == RIGHT) begin
             face <= 1;
+        end else if (state == RIGHT) begin
+            face <= -1;
         end
     end
 end
