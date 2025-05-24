@@ -274,7 +274,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    jump_factor = {6'b0, jump_cnt[8:6], 8'b0} + {8'b0, jump_cnt[5:3], 1'b1, 5'b0} + {9'b0, jump_cnt[2:0], 5'b0};
+    jump_factor = {6'b0, jump_cnt[8:6], 8'b0} + {7'b0, jump_cnt[5:3], 1'b1, 6'b0} + {9'b0, jump_cnt[2:0], 5'b0};
 end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -313,12 +313,12 @@ always @(*) begin
         vel_y = -vel_y_reg;
     end else if (collision_type == 1) begin
         vel_x = 0;
-        vel_y = -vel_y_reg - ($signed(vel_y_reg) >>> 1) - ($signed(vel_y_reg) >>> 2); // -1.875 damped
+        vel_y = -vel_y_reg - ($signed(vel_y_reg) >>> 1); // -1.5 damped
     end else if (collision_type == 2) begin
-        vel_x = -vel_x_reg - ($signed(vel_x_reg) >>> 1) - ($signed(vel_x_reg) >>> 2); // -1.875 damped
+        vel_x = -(vel_x_reg <<< 1); // no damping
         vel_y = 0;
     end else if (state == JUMP) begin
-        vel_x = (JUMP_VEL_X + ($signed(jump_factor) >>> 2) + ($signed(jump_factor) >>> 3)) * face;
+        vel_x = (JUMP_VEL_X + ($signed(jump_factor) >>> 2)) * face;
         vel_y = (JUMP_VEL_Y + jump_factor);
     end else begin
         vel_x = 0;
