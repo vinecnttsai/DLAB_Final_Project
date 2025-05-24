@@ -7,7 +7,7 @@ module character #(
     parameter WALL_WIDTH = 40,
     parameter WALL_HEIGHT = 20,
     parameter MAP_WIDTH_X = 480,
-    parameter MAP_X_OFFSET = 120, // (640 - 480) / 2
+    parameter MAP_X_OFFSET = 140, // (640 - 480) / 2
     parameter MAP_Y_OFFSET = 0,
     parameter LEFT_WALL = MAP_WIDTH_X - WALL_WIDTH + MAP_X_OFFSET,
     parameter RIGHT_WALL = MAP_X_OFFSET,
@@ -109,6 +109,9 @@ wire fall_posedge;
 // hold signal to wait for the object until being out of the obstacle
 reg [$clog2(OBSTACLE_NUM+5)-1:0] hold;
 wire is_hold;
+
+// invalid move
+reg invalid_move;
 
 // output wire
 assign out_pos_x = pos_x_reg;
@@ -331,7 +334,8 @@ always @(*) begin
         pos_x = 0;
         pos_y = 0;
     end else if (fall_to_ground) begin
-        {pos_x, pos_y} = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
+        pos_y = calculate_impact_pos(pos_x_reg, pos_y_reg, vel_x_reg, vel_y_reg);
+        pos_x = pos_x_reg_d - pos_x_reg;
     end else if (state == LEFT) begin
         pos_x = LEFT_POS_X;
         pos_y = 0;
@@ -368,6 +372,8 @@ always @(*) begin
         pos_x_next = LEFT_WALL - CHAR_WIDTH_X;
     end else if (pos_x_reg + pos_x < RIGHT_WALL + WALL_WIDTH) begin
         pos_x_next = RIGHT_WALL + WALL_WIDTH;
+    end else if (invalid_move) begin
+        pos_x_next = pos_x_reg;
     end else begin
         pos_x_next = pos_x_reg + pos_x;
     end
@@ -452,6 +458,20 @@ generate
     end
 endgenerate
 
+integer n, m;
+always @(*) begin
+    invalid_move = 0;
+    for (n = 0; n < OBSTACLE_NUM; n = n + 1) begin
+        for (m = 0; m < CHAR_WIDTH_Y; m = m + 1) begin
+            if (in_obstacle(pos_x_reg + pos_x, pos_y_reg + m, obstacle_signed_abs_pos_x[n*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[n*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[n*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]) ||
+                in_obstacle(pos_x_reg + pos_x + (CHAR_WIDTH_X >>> 1), pos_y_reg + m, obstacle_signed_abs_pos_x[n*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[n*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[n*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]) ||
+                in_obstacle(pos_x_reg + pos_x + CHAR_WIDTH_X - 1, pos_y_reg + m, obstacle_signed_abs_pos_x[n*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[n*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[n*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
+                invalid_move = 1;
+            end
+        end
+    end
+end
+
 function automatic in_obstacle;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_x;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_y;
@@ -473,6 +493,7 @@ always @(*) begin
         ob_detect_row[a] = 1'b1;
         for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
             if (in_obstacle(pos_x_reg, pos_y_reg + a, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]) ||
+                in_obstacle(pos_x_reg + (CHAR_WIDTH_X >>> 1), pos_y_reg + a, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]) ||
                 in_obstacle(pos_x_reg + CHAR_WIDTH_X - 1, pos_y_reg + a, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
                 ob_detect_row[a] = 1'b0;
                 if(a < CHAR_WIDTH_Y) begin
@@ -487,6 +508,7 @@ always @(*) begin
     ob_detect_below = 1'b1;
     for (b = 0; b < OBSTACLE_NUM; b = b + 1) begin
         if (in_obstacle(pos_x_reg, pos_y_reg - 1, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]) || 
+            in_obstacle(pos_x_reg + (CHAR_WIDTH_X >>> 1), pos_y_reg - 1, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH]) ||
             in_obstacle(pos_x_reg + CHAR_WIDTH_X - 1, pos_y_reg - 1, obstacle_signed_abs_pos_x[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_signed_abs_pos_y[b*SIGNED_PHY_WIDTH +: SIGNED_PHY_WIDTH], obstacle_block_width[b*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH])) begin
             ob_detect_below = 1'b0;
         end
@@ -540,7 +562,7 @@ function automatic signed [SIGNED_PHY_WIDTH-1:0] multi_div;
 endfunction
 */
 
-function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos;
+function signed [SIGNED_PHY_WIDTH-1:0] calculate_impact_pos;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_y_reg;
     input signed [SIGNED_PHY_WIDTH-1:0] vel_x_reg;
@@ -548,7 +570,6 @@ function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos
     integer i;
 
     reg signed [SIGNED_PHY_WIDTH-1:0] distance_to_nearest_ob;
-    //reg signed [SIGNED_PHY_WIDTH-1:0] impact_pos_x;
     begin
         distance_to_nearest_ob = 0;
         if (row_detect[0]) begin // if the bottom of the character is not fully in the wall
@@ -565,9 +586,7 @@ function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos
             end
         end
 
-        //impact_pos_x = multi_div(vel_x_reg, distance_to_nearest_ob, vel_y_reg);
-
-        calculate_impact_pos = {0, distance_to_nearest_ob};
+        calculate_impact_pos = distance_to_nearest_ob;
     end
 endfunction
 //-----------------------------------------Push Character to the Ground-----------------------------------------

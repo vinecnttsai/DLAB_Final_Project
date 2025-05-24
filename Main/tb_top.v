@@ -44,7 +44,7 @@ initial begin
     #3 sys_rst_n = 0;
     #3 sys_rst_n = 1;
 
-    #100 left = 1;
+    #1000 left = 1;
     #10000 left = 0;
     //#10000;
     //#1000 jump = 1;

@@ -59,11 +59,11 @@ module block_gen #(
 
         case (cur_block_type)
             0: begin
-                plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 280; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 75;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 10;
+                plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 280; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 35;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 10;
                 plat_relative_x[1*PHY_WIDTH +: PHY_WIDTH] = 100; plat_relative_y[1*PHY_WIDTH +: PHY_WIDTH] = 100;  plat_len[1*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
-                plat_relative_x[2*PHY_WIDTH +: PHY_WIDTH] = 370; plat_relative_y[2*PHY_WIDTH +: PHY_WIDTH] = 200; plat_len[2*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 10;
+                plat_relative_x[2*PHY_WIDTH +: PHY_WIDTH] = 370; plat_relative_y[2*PHY_WIDTH +: PHY_WIDTH] = 150; plat_len[2*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 10;
                 plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 30;  plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 250; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
-                plat_relative_x[4*PHY_WIDTH +: PHY_WIDTH] = 250; plat_relative_y[4*PHY_WIDTH +: PHY_WIDTH] = 320; plat_len[4*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
+                plat_relative_x[4*PHY_WIDTH +: PHY_WIDTH] = 250; plat_relative_y[4*PHY_WIDTH +: PHY_WIDTH] = 280; plat_len[4*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
                 plat_relative_x[5*PHY_WIDTH +: PHY_WIDTH] = 120; plat_relative_y[5*PHY_WIDTH +: PHY_WIDTH] = 380; plat_len[5*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
                 plat_relative_x[6*PHY_WIDTH +: PHY_WIDTH] = 400; plat_relative_y[6*PHY_WIDTH +: PHY_WIDTH] = 380; plat_len[6*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 8;
             end
