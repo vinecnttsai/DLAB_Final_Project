@@ -25,7 +25,7 @@ reg [BCD_WIDTH - 1:0] digit;
 
 always @(*) begin
     if(which_digit == SEQ_DIGITS - 1) begin // sign digit
-        digit = (bcd_seq[SEQ_LEN - BCD_WIDTH +: BCD_WIDTH] == 4'h1) ? 4'hA : 4'hC; // A for -, C for blank
+        digit = (bcd_seq[SEQ_LEN - BCD_WIDTH +: BCD_WIDTH]) ? 4'hA : 4'hB; // A for -, B for blank
     end else begin
         digit = bcd_seq[which_digit * BCD_WIDTH +: BCD_WIDTH];
     end
@@ -188,7 +188,6 @@ always @( * ) begin
             3'd0: bitmap_row = 8'b00000000; //         
             default: bitmap_row = 8'b00000000;
         endcase
-        4'd11: bitmap_row = 8'b11111111; // ███████ a square
         default: bitmap_row = 8'b00000000;
     endcase
 end

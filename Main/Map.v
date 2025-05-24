@@ -9,7 +9,7 @@ module Map #(
     parameter CAMERA_WIDTH = 6
 ) (
     input [CAMERA_WIDTH - 1:0] camera_y,
-    input [CAMERA_WIDTH - 1:0] camera_offset,
+    input [PHY_WIDTH - 1:0] camera_offset,
     input [PHY_WIDTH-1:0] map_x,
     input [PHY_WIDTH-1:0] map_y,
     input map_on,
@@ -19,8 +19,8 @@ module Map #(
 // 80 * 80 for digit, 460 * 470 for map size
 localparam MAP_COLOR = 12'hFD8;
 localparam DIGIT_COLOR = 12'h5FF; // Yellow
-localparam FIRST_DIGIT_X = 140; // 240 - 220 = 20
-localparam SECOND_DIGIT_X = 260; // 240 + 100
+localparam FIRST_DIGIT_X = 120; // 240 - 220 = 20
+localparam SECOND_DIGIT_X = 240; // 240 + 100
 localparam DIGIT_Y = 160;
 localparam DIGIT_WIDTH = 80;
 

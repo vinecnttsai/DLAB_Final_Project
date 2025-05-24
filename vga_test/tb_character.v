@@ -20,12 +20,12 @@ module tb_character #(
     parameter RIGHT_WALL = MAP_X_OFFSET,
     parameter BOTTOM_WALL = MAP_Y_OFFSET,
     //-----------Character Parameters-----
-    parameter CHAR_WIDTH_X = 32,
-    parameter CHAR_WIDTH_Y = 32,
-    parameter signed INITIAL_POS_X = 430,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
-    parameter signed INITIAL_POS_Y = 151,//MAP_Y_OFFSET + WALL_HEIGHT,
-    parameter signed INITIAL_VEL_X = 1472,
-    parameter signed INITIAL_VEL_Y = -3072,
+    parameter CHAR_WIDTH_X = 42,
+    parameter CHAR_WIDTH_Y = 50,
+    parameter signed INITIAL_POS_X = 328,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
+    parameter signed INITIAL_POS_Y = 20,//MAP_Y_OFFSET + WALL_HEIGHT,
+    parameter signed INITIAL_VEL_X = 0,
+    parameter signed INITIAL_VEL_Y = 0,
     //-----------Obstacle Parameters-----
     parameter OBSTACLE_NUM = 7,
     parameter OBSTACLE_WIDTH = 10,
@@ -282,7 +282,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    jump_factor = {5'b0, jump_cnt[8:6], 9'b0} + {8'b0, jump_cnt[5:3], 1'b1, 5'b0} + {10'b0, jump_cnt[2:0], 4'b0};
+    jump_factor = {6'b0, jump_cnt[8:6], 8'b0} + {9'b0, jump_cnt[5:3], 1'b1, 4'b0} + {11'b0, jump_cnt[2:0], 3'b0};
 end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -328,8 +328,8 @@ always @(*) begin
     end else if (state == JUMP) begin
         vel_x = (JUMP_VEL_X + ($signed(jump_factor) >>> 2) + ($signed(jump_factor) >>> 3)) * face;
         vel_y = (JUMP_VEL_Y + jump_factor);
-    end else begin
-        vel_x = 0;
+        end else begin
+            vel_x = 0;
         vel_y = 0;
     end
 end
@@ -371,7 +371,6 @@ always @(*) begin
     end
 end
 
-//注意這邊只有檢查到牆壁, 沒有障礙物
 always @(*) begin
     if (pos_x_reg + pos_x + CHAR_WIDTH_X - 1 >= LEFT_WALL) begin
         pos_x_next = LEFT_WALL - CHAR_WIDTH_X;

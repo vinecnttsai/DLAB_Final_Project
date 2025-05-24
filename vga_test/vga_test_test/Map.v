@@ -8,7 +8,7 @@ module Map #(
     parameter CAMERA_WIDTH = 6
 ) (
     input [CAMERA_WIDTH - 1:0] camera_y,
-    input [CAMERA_WIDTH - 1:0] camera_offset,
+    input [PHY_WIDTH - 1:0] camera_offset,
     input [PHY_WIDTH-1:0] map_x,
     input [PHY_WIDTH-1:0] map_y,
     input map_on,

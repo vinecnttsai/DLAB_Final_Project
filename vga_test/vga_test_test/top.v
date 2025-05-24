@@ -17,8 +17,8 @@ module top(
     );
     
 //-----------------------------------VGA signals-----------------------------------
-    wire [9:0] w_x, w_y;
-    wire w_p_tick, w_video_on;
+    wire [9:0] x, y;
+    wire p_tick, video_on;
     reg [11:0] rgb_reg;
     wire [11:0] rgb_next;
 //-----------------------------------VGA signals-----------------------------------
@@ -32,7 +32,7 @@ module top(
     //-----------Sequence debug parameters-----------
     localparam SEQ_LEN = 20;
     localparam SEQ_DIGITS = (SEQ_LEN >>> 2) + 1; // 1 for sign digit
-    localparam SEQ_NUM = 6;
+    localparam SEQ_NUM = 5;
     localparam FONT_WIDTH = 8;
     //-----------Sequence debug parameters-----------
 
@@ -142,7 +142,7 @@ module top(
         end
     end
 
-    fq_div #(.N(2)) fq_div1( // 10000000
+    fq_div #(.N(10000000)) fq_div1( // 10000000
         .org_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .div_n_clk(debug_char_clk)
@@ -193,21 +193,15 @@ module top(
 //-----------------------------------VGA controller-----------------------------------
     vga_controller vga( .sys_clk(sys_clk),
                         .sys_rst_n(sys_rst_n),
-                        .video_on(w_video_on),
-                        .p_tick(w_p_tick),
+                        .video_on(video_on),
+                        .p_tick(p_tick),
                         .hsync(hsync),
                         .vsync(vsync),
-                        .x(w_x),
-                        .y(w_y));
+                        .x(x),
+                        .y(y));
 //-----------------------------------VGA controller-----------------------------------
 
-//----------------------------------Charge bar signals----------------------------------
-    wire [7:0] charge_bar_svn;
-    wire [PHY_WIDTH-1:0] charge_bar_vga;
-//----------------------------------Charge bar signals----------------------------------
-
 //-----------------------------------Charge bar-----------------------------------
-
     charge_bar_controller #(
         .PHY_WIDTH(PHY_WIDTH),
         .SEQ_LEN(SEQ_LEN)
@@ -215,7 +209,6 @@ module top(
         .sys_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .charge_bar(cnt[PHY_WIDTH-1:0]),
-        .charge_bar_vga(charge_bar_vga),
         .CA(CA),
         .CB(CB),
         .CC(CC),
@@ -226,7 +219,6 @@ module top(
         .DP(DP),
         .AN(AN)
     );
-
 //-----------------------------------Charge bar-----------------------------------
 
 //-----------------------------------Debug variables-----------------------------------
@@ -237,7 +229,6 @@ wire [SEQ_LEN * SEQ_NUM - 1:0] debug_sig;
     pad_sign #(.seq_len(SEQ_LEN), .SEQ_LEN(SEQ_LEN)) pad_3 ( .seq(cnt_2), .padded_seq(debug_sig[SEQ_LEN * 2 +: SEQ_LEN]) );
     pad_sign #(.seq_len(4 + 1), .SEQ_LEN(SEQ_LEN)) pad_4 ( .seq({1'b0, cur_block_type}), .padded_seq(debug_sig[SEQ_LEN * 3 +: SEQ_LEN]) );
     pad_sign #(.seq_len(CAMERA_WIDTH + 1), .SEQ_LEN(SEQ_LEN)) pad_5 ( .seq({1'b0, camera_y}), .padded_seq(debug_sig[SEQ_LEN * 4 +: SEQ_LEN]) );
-    assign debug_sig[SEQ_LEN * 5 +: SEQ_LEN] = {4'h0, charge_bar_vga};
 
 //-----------------------------------Debug variables-----------------------------------
 
@@ -273,10 +264,10 @@ wire [SEQ_LEN * SEQ_NUM - 1:0] debug_sig;
                 .sw(sw),
                 .sys_clk(sys_clk),
                 .sys_rst_n(sys_rst_n),
-                .video_on(w_video_on),
+                .video_on(video_on),
                 .camera_y(camera_y),
-                .x(w_x),
-                .y(w_y),
+                .x(x),
+                .y(y),
                 .char_abs_x(560),
                 .char_abs_y(380),
                 .obstacle_abs_pos_x(obstacle_abs_pos_x),
@@ -289,7 +280,7 @@ wire [SEQ_LEN * SEQ_NUM - 1:0] debug_sig;
 
     // rgb buffer
     always @(posedge sys_clk) 
-        if(w_p_tick)
+        if(p_tick)
             rgb_reg <= rgb_next;
             
     assign rgb = rgb_reg;

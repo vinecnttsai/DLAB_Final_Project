@@ -55,8 +55,8 @@ localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_VEL = $signed((OBSTACLE_WIDTH + CHA
 localparam signed [SIGNED_PHY_WIDTH-1:0] MAX_DISPLACEMENT = (OBSTACLE_WIDTH + CHAR_WIDTH_Y - 2);
 localparam signed [SIGNED_PHY_WIDTH-1:0] GRAVITY = -(1 <<< SMOOTH_FACTOR);
 localparam signed [SIGNED_PHY_WIDTH-1:0] POSITIVE = 1 <<< SMOOTH_FACTOR;
-localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_POS_X = 3;
-localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_POS_X = -3;
+localparam signed [SIGNED_PHY_WIDTH-1:0] LEFT_POS_X = 1;
+localparam signed [SIGNED_PHY_WIDTH-1:0] RIGHT_POS_X = -1;
 localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_X = 2 <<< SMOOTH_FACTOR;
 localparam signed [SIGNED_PHY_WIDTH-1:0] JUMP_VEL_Y = 6 <<< SMOOTH_FACTOR;
 
@@ -113,8 +113,8 @@ wire is_hold;
 // output wire
 assign out_pos_x = pos_x_reg;
 assign out_pos_y = pos_y_reg;
-assign out_vel_x = $signed(vel_x_reg) >>> SMOOTH_FACTOR;
-assign out_vel_y = $signed(vel_y_reg) >>> SMOOTH_FACTOR;
+assign out_vel_x = vel_x_reg;
+assign out_vel_y = vel_y_reg;
 assign out_face = face;
 assign out_jump_cnt = jump_cnt;
 
@@ -274,7 +274,7 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
 end
 
 always @(*) begin
-    jump_factor = {6'b0, jump_cnt[8:6], 8'b0} + {9'b0, jump_cnt[5:3], 1'b1, 4'b0} + {11'b0, jump_cnt[2:0], 3'b0};
+    jump_factor = {6'b0, jump_cnt[8:6], 8'b0} + {7'b0, jump_cnt[5:3], 1'b1, 6'b0} + {9'b0, jump_cnt[2:0], 5'b0};
 end
 
 always @(posedge sys_clk or negedge sys_rst_n) begin
@@ -284,9 +284,9 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
         if (collision_type == 2) begin
             face <= -face;
         end else if (state == LEFT) begin
-            face <= 1;
-        end else if (state == RIGHT) begin
             face <= -1;
+        end else if (state == RIGHT) begin
+            face <= 1;
         end
     end
 end
@@ -523,6 +523,7 @@ assign row_detect_below = (pos_y_reg - 1 >= BOTTOM_WALL + WALL_HEIGHT) && ob_det
 //-----------------------------------------detect boundary-----------------------------------------
 
 //-----------------------------------------Push Character to the Ground-----------------------------------------
+/*
 function automatic signed [SIGNED_PHY_WIDTH-1:0] multi_div;
     input signed [SIGNED_PHY_WIDTH-1:0] org;
     input signed [SIGNED_PHY_WIDTH-1:0] mul;
@@ -537,6 +538,7 @@ function automatic signed [SIGNED_PHY_WIDTH-1:0] multi_div;
         end
     end
 endfunction
+*/
 
 function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos;
     input signed [SIGNED_PHY_WIDTH-1:0] pos_x_reg;
@@ -546,7 +548,7 @@ function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos
     integer i;
 
     reg signed [SIGNED_PHY_WIDTH-1:0] distance_to_nearest_ob;
-    reg signed [SIGNED_PHY_WIDTH-1:0] impact_pos_x;
+    //reg signed [SIGNED_PHY_WIDTH-1:0] impact_pos_x;
     begin
         distance_to_nearest_ob = 0;
         if (row_detect[0]) begin // if the bottom of the character is not fully in the wall
@@ -563,9 +565,9 @@ function signed [SIGNED_PHY_WIDTH + SIGNED_PHY_WIDTH - 1:0] calculate_impact_pos
             end
         end
 
-        impact_pos_x = multi_div(vel_x_reg, distance_to_nearest_ob, vel_y_reg);
+        //impact_pos_x = multi_div(vel_x_reg, distance_to_nearest_ob, vel_y_reg);
 
-        calculate_impact_pos = {impact_pos_x, distance_to_nearest_ob};
+        calculate_impact_pos = {0, distance_to_nearest_ob};
     end
 endfunction
 //-----------------------------------------Push Character to the Ground-----------------------------------------

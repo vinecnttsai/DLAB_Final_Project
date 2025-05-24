@@ -1,16 +1,25 @@
 `timescale 1ns / 1ps
 
 module top(
-    input up,
-    input down,
     input left,
     input right,
     input jump,
     input sys_clk,
     input sys_rst_n,
+    //-----------vga output-----------
     output hsync,
     output vsync,
-    output [11:0] rgb
+    output [11:0] rgb,
+    //-----------7-segment display-----------
+    output CA,
+    output CB,
+    output CC,
+    output CD,
+    output CE,
+    output CF,
+    output CG,
+    output DP,
+    output [7:0] AN
 );
 
 //-----------------------------------localparam-----------------------------------
@@ -64,13 +73,11 @@ module top(
     //-----------Obstacle parameters-----------
 
     //-----------Button parameters-----------
-    localparam BTN_NUM = 5;
+    localparam BTN_NUM = 3;
 
-    localparam UP_BTN = 0;
-    localparam DOWN_BTN = 1;
-    localparam LEFT_BTN = 2;
-    localparam RIGHT_BTN = 3;
-    localparam JUMP_BTN = 4;
+    localparam LEFT_BTN = 0;
+    localparam RIGHT_BTN = 1;
+    localparam JUMP_BTN = 2;
     //-----------Button parameters-----------
 
 //-----------------------------------localparam-----------------------------------
@@ -78,8 +85,8 @@ module top(
 //-----------------------------------Signal-----------------------------------
 
 //--------------VGA signals----------------
-    wire [SCREEN_WIDTH-1:0] w_x, w_y;
-    wire w_p_tick, w_video_on;
+    wire [SCREEN_WIDTH-1:0] x, y;
+    wire p_tick, video_on;
     reg [PIXEL_WIDTH-1:0] rgb_reg;
     wire [PIXEL_WIDTH-1:0] rgb_next;
 //--------------VGA signals----------------
@@ -125,8 +132,6 @@ module top(
 //-----------------------------------Signal-----------------------------------
 
 //-----------------------------------Input Button-----------------------------------
-    assign btn[UP_BTN] = up;
-    assign btn[DOWN_BTN] = down;
     assign btn[LEFT_BTN] = left;
     assign btn[RIGHT_BTN] = right;
     assign btn[JUMP_BTN] = jump;
@@ -145,16 +150,6 @@ module top(
         end
     endgenerate
 
-    always @(posedge sys_clk or negedge sys_rst_n) begin
-        if (!sys_rst_n) begin
-            abs_camera_y <= 10;
-        end else if (btn_posedge[UP_BTN]) begin
-            abs_camera_y <= (camera_y >= MAX_CAMERA_Y) ? abs_camera_y : abs_camera_y + BLOCK_WIDTH;
-        end else if (btn_posedge[DOWN_BTN]) begin
-            abs_camera_y <= (camera_y == 0) ? 10 : abs_camera_y - BLOCK_WIDTH;
-        end
-    end
-
     genvar j;
     generate
         for (j = 0; j < BTN_NUM; j = j + 1) begin
@@ -170,16 +165,23 @@ module top(
 
 //-----------------------------------Character clock-----------------------------------
     wire char_clk;
+    wire game_clk;
 
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if(!sys_rst_n) begin
             game_time <= 0;
-        end else if (char_clk) begin
+        end else if (game_clk) begin
             game_time <= game_time + 1;
         end
     end
 
-    fq_div #(.N(SCREEN_N)) fq_div1(
+    fq_div #(.N(100_000_000)) fq_div1( // 100 MHz -> 1 Hz
+        .org_clk(sys_clk),
+        .sys_rst_n(sys_rst_n),
+        .div_n_clk(game_clk)
+    );
+
+    fq_div #(.N(SCREEN_N)) fq_div2(
         .org_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
         .div_n_clk(char_clk)
@@ -242,7 +244,7 @@ character #(
     ) block_gen_inst(
         .sys_clk(sys_clk),
         .sys_rst_n(sys_rst_n),
-        .abs_camera_y(abs_camera_y),
+        .abs_camera_y(out_pos_y),
         .camera_y(camera_y),
         .plat_relative_x(obstacle_relative_pos_x),
         .plat_relative_y(obstacle_relative_pos_y),
@@ -266,12 +268,12 @@ character #(
 //-----------------------------------VGA controller-----------------------------------
     vga_controller vga( .sys_clk(sys_clk),
                         .sys_rst_n(sys_rst_n),
-                        .video_on(w_video_on),
-                        .p_tick(w_p_tick),
+                        .video_on(video_on),
+                        .p_tick(p_tick),
                         .hsync(hsync),
                         .vsync(vsync),
-                        .x(w_x),
-                        .y(w_y));
+                        .x(x),
+                        .y(y));
 //-----------------------------------VGA controller-----------------------------------
 
 //-----------------------------------Debug variables-----------------------------------
@@ -283,6 +285,26 @@ character #(
     pad_sign #(.seq_len(SIGNED_PHY_WIDTH), .SEQ_LEN(SEQ_LEN)) pad_6 ( .seq({1'b0, out_fall_cnt}), .padded_seq(bcd_seq[SEQ_LEN * 5 +: SEQ_LEN]) );
 
 //-----------------------------------Debug variables-----------------------------------
+
+//-----------------------------------Charge bar-----------------------------------
+    charge_bar_controller #(
+        .PHY_WIDTH(PHY_WIDTH),
+        .SEQ_LEN(SEQ_LEN)
+    ) charge_bar_controller_inst(
+        .sys_clk(sys_clk),
+        .sys_rst_n(sys_rst_n),
+        .charge_bar(out_jump_cnt),
+        .CA(CA),
+        .CB(CB),
+        .CC(CC),
+        .CD(CD),
+        .CE(CE),
+        .CF(CF),
+        .CG(CG),
+        .DP(DP),
+        .AN(AN)
+    );
+//-----------------------------------Charge bar-----------------------------------
 
 
 //-----------------------------------Pixel generator-----------------------------------
@@ -317,10 +339,10 @@ character #(
                 ) pg (
                 .sys_clk(sys_clk),
                 .sys_rst_n(sys_rst_n),
-                .video_on(w_video_on),
+                .video_on(video_on),
                 .camera_y(camera_y),
-                .x(w_x),
-                .y(w_y),
+                .x(x),
+                .y(y),
                 .char_abs_x(out_pos_x[PHY_WIDTH-1:0]),
                 .char_abs_y(out_pos_y[PHY_WIDTH-1:0]),
                 .char_display_id(char_display_id),
@@ -336,7 +358,7 @@ character #(
 
     // rgb buffer
     always @(posedge sys_clk) 
-        if(w_p_tick)
+        if(p_tick)
             rgb_reg <= rgb_next;
             
     assign rgb = rgb_reg;
