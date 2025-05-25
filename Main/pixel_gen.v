@@ -10,7 +10,7 @@ module pixel_gen #(
     parameter BCD_SEQ_NUM = 6,
     parameter BCD_SEQ_X_WIDTH = BCD_SEQ_DIGITS * FONT_WIDTH,
     //-----------ASCII Sequence parameters-----------
-    parameter STRING_NUM = 7,
+    parameter STRING_NUM = 13,
     parameter MAX_CHAR_NUM = 11,
     parameter CHAR_WIDTH = 5,
     parameter ASCII_SEQ_X_WIDTH = MAX_CHAR_NUM * FONT_WIDTH,
