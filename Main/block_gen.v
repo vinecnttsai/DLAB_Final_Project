@@ -79,7 +79,7 @@ module block_gen #(
             end
             
             2: begin
-                plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 250; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 30;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 13;
+                plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 260; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 30;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 12;
                 plat_relative_x[1*PHY_WIDTH +: PHY_WIDTH] = 120; plat_relative_y[1*PHY_WIDTH +: PHY_WIDTH] = 75;  plat_len[1*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 6;
                 plat_relative_x[2*PHY_WIDTH +: PHY_WIDTH] = 10; plat_relative_y[2*PHY_WIDTH +: PHY_WIDTH] = 135; plat_len[2*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
                 plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 250; plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 195; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 6;
@@ -90,7 +90,7 @@ module block_gen #(
             
             3: begin
                 plat_relative_x[0*PHY_WIDTH +: PHY_WIDTH] = 350; plat_relative_y[0*PHY_WIDTH +: PHY_WIDTH] = 20;  plat_len[0*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 6;
-                plat_relative_x[1*PHY_WIDTH +: PHY_WIDTH] = 60; plat_relative_y[1*PHY_WIDTH +: PHY_WIDTH] = 40;  plat_len[1*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 6;
+                plat_relative_x[1*PHY_WIDTH +: PHY_WIDTH] = 70; plat_relative_y[1*PHY_WIDTH +: PHY_WIDTH] = 30;  plat_len[1*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
                 plat_relative_x[2*PHY_WIDTH +: PHY_WIDTH] = 280; plat_relative_y[2*PHY_WIDTH +: PHY_WIDTH] = 160; plat_len[2*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 4;
                 plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 140; plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 140; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 6;
                 plat_relative_x[4*PHY_WIDTH +: PHY_WIDTH] = 200; plat_relative_y[4*PHY_WIDTH +: PHY_WIDTH] = 280; plat_len[4*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 4;
@@ -115,7 +115,7 @@ module block_gen #(
                 plat_relative_x[3*PHY_WIDTH +: PHY_WIDTH] = 150; plat_relative_y[3*PHY_WIDTH +: PHY_WIDTH] = 180; plat_len[3*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
                 plat_relative_x[4*PHY_WIDTH +: PHY_WIDTH] = 220; plat_relative_y[4*PHY_WIDTH +: PHY_WIDTH] = 245; plat_len[4*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
                 plat_relative_x[5*PHY_WIDTH +: PHY_WIDTH] = 350; plat_relative_y[5*PHY_WIDTH +: PHY_WIDTH] = 380; plat_len[5*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
-                plat_relative_x[6*PHY_WIDTH +: PHY_WIDTH] = 150; plat_relative_y[6*PHY_WIDTH +: PHY_WIDTH] = 380; plat_len[6*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
+                plat_relative_x[6*PHY_WIDTH +: PHY_WIDTH] = 130; plat_relative_y[6*PHY_WIDTH +: PHY_WIDTH] = 380; plat_len[6*BLOCK_LEN_WIDTH +: BLOCK_LEN_WIDTH] = 5;
             end
             
             6: begin
