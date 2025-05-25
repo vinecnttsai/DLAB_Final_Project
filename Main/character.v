@@ -41,7 +41,8 @@ module character #(
     output [2:0] char_display_id,
     output [1:0] out_face,
     output [PHY_WIDTH-1:0] out_jump_cnt,
-    output reg [PHY_WIDTH-1:0] out_fall_cnt
+    output reg [PHY_WIDTH-1:0] out_fall_cnt,
+    output [2:0] out_state
 );
 
 
@@ -120,6 +121,7 @@ assign out_vel_x = vel_x_reg;
 assign out_vel_y = vel_y_reg;
 assign out_face = face;
 assign out_jump_cnt = jump_cnt;
+assign out_state = state;
 
 reg character_clk_d;
 

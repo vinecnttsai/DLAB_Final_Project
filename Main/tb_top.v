@@ -28,7 +28,10 @@ module tb_tb_vga;
         .CF(),
         .CG(),
         .DP(),
-        .AN()
+        .AN(),
+        .background_melody_out(),
+        .background_bass_out(),
+        .character_melody_out()
     );
 
    
@@ -45,10 +48,10 @@ initial begin
     #3 sys_rst_n = 1;
 
     #1000 left = 1;
-    #10000 left = 0;
+    #1000 left = 0;
     //#10000;
-    //#1000 jump = 1;
-    //#2000 jump = 0;
+    #1000 jump = 1;
+    #2000 jump = 0;
 
     #1000 jump = 1;
     #2000 jump = 0;

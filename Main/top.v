@@ -19,7 +19,11 @@ module top(
     output CF,
     output CG,
     output DP,
-    output [7:0] AN
+    output [7:0] AN,
+    //-----------Audio-----------
+    output background_melody_out,
+    output background_bass_out,
+    output character_melody_out
 );
 
 //-----------------------------------localparam-----------------------------------
@@ -57,6 +61,7 @@ module top(
     localparam SIGNED_PHY_WIDTH = PHY_WIDTH + 1;
     localparam SMOOTH_FACTOR = 8; // Max = 8
     localparam SCREEN_N = 25600000 >>> (SMOOTH_FACTOR >>> 1); // 31.25 Hz
+    localparam [2:0] IDLE = 0, LEFT = 1, RIGHT = 2, CHARGE = 3, JUMP = 4, COLLISION = 5, FALL_TO_GROUND = 6, HOLD = 7;
     //-----------Character parameters-----------
 
     //-----------Camera parameters-----------
@@ -112,6 +117,7 @@ module top(
 //---------------Character signals----------------
     wire [2:0] char_display_id;
     wire [1:0] out_face;
+    wire [2:0] out_state;
 //---------------Character signals----------------
 
 //--------------Obstacle signals----------------
@@ -130,6 +136,31 @@ module top(
 
 
 //-----------------------------------Signal-----------------------------------
+
+
+//-----------------------------------Background music-----------------------------------
+    mario_music mario_music_inst(
+        .sys_clk(sys_clk),
+        .sys_rst_n(sys_rst_n),
+        .melody_out(background_melody_out),
+        .bass_out(background_bass_out)
+    );
+
+    wire is_jump, is_hit, is_charge;
+    assign is_jump = (out_state == JUMP);
+    assign is_hit = (out_state == FALL_TO_GROUND);
+    assign is_charge = (out_state == CHARGE);
+    sound_controller sound_controller_inst(
+        .sys_clk(sys_clk),
+        .sys_rst_n(sys_rst_n),
+        .is_jump(is_jump),
+        .is_hit(is_hit),
+        .is_charge(is_charge),
+        .is_win(1'b0),
+        .melody_out(character_melody_out),
+        .bass_out()
+    );
+//-----------------------------------Background music-----------------------------------
 
 //-----------------------------------Input Button-----------------------------------
     assign btn[LEFT_BTN] = left;
@@ -225,7 +256,8 @@ character #(
         .char_display_id(char_display_id),
         .out_jump_cnt(out_jump_cnt),
         .out_face(out_face),
-        .out_fall_cnt(out_fall_cnt)
+        .out_fall_cnt(out_fall_cnt),
+        .out_state(out_state)
     );
 //-----------------------------------Character---------------------------------------
 
