@@ -37,7 +37,7 @@ reg [SCREEN_WIDTH - 1:0] obstacle_x_rom_safe, obstacle_y_rom_safe;
     
 always @(*) begin
     obstacle_x_rom_safe = (obstacle_face == 2'b01) ? (obstacle_x_rom) % (OBSTACLE_WIDTH) : (OBSTACLE_WIDTH - obstacle_x_rom - 1) % (OBSTACLE_WIDTH);
-    obstacle_y_rom_safe = (obstacle_y_rom >> 1); // cause height = width * 2, width = 10
+    obstacle_y_rom_safe = (obstacle_y_rom >> 1); // height = obstacle picture width * 2, where obstacle picture width = 10
 end
 
 obstacle_id_selector #(
@@ -163,8 +163,6 @@ always @(*) begin
 end
 //----------------------------------------------------------------------------------
 
-//---------------------------------random single obstacle-------------------------------
-//---------------------------------random single obstacle-------------------------------
 
 //-------------------------------color id selector-------------------------------------
 always @(*) begin

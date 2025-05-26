@@ -1,6 +1,5 @@
 `timescale 1ns / 1ps
-// camera_y is the y coordinate of the camera, is TODO
-// obstacle_print_module
+// camera_y is the y coordinate of the camera
 module pixel_gen #(
     parameter PIXEL_WIDTH = 12,
     parameter FONT_WIDTH = 8,
@@ -18,7 +17,7 @@ module pixel_gen #(
     parameter BLOCK_WIDTH = 480,
     //-----------Map parameters-----------
     parameter MAP_WIDTH_X = 480,
-    parameter MAP_X_OFFSET = 140, // start position of map (640 - 480) / 2
+    parameter MAP_X_OFFSET = 140,
     parameter MAP_Y_OFFSET = 0,
     parameter WALL_WIDTH = 10,
     parameter WALL_HEIGHT = 20,
@@ -159,12 +158,12 @@ module pixel_gen #(
     //-----------------------------Map Relative Position Signals-----------------------------
     wire [PHY_WIDTH-1:0] map_y;
     wire [PHY_WIDTH-1:0] map_x;
-    assign map_y = y - MAP_Y_OFFSET;   // boundary does not count
-    assign map_x = x - MAP_X_OFFSET;                   // boundary does not count
+    assign map_y = y - MAP_Y_OFFSET;
+    assign map_x = x - MAP_X_OFFSET;
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Character Relative Position Signals-----------------------------
-    wire [PHY_WIDTH - 1:0] char_y_rom; // 要改成screen_width
+    wire [PHY_WIDTH - 1:0] char_y_rom;
     wire [PHY_WIDTH - 1:0] char_x_rom;
     assign char_y_rom = y + camera_offset - char_abs_y;
     assign char_x_rom = x - char_abs_x;
@@ -187,7 +186,7 @@ module pixel_gen #(
     wire [SCREEN_WIDTH-1:0] background_y_rom;
     wire [SCREEN_WIDTH-1:0] background_x_rom;
     assign background_y_rom = y % OBSTACLE_HEIGHT;
-    assign background_x_rom = x % BACKGROUND_WIDTH; // every 16 obstacle 
+    assign background_x_rom = x % BACKGROUND_WIDTH; // change obstacle type every 4 obstacle
     //----------------------------------------------------------------------------------------
 
     //-----------------------------Background Absolute Position Signals-----------------------------
@@ -255,7 +254,7 @@ module pixel_gen #(
             end else if(ascii_seq_on_for_all) begin
                 rgb = ascii_seq_rgb;
             end else if(char_on) begin
-                rgb = char_rgb; //char_rgb, remember to change back
+                rgb = char_rgb;
             end else begin
                 rgb = others_rgb;
             end
@@ -355,7 +354,7 @@ module pixel_gen #(
     
     //-----------------------------------------------------------------
 
-    //------------------------------Obstacle-------------------------------- // TODO: write module for obstacle print
+    //------------------------------Obstacle--------------------------------
     obstacle_display_controller #(
         .OBSTACLE_WIDTH(OBSTACLE_WIDTH),
         .BLOCK_LEN_WIDTH(BLOCK_LEN_WIDTH),

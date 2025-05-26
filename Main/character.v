@@ -7,7 +7,7 @@ module character #(
     parameter WALL_WIDTH = 40,
     parameter WALL_HEIGHT = 20,
     parameter MAP_WIDTH_X = 480,
-    parameter MAP_X_OFFSET = 140, // (640 - 480) / 2
+    parameter MAP_X_OFFSET = 140, //
     parameter MAP_Y_OFFSET = 0,
     parameter LEFT_WALL = MAP_WIDTH_X - WALL_WIDTH + MAP_X_OFFSET,
     parameter RIGHT_WALL = MAP_X_OFFSET,
@@ -15,8 +15,8 @@ module character #(
     //-----------Character Parameters-----
     parameter CHAR_WIDTH_X = 42,
     parameter CHAR_WIDTH_Y = 50,
-    parameter signed INITIAL_POS_X = 517,//MAP_X_OFFSET + (MAP_WIDTH_X - CHAR_WIDTH_X) / 2,
-    parameter signed INITIAL_POS_Y = 770,//MAP_Y_OFFSET + WALL_HEIGHT,
+    parameter signed INITIAL_POS_X = MAP_X_OFFSET + 180,
+    parameter signed INITIAL_POS_Y = MAP_Y_OFFSET + WALL_HEIGHT,
     parameter signed INITIAL_VEL_X = 0,
     parameter signed INITIAL_VEL_Y = 0,
     //-----------Obstacle Parameters-----
@@ -111,7 +111,7 @@ wire fall_posedge;
 reg [$clog2(OBSTACLE_NUM+5)-1:0] hold;
 wire is_hold;
 
-// invalid move
+// invalid move for left and right
 reg invalid_move;
 
 // output wire

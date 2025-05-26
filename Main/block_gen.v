@@ -24,7 +24,7 @@ module block_gen #(
     reg [4:0] prev_block;
     wire [PHY_WIDTH-1:0] abs_positive_y = (abs_camera_y < 0) ? 0 : abs_camera_y[PHY_WIDTH-1:0];
     wire [PHY_WIDTH-1:0] block_base_y = (abs_positive_y / BLOCK_WIDTH) * BLOCK_WIDTH;
-    wire [4:0] computed_block = block_base_y % BLOCK_NUM; // Be careful with the range of block_num
+    wire [4:0] computed_block = (block_base_y + 11) % BLOCK_NUM;
 
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if (!sys_rst_n) begin

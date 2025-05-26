@@ -5,11 +5,10 @@ module debounce #(parameter N = 100000, parameter WIDTH = 1) (
     output reg [WIDTH-1:0] debounced
 );
 
-    reg [WIDTH-1:0] org_sync0, org_sync1;  // 兩級同步器
-    reg [$clog2(N)-1:0] cnt;               // 一個總 counter
+    reg [WIDTH-1:0] org_sync0, org_sync1;
+    reg [$clog2(N)-1:0] cnt;
     reg enable;
 
-    // 兩級同步器
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if (!sys_rst_n) begin
             org_sync0 <= {WIDTH{1'b0}};

@@ -5,22 +5,21 @@
 
 ## Clock signal
 set_property -dict { PACKAGE_PIN E3    IOSTANDARD LVCMOS33 } [get_ports { sys_clk }]; #IO_L12P_T1_MRCC_35 Sch=clk100mhz
-# 創建100MHz主時鐘約束
 create_clock -period 10.000 -name sys_clk -waveform {0.000 5.000} [get_ports sys_clk]
 
-# 設置輸入延遲約束
+# Set input delay constraints
 set_input_delay -clock sys_clk -max 2.0 [get_ports sys_rst_n]
 set_input_delay -clock sys_clk -min 0.0 [get_ports sys_rst_n]
 
-# 設置輸出延遲約束（基於100MHz系統時鐘）
-set_output_delay -clock sys_clk -max 3.0 [get_ports {hsync vsync video_on p_tick}]
-set_output_delay -clock sys_clk -min 0.5 [get_ports {hsync vsync video_on p_tick}]
+# Set output delay constraints (based on 100MHz system clock)
+set_output_delay -clock sys_clk -max 3.0 [get_ports {hsync vsync}]
+set_output_delay -clock sys_clk -min 0.5 [get_ports {hsync vsync}]
 
 
-# 設置虛擬時鐘來表示25MHz像素時鐘（用於分析）
+# Create virtual clock to represent 25MHz pixel clock (for analysis)
 create_clock -period 40.000 -name virt_pixel_clk
 
-# 多週期路徑約束（因為像素邏輯每4個系統時鐘週期執行一次）
+# Multi-cycle path constraints (because pixel logic executes once every 4 system clock cycles)
 set_multicycle_path -setup -from [get_clocks sys_clk] -to [get_clocks sys_clk] 4
 set_multicycle_path -hold -from [get_clocks sys_clk] -to [get_clocks sys_clk] 3
 

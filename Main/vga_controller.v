@@ -1,12 +1,12 @@
 module vga_controller(
-    input sys_clk,          // 100MHz system clock from Basys 3
-    input sys_rst_n,        // system reset (active low)
-    output reg video_on,    // ON while pixel counts are within display area
-    output reg hsync,       // horizontal sync
-    output reg vsync,       // vertical sync
-    output reg p_tick,      // 25MHz pixel clock signal
-    output reg [9:0] x,     // current pixel x position (0-639)
-    output reg [9:0] y      // current pixel y position (0-479)
+    input sys_clk,          
+    input sys_rst_n,        
+    output reg video_on,    
+    output reg hsync,       
+    output reg vsync,       
+    output reg p_tick,      
+    output reg [9:0] x,     
+    output reg [9:0] y      
 );
 
     // VGA 640x480 @ 60Hz timing parameters
@@ -29,7 +29,6 @@ module vga_controller(
     reg [9:0] h_count;
     reg [9:0] v_count;
     
-    // Separate always blocks for better timing
     
     // Clock divider
     always @(posedge sys_clk) begin

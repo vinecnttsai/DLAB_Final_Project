@@ -66,7 +66,7 @@ always @(*) begin
     endcase
 end
 always @(*) begin
-    rgb = (color_id == 4'hB) ? background_rgb_reg : rgb_table[color_id * PIXEL_WIDTH +: PIXEL_WIDTH]; // default color is WHITE
+    rgb = (color_id == 4'hB) ? background_rgb_reg : rgb_table[color_id * PIXEL_WIDTH +: PIXEL_WIDTH]; // default color is backgroundcolor
 end
 //-------------------------------rgb_table-------------------------------------
 

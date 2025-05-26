@@ -19,8 +19,8 @@ module Map #(
 // 80 * 80 for digit, 460 * 470 for map size
 localparam MAP_COLOR = 12'hFD8;
 localparam DIGIT_COLOR = 12'h5FF; // Yellow
-localparam FIRST_DIGIT_X = 120; // 240 - 220 = 20
-localparam SECOND_DIGIT_X = 240; // 240 + 100
+localparam FIRST_DIGIT_X = 120; // first level digit x position
+localparam SECOND_DIGIT_X = 240; // second level digit x position
 localparam DIGIT_Y = 160;
 localparam DIGIT_WIDTH = 80;
 
@@ -85,9 +85,9 @@ end
 
 endmodule
 module digit_font_rom_10 (
-    input [3:0] digit,       // 0~9, 10 for minus
+    input [3:0] digit,       // 0~9, 10 for minus sign
     input [3:0] row,         // 0~9
-    output reg [9:0] bitmap_row // 該行的10bit bitmap
+    output reg [9:0] bitmap_row // 10-bit bitmap for each row
 );
 
 (* rom_style = "block" *)
