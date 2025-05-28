@@ -1,4 +1,4 @@
-module N_decoder #(parameter N = 12)(
+module N_encoder #(parameter N = 12)(
     input  [N-1:0] in,
     output reg [$clog2(N + 1)-1:0] out
 );
