@@ -377,12 +377,12 @@ always @(*) begin
         5'd29: case (row)
             3'd7: bitmap_row = 8'b01111100; //  █████  
             3'd6: bitmap_row = 8'b11000110; // ██   ██ 
-            3'd5: bitmap_row = 8'b00000110; //      ██ 
-            3'd4: bitmap_row = 8'b00011100; //    ███  
-            3'd3: bitmap_row = 8'b00111000; //   ███   
-            3'd2: bitmap_row = 8'b01110000; //  ███    
-            3'd1: bitmap_row = 8'b11100000; // ███     
-            3'd0: bitmap_row = 8'b11111110; // ███████ 
+            3'd5: bitmap_row = 8'b11000110; // ██   ██ 
+            3'd4: bitmap_row = 8'b01111100; //  █████  
+            3'd3: bitmap_row = 8'b11000110; // ██   ██ 
+            3'd2: bitmap_row = 8'b11000110; // ██   ██ 
+            3'd1: bitmap_row = 8'b11000110; // ██   ██ 
+            3'd0: bitmap_row = 8'b01111100; //  █████  
             default: bitmap_row = 8'b00000000;
         endcase
         5'd30: case (row)
