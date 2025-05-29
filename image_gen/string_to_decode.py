@@ -52,10 +52,8 @@ def convert_strings_to_verilog_module(input_file, output_file):
         # 從字串尾部補空白 (右側補空白)
         while len(values) < MAX_CHAR:
             values.append(space_value)
-        # 不反轉，保持原序
         all_values.extend(values)
 
-    # 輸出時依照 MSB -> LSB 順序直接輸出，不用反轉
     for i in range(0, len(all_values), MAX_CHAR):
         if i > 0:
             verilog_code += ",\n"
