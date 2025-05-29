@@ -206,7 +206,7 @@ module pixel_gen #(
         end
     endgenerate
     assign bcd_seq_on_for_all = |bcd_seq_on;
-    N_decoder #(.N(BCD_SEQ_NUM)) n_decoder_inst_bcd(
+    N_encoder #(.N(BCD_SEQ_NUM)) n_decoder_inst_bcd(
         .in(bcd_seq_on),
         .out(bcd_seq_on_id)
     );
@@ -218,7 +218,7 @@ module pixel_gen #(
         end
     endgenerate
     assign ascii_seq_on_for_all = |ascii_seq_on;
-    N_decoder #(.N(STRING_NUM)) n_decoder_inst_ascii(
+    N_encoder #(.N(STRING_NUM)) n_decoder_inst_ascii(
         .in(ascii_seq_on),
         .out(ascii_seq_on_id)
     );
@@ -235,7 +235,7 @@ module pixel_gen #(
         end
     endgenerate
     assign obstacle_on_for_all = |obstacle_on;
-    N_decoder #(.N(OBSTACLE_NUM)) n_decoder_inst_obstacle(
+    N_encoder #(.N(OBSTACLE_NUM)) n_decoder_inst_obstacle(
         .in(obstacle_on),
         .out(obstacle_on_id)
     );
