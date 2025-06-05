@@ -1,28 +1,8 @@
 ## Overview
 
-This is a Verilog-based implementation of an **"Only Up"-style 2D pixel art game**.  
-The project features a vertical-scrolling gameplay mechanic, where the player controls a character navigating upward through obstacles.  
-The design is targeted for FPGA deployment with VGA display output.
-
 ---
 
-## Repository Structure
-
-project-root/
-│
-├── main/
-│ └── Contains the core logic of the project. All Verilog source files (.v) and constraint files (.xdc) are located here.
-│ This includes the top-level module, FSM, VGA controller, collision detection, and game logic.
-│
-├── vga_test/
-│ └── Used during development to test individual components or features in isolation.
-│ Includes simple testbenches and test modules for debugging VGA output and other subsystems.
-│
-└── image_gen/
-└── Contains Verilog modules for RAM initialization to store pixel data for sprites. This includes:
-- Character sprites in different animation states
-- Obstacle graphics and other game elements
-Each module here defines the memory structure used to render pixel-based graphics in the game
+## Project Structure
 
 ## Contributions
 
