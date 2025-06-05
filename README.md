@@ -96,7 +96,7 @@ These modules are used by the VGA rendering logic to display graphics on the scr
 │       ├── JUMP_DOWN_CHAR.v
 │       ├── JUMP_UP_CHAR.v
 │       ├── Map.v
-│       ├── N_decoder.v
+│       ├── N_encoder.v
 │       ├── SAFE_GROUND_CHAR.v
 │       ├── WALL_1.v
 │       ├── WALL_2.v
