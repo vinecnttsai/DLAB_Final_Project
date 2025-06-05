@@ -3,7 +3,7 @@
 ---
 
 ## Project Structure
-'''
+```
 .
 ├── Main
 │   ├── Camera.v
@@ -92,7 +92,7 @@
 │       ├── top.v
 │       └── vga_controller.v
 └── README.md
-'''
+```
 ### main/  
 Contains the core game logic and all major Verilog modules, including:  
 - Top-level integration  
