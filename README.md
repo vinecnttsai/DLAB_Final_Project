@@ -1,8 +1,13 @@
 ## Overview
 
+This project implements a 2D pixel art style "Only Up" game using an FPGA board (Nexys 4 DDR), an external display, and three speakers.  
+The FPGA handles the game logic and graphics rendering, outputting gameplay to the external monitor via VGA.  
+Sound effects and background music are played through the three speakers, creating an engaging gaming experience.
+
+
 ## Project Structure
 
-This Final Project is organized into three main folders for development purposes: `main`, `vga_test`, and `image_gen`.
+This project is organized into three main folders for development purposes: `main`, `vga_test`, and `image_gen`.
 
 ---
 
