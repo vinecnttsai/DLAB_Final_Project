@@ -1,7 +1,5 @@
 ## Overview
 
----
-
 ## Project Structure
 ```
 .
@@ -114,6 +112,8 @@ Includes test modules and testbenches for validating functionality visually or t
 ### image_gen/  
 Uses Python scripts to generate RAM-based Verilog modules for character rendering. Each `.v` file contains pixel data representing a specific character display state or obstacle.  
 These modules are used by the VGA rendering logic to display graphics on the screen.
+
+---
 
 ## Contributions
 
