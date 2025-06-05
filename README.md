@@ -26,15 +26,15 @@ Each module here defines the memory structure used to render pixel-based graphic
 
 ## Contributions
 
-- **Alice**  
+- **113511239**  
   - Wrote the final project report  
   - Filmed the gameplay introduction video
 
-- **Bob**  
+- **113511128**  
   - Created character sound effects and background music  
   - Edited the gameplay introduction video
 
-- **Charlie**  
+- **113511270**  
   - Designed and implemented character movement logic  
   - Created game visuals including obstacles and backgrounds
 
